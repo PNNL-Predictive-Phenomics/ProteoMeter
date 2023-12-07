@@ -2,7 +2,7 @@
 [tool.poetry]
 name = "proteometer"
 version = "0.1.0"
-homepage = "https://github.com/LifeWorks/proteometer"
+homepage = "https://github.com/PhenoMeters/proteometer"
 description = "ProteoMeter: A Comprehensive Python Library for Proteom."
 authors = ["ProteoMeter <song.feng@outlook.com>"]
 readme = "README.md"
@@ -90,6 +90,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.black]
 line-length = 88
+skip-string-normalization = 1
 include = '\.pyi?$'
 exclude = '''
 /(

@@ -10,14 +10,12 @@
     ".vscode",
     "docs",
     "**/__pycache__",
-    "LifeWorks_proteometer.egg-info"
+    "PhenoMeters_proteometer.egg-info"
   ],
-
   "ignore": [
     "src/oldstuff"
   ],
-
   "reportMissingImports": true,
   "reportMissingTypeStubs": false,
-  "pythonVersion": "3.8"
+  "pythonVersion": "3.11"
 }

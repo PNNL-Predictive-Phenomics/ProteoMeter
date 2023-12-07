@@ -6,7 +6,7 @@
 
 # Create repo and push code to github
 gh repo create proteometer --public
-git remote add origin git@github.com:LifeWorks/proteometer.git
+git remote add origin https://github.com/PhenoMeters/proteometer.git
 git add .
 pre-commit run --all-files
 git add .

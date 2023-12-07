@@ -1,6 +1,6 @@
 site_name: ProteoMeter
 # site_url: http://www.jieyu.ai
-repo_url: https://github.com/LifeWorks/proteometer
+repo_url: https://github.com/PhenoMeters/proteometer
 repo_name: proteometer
 #strict: true
 nav:
@@ -73,7 +73,7 @@ extra:
       link: http://www.jieyu.ai
       name: Facebook
     - icon: fontawesome/brands/github
-      link: https://github.com/LifeWorks/proteometer
+      link: https://github.com/PhenoMeters/proteometer
       name: Github
     - icon: material/email
       link: "mailto:song.feng@outlook.com"
