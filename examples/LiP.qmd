@@ -1,0 +1,1920 @@
+---
+jupyter: python3
+---
+
+```{python}
+import sys, os, re, warnings, copy, math, time, datetime
+
+warnings.filterwarnings("ignore")
+
+from IPython.display import display
+from pathlib import Path
+home = str(Path.home())
+
+import numpy as np
+import scipy as sp
+import pandas as pd
+import statsmodels.stats.multitest as multitest
+import matplotlib.pyplot as plt
+plt.rcParams['figure.figsize'] = [7, 5]
+# plt.rcParams['figure.dpi'] = 100 # 200 e.g. is really fine, but slower
+import seaborn as sns
+from plotnine import *
+
+from Bio import SeqIO
+from Bio.PDB import *
+from Bio.PDB.MMCIF2Dict import MMCIF2Dict
+from Bio.PDB.MMCIFParser import MMCIFParser
+import networkx as nx
+# import nglview as nv
+
+from utils import *
+```
+
+# Required inputs and parameters
+
+## Cyanobacteria 2023-01-09
+
+```{python}
+fasta_file = "./data/LiP-Cyano-Exp2/ID_005856_9F874F1E.fasta"
+prot_seq_obj = SeqIO.parse(fasta_file, "fasta")
+prot_seqs = [seq_item for seq_item in prot_seq_obj]
+len(prot_seqs)
+```
+
+```{python}
+id_separator = '@'
+sig_thr = 0.05
+adj_thr = 0.1
+sig_num_thr = 1
+prot_missing_thr = 0.5
+pept_missing_thr = 0.5
+min_pept_count = 1
+sample = "Cyano"
+# sample = "A549"
+# sample = "MRC5"
+workdir = "./data/LiP-" + sample + "-Exp2/"
+result_dir = "./results/20230110_LiP/" + sample + '/'
+Path(result_dir).mkdir(parents=True, exist_ok=True)
+```
+
+```{python}
+trypsin_pept_file = workdir + "Trypsin_only_samples/Semispecific_trypsin/peptides.txt"
+trypsin_prot_file = workdir + "Trypsin_only_samples/Semispecific_trypsin/proteinGroups.txt"
+double_pept_file = workdir + "Double_digested_samples/Semispecific_trypsin/peptides.txt"
+# double_prot_file = workdir + "Double_digested_samples/Semispecific_trypsin/proteinGroups.txt"
+```
+
+```{python}
+trypsin_pept = pd.read_csv(trypsin_pept_file, sep='\t')
+trypsin_prot = pd.read_csv(trypsin_prot_file, sep='\t')
+double_pept = pd.read_csv(double_pept_file, sep='\t')
+# double_prot = pd.read_csv(double_prot_file, sep='\t')
+```
+
+```{python}
+print(double_pept.columns.to_list())
+print(trypsin_pept.columns.to_list())
+```
+
+
+```{python}
+ProteinID_col_prot = "Majority protein IDs"
+ProteinID_col_pept = "Leading razor protein"
+PeptCounts_col = "Peptide counts (all)"
+```
+
+
+```{python}
+trypsin_ctrl_cols = ['Intensity Cyano_Light_T1', 'Intensity Cyano_Light_T2', 'Intensity Cyano_Light_T3', 'Intensity Cyano_Light_T4']
+trypsin_treat_cols = ['Intensity Cyano_Dark_T1', 'Intensity Cyano_Dark_T2', 'Intensity Cyano_Dark_T3', 'Intensity Cyano_Dark_T4']
+trypsin_int_cols = trypsin_ctrl_cols + trypsin_treat_cols
+double_ctrl_cols = ['Intensity Cyano_Light_DD1', 'Intensity Cyano_Light_DD2', 'Intensity Cyano_Light_DD3', 'Intensity Cyano_Light_DD4']
+double_treat_cols = ['Intensity Cyano_Dark_DD1', 'Intensity Cyano_Dark_DD2', 'Intensity Cyano_Dark_DD3', 'Intensity Cyano_Dark_DD4']
+double_int_cols = double_ctrl_cols + double_treat_cols
+```
+
+```{python}
+prot_info_cols = ['id', 'Uniprot', "Fasta headers", "Treat/Control", "Treat/Control_pval", "Scalar"]
+info_cols = ['id', 'Sequence', 'Uniprot', 'Amino acid before', 'Last amino acid', 'Length', 'Start position', 'End position', 'Missed cleavages', "Scalar", "Ctrl missingness", "Treat missingness", "Total missingness", "Control", "Treat", "Treat/Control", "Treat/Control_pval", "Treat/Control_adj-p", "Treat/Control_adj-p_BY", "Treat/Control_adj-p_bonferroni", "Sig Pept num"]
+```
+
+## Cyanobacteria 2023-10-18
+
+```{python}
+data_dir = "./data/LIP_Cyano_Exp3/"
+fasta_file = data_dir + "ID_005856_9F874F1E.fasta"
+prot_seq_obj = SeqIO.parse(fasta_file, "fasta")
+prot_seqs = [seq_item for seq_item in prot_seq_obj]
+len(prot_seqs)
+```
+
+```{python}
+prot_info_cols = ['id', 'Uniprot', "Fasta headers", "Treat/Control", "Treat/Control_pval", "Scalar"]
+info_cols = ['id', 'Sequence', 'Uniprot', 'Amino acid before', 'Last amino acid', 'Length', 'Start position', 'End position', 'Missed cleavages', "Scalar", "Ctrl missingness", "Treat missingness", "Total missingness", "Control", "Treat", "Treat/Control", "Treat/Control_pval", "Treat/Control_adj-p", "Treat/Control_adj-p_BY", "Treat/Control_adj-p_bonferroni", "Sig Pept num"]
+```
+
+```{python}
+id_separator = '@'
+sig_thr = 0.05
+adj_thr = 0.1
+sig_num_thr = 1
+prot_missing_thr = 0.5
+pept_missing_thr = 0.5
+min_pept_count = 1
+# sample = "Dense"
+sample = "Dilute"
+# sample = "Dense2Dilute"
+workdir = data_dir + sample + "/"
+result_dir = "./results/20231025_LiP_Cyano_Exp3/" + sample + '/'
+Path(result_dir).mkdir(parents=True, exist_ok=True)
+```
+
+```{python}
+trypsin_pept_file = workdir + "Trypsin only/peptides.txt"
+trypsin_prot_file = workdir + "Trypsin only/proteinGroups.txt"
+double_pept_file = workdir + "Double digest/peptides.txt"
+# double_prot_file = workdir + "Double digest/proteinGroups.txt"
+```
+
+```{python}
+trypsin_pept = pd.read_csv(trypsin_pept_file, sep='\t')
+trypsin_prot = pd.read_csv(trypsin_prot_file, sep='\t')
+double_pept = pd.read_csv(double_pept_file, sep='\t')
+# double_prot = pd.read_csv(double_prot_file, sep='\t')
+```
+
+```{python}
+print(double_pept.columns.to_list())
+print(trypsin_pept.columns.to_list())
+```
+
+```{python}
+ProteinID_col_prot = "Majority protein IDs"
+ProteinID_col_pept = "Leading razor protein"
+PeptCounts_col = "Peptide counts (all)"
+```
+
+
+```{python}
+trypsin_ctrl_cols = ['LFQ intensity Dense_Light_T1', 'LFQ intensity Dense_Light_T2', 'LFQ intensity Dense_Light_T3', 'LFQ intensity Dense_Light_T4', 'LFQ intensity Dense_Light_T5']
+trypsin_treat_cols = ['LFQ intensity Dense_Dark_T1', 'LFQ intensity Dense_Dark_T2', 'LFQ intensity Dense_Dark_T3', 'LFQ intensity Dense_Dark_T4', 'LFQ intensity Dense_Dark_T5']
+trypsin_int_cols = trypsin_ctrl_cols + trypsin_treat_cols
+double_ctrl_cols = ['LFQ intensity Dense_Light_DD1', 'LFQ intensity Dense_Light_DD2', 'LFQ intensity Dense_Light_DD3', 'LFQ intensity Dense_Light_DD4', 'LFQ intensity Dense_Light_DD5']
+double_treat_cols = ['LFQ intensity Dense_Dark_DD1', 'LFQ intensity Dense_Dark_DD2', 'LFQ intensity Dense_Dark_DD3', 'LFQ intensity Dense_Dark_DD4', 'LFQ intensity Dense_Dark_DD5']
+double_int_cols = double_ctrl_cols + double_treat_cols
+```
+
+
+```{python}
+trypsin_ctrl_cols = ['LFQ intensity Dilute_Light_T1', 'LFQ intensity Dilute_Light_T2', 'LFQ intensity Dilute_Light_T3', 'LFQ intensity Dilute_Light_T4', 'LFQ intensity Dilute_Light_T5']
+trypsin_treat_cols = ['LFQ intensity Dilute_Dark_T1', 'LFQ intensity Dilute_Dark_T2', 'LFQ intensity Dilute_Dark_T3', 'LFQ intensity Dilute_Dark_T4', 'LFQ intensity Dilute_Dark_T5']
+trypsin_int_cols = trypsin_ctrl_cols + trypsin_treat_cols
+double_ctrl_cols = ['LFQ intensity Dilute_Light_DD1', 'LFQ intensity Dilute_Light_DD2', 'LFQ intensity Dilute_Light_DD3', 'LFQ intensity Dilute_Light_DD4', 'LFQ intensity Dilute_Light_DD5']
+double_treat_cols = ['LFQ intensity Dilute_Dark_DD1', 'LFQ intensity Dilute_Dark_DD2', 'LFQ intensity Dilute_Dark_DD3', 'LFQ intensity Dilute_Dark_DD4', 'LFQ intensity Dilute_Dark_DD5']
+double_int_cols = double_ctrl_cols + double_treat_cols
+```
+
+
+```{python}
+trypsin_ctrl_cols = ['LFQ intensity Dense_Light_T1', 'LFQ intensity Dense_Light_T2', 'LFQ intensity Dense_Light_T3', 'LFQ intensity Dense_Light_T4', 'LFQ intensity Dense_Light_T5']
+trypsin_treat_cols = ['LFQ intensity Dilute_Light_T1', 'LFQ intensity Dilute_Light_T2', 'LFQ intensity Dilute_Light_T3', 'LFQ intensity Dilute_Light_T4', 'LFQ intensity Dilute_Light_T5']
+trypsin_int_cols = trypsin_ctrl_cols + trypsin_treat_cols
+double_ctrl_cols = ['LFQ intensity Dense_Light_DD1', 'LFQ intensity Dense_Light_DD2', 'LFQ intensity Dense_Light_DD3', 'LFQ intensity Dense_Light_DD4', 'LFQ intensity Dense_Light_DD5']
+double_treat_cols = ['LFQ intensity Dilute_Light_DD1', 'LFQ intensity Dilute_Light_DD2', 'LFQ intensity Dilute_Light_DD3', 'LFQ intensity Dilute_Light_DD4', 'LFQ intensity Dilute_Light_DD5']
+double_int_cols = double_ctrl_cols + double_treat_cols
+```
+
+
+## Host-pathogen 2023-01-03
+
+```{python}
+fasta_file = "./data/LiP-Nuclear extracts-Exp2/uniprot-proteome_UP000005640+reviewed_yes.fasta"
+prot_seq_obj = SeqIO.parse(fasta_file, "fasta")
+prot_seqs = [seq_item for seq_item in prot_seq_obj]
+len(prot_seqs)
+```
+
+```{python}
+prot_info_cols = ['id', 'Uniprot', 'Gene names', 'Protein names', "Treat/Control", "Treat/Control_pval", "Scalar"]
+info_cols = ['id', 'Sequence', 'Uniprot', 'Gene names', 'Protein names', 'Amino acid before', 'Last amino acid', 'Length', 'Start position', 'End position', 'Missed cleavages', "Scalar", "Ctrl missingness", "Treat missingness", "Total missingness", "Control", "Treat", "Treat/Control", "Treat/Control_pval", "Treat/Control_adj-p", "Treat/Control_adj-p_BY", "Treat/Control_adj-p_bonferroni", "Sig Pept num"]
+```
+
+### A549
+
+```{python}
+id_separator = '@'
+sig_thr = 0.05
+adj_thr = 0.1
+sig_num_thr = 1
+prot_missing_thr = 0.5
+pept_missing_thr = 0.5
+min_pept_count = 1
+sample = "A549"
+# sample = "MRC5"
+workdir = "./data/LiP-Nuclear extracts-Exp2/" + sample + " Nuclear extracts/"
+result_dir = "./results/20230110_LiP/" + sample + '/'
+Path(result_dir).mkdir(parents=True, exist_ok=True)
+```
+
+```{python}
+trypsin_pept_file = workdir + "Label free_MaxQuant/Trypsin_only_samples/Semispecific_trypsin/peptides.txt"
+trypsin_prot_file = workdir + "Label free_MaxQuant/Trypsin_only_samples/Semispecific_trypsin/proteinGroups.txt"
+double_pept_file = workdir + "Label free_MaxQuant/Double_digested_samples/Semispecific_trypsin/peptides.txt"
+# double_prot_file = workdir + "Label free_MaxQuant/Double_digested_samples/Semispecific_trypsin/proteinGroups.txt"
+```
+
+```{python}
+trypsin_pept = pd.read_csv(trypsin_pept_file, sep='\t')
+trypsin_prot = pd.read_csv(trypsin_prot_file, sep='\t')
+double_pept = pd.read_csv(double_pept_file, sep='\t')
+# double_prot = pd.read_csv(double_prot_file, sep='\t')
+```
+
+```{python}
+print(double_pept.columns.to_list())
+print(trypsin_pept.columns.to_list())
+```
+
+
+```{python}
+ProteinID_col_prot = "Majority protein IDs"
+ProteinID_col_pept = "Leading razor protein"
+PeptCounts_col = "Peptide counts (all)"
+```
+
+
+```{python}
+trypsin_ctrl_cols = ['Intensity A549_T_Mock_1', 'Intensity A549_T_Mock_2', 'Intensity A549_T_Mock_3', 'Intensity A549_T_Mock_4', 'Intensity A549_T_Mock_5']
+trypsin_treat_cols = ['Intensity A549_T_Infected_1', 'Intensity A549_T_Infected_2', 'Intensity A549_T_Infected_3', 'Intensity A549_T_Infected_4', 'Intensity A549_T_Infected_5']
+trypsin_int_cols = trypsin_ctrl_cols + trypsin_treat_cols
+double_ctrl_cols = ['Intensity A549_DD_Mock_1', 'Intensity A549_DD_Mock_2', 'Intensity A549_DD_Mock_3', 'Intensity A549_DD_Mock_4', 'Intensity A549_DD_Mock_5']
+double_treat_cols = ['Intensity A549_DD_Infected_1', 'Intensity A549_DD_Infected_2', 'Intensity A549_DD_Infected_3', 'Intensity A549_DD_Infected_4', 'Intensity A549_DD_Infected_5']
+double_int_cols = double_ctrl_cols + double_treat_cols
+```
+
+### MRC5
+
+```{python}
+id_separator = '@'
+sig_thr = 0.05
+adj_thr = 0.1
+sig_num_thr = 1
+prot_missing_thr = 0.5
+pept_missing_thr = 0.5
+min_pept_count = 1
+# sample = "A549"
+sample = "MRC5"
+workdir = "./data/LiP-Nuclear extracts-Exp2/" + sample + " Nuclear extracts/"
+fasta_file = "./data/LiP-Nuclear extracts-Exp2/uniprot-proteome_UP000005640+reviewed_yes.fasta"
+result_dir = "./results/20230110_LiP/" + sample + '/'
+Path(result_dir).mkdir(parents=True, exist_ok=True)
+```
+
+```{python}
+trypsin_pept_file = workdir + "Label free_MaxQuant/Trypsin_only_samples/Semispecific_trypsin/peptides.txt"
+trypsin_prot_file = workdir + "Label free_MaxQuant/Trypsin_only_samples/Semispecific_trypsin/proteinGroups.txt"
+double_pept_file = workdir + "Label free_MaxQuant/Double_digested_samples/Semispecific_trypsin/peptides.txt"
+# double_prot_file = workdir + "Label free_MaxQuant/Double_digested_samples/Semispecific_trypsin/proteinGroups.txt"
+```
+
+```{python}
+trypsin_pept = pd.read_csv(trypsin_pept_file, sep='\t')
+trypsin_prot = pd.read_csv(trypsin_prot_file, sep='\t')
+double_pept = pd.read_csv(double_pept_file, sep='\t')
+# double_prot = pd.read_csv(double_prot_file, sep='\t')
+```
+
+```{python}
+print(double_pept.columns.to_list())
+print(trypsin_pept.columns.to_list())
+```
+
+
+```{python}
+ProteinID_col_prot = "Majority protein IDs"
+ProteinID_col_pept = "Leading razor protein"
+PeptCounts_col = "Peptide counts (all)"
+```
+
+
+```{python}
+trypsin_ctrl_cols = ['Intensity MRC5_T_Mock_1', 'Intensity MRC5_T_Mock_2', 'Intensity MRC5_T_Mock_3', 'Intensity MRC5_T_Mock_4', 'Intensity MRC5_T_Mock_5']
+trypsin_treat_cols = ['Intensity MRC5_T_Infected_1', 'Intensity MRC5_T_Infected_2', 'Intensity MRC5_T_Infected_3', 'Intensity MRC5_T_Infected_4', 'Intensity MRC5_T_Infected_5']
+trypsin_int_cols = trypsin_ctrl_cols + trypsin_treat_cols
+double_ctrl_cols = ['Intensity MRC5_DD_Mock_1', 'Intensity MRC5_DD_Mock_2', 'Intensity MRC5_DD_Mock_3', 'Intensity MRC5_DD_Mock_4', 'Intensity MRC5_DD_Mock_5']
+double_treat_cols = ['Intensity MRC5_DD_Infected_1', 'Intensity MRC5_DD_Infected_2', 'Intensity MRC5_DD_Infected_3', 'Intensity MRC5_DD_Infected_4', 'Intensity MRC5_DD_Infected_5']
+double_int_cols = double_ctrl_cols + double_treat_cols
+```
+
+## Host-pathogen 2023-06-12
+
+```{python}
+data_folder = "LIP_Lung_Cells_Exp_1"
+result_folder = "20230612_LiP"
+fasta_file = "./data/" + data_folder + "/uniprot-proteome_UP000005640+reviewed_yes.fasta"
+prot_seq_obj = SeqIO.parse(fasta_file, "fasta")
+prot_seqs = [seq_item for seq_item in prot_seq_obj]
+id_separator = '@'
+sig_thr = 0.05
+adj_thr = 0.1
+sig_num_thr = 1
+prot_missing_thr = 0.5
+pept_missing_thr = 0.5
+min_pept_count = 1
+len(prot_seqs)
+```
+
+```{python}
+prot_info_cols = ['id', 'Uniprot', 'Gene names', 'Protein names', "Treat/Control", "Treat/Control_pval", "Scalar"]
+info_cols = ['id', 'Sequence', 'Uniprot', 'Gene names', 'Protein names', 'Amino acid before', 'Last amino acid', 'Length', 'Start position', 'End position', 'Missed cleavages', "Scalar", "Ctrl missingness", "Treat missingness", "Total missingness", "Control", "Treat", "Treat/Control", "Treat/Control_pval", "Treat/Control_adj-p", "Treat/Control_adj-p_BY", "Treat/Control_adj-p_bonferroni", "Sig Pept num"]
+```
+
+### A549
+
+```{python}
+sample = "A549"
+workdir = "./data/" + data_folder + "/" + sample + "/"
+result_dir = "./results/" + result_folder + "/" + sample + '/'
+Path(result_dir).mkdir(parents=True, exist_ok=True)
+```
+
+```{python}
+trypsin_pept_file = workdir + "Trypsin only/peptides.txt"
+trypsin_prot_file = workdir + "Trypsin only/proteinGroups.txt"
+double_pept_file = workdir + "Double digest/peptides.txt"
+# double_prot_file = workdir + "Double digest/proteinGroups.txt"
+```
+
+```{python}
+trypsin_pept = pd.read_csv(trypsin_pept_file, sep='\t')
+trypsin_prot = pd.read_csv(trypsin_prot_file, sep='\t')
+double_pept = pd.read_csv(double_pept_file, sep='\t')
+# double_prot = pd.read_csv(double_prot_file, sep='\t')
+```
+
+```{python}
+print(double_pept.columns.to_list())
+print(trypsin_pept.columns.to_list())
+```
+
+
+```{python}
+ProteinID_col_prot = "Majority protein IDs"
+ProteinID_col_pept = "Leading razor protein"
+PeptCounts_col = "Peptide counts (all)"
+```
+
+
+```{python}
+trypsin_ctrl_cols = ['LFQ intensity A549_C_T_Mock_1', 'LFQ intensity A549_C_T_Mock_2', 'LFQ intensity A549_C_T_Mock_3', 'LFQ intensity A549_C_T_Mock_4', 'LFQ intensity A549_C_T_Mock_5']
+trypsin_treat_cols = ['LFQ intensity A549_C_T_Infected_1', 'LFQ intensity A549_C_T_Infected_2', 'LFQ intensity A549_C_T_Infected_3', 'LFQ intensity A549_C_T_Infected_4', 'LFQ intensity A549_C_T_Infected_5']
+trypsin_int_cols = trypsin_ctrl_cols + trypsin_treat_cols
+double_ctrl_cols = ['LFQ intensity A549_C_DD_Mock_1', 'LFQ intensity A549_C_DD_Mock_2', 'LFQ intensity A549_C_DD_Mock_3', 'LFQ intensity A549_C_DD_Mock_4', 'LFQ intensity A549_C_DD_Mock_5']
+double_treat_cols = ['LFQ intensity A549_C_DD_Infected_1', 'LFQ intensity A549_C_DD_Infected_2', 'LFQ intensity A549_C_DD_Infected_3', 'LFQ intensity A549_C_DD_Infected_4', 'LFQ intensity A549_C_DD_Infected_5']
+double_int_cols = double_ctrl_cols + double_treat_cols
+```
+
+### MRC5
+
+```{python}
+sample = "MRC5"
+workdir = "./data/" + data_folder + "/" + sample + "/"
+result_dir = "./results/" + result_folder + "/" + sample + '/'
+Path(result_dir).mkdir(parents=True, exist_ok=True)
+```
+
+```{python}
+trypsin_pept_file = workdir + "Trypsin only/peptides.txt"
+trypsin_prot_file = workdir + "Trypsin only/proteinGroups.txt"
+double_pept_file = workdir + "Double digest/peptides.txt"
+# double_prot_file = workdir + "Double digest/proteinGroups.txt"
+```
+
+```{python}
+trypsin_pept = pd.read_csv(trypsin_pept_file, sep='\t')
+trypsin_prot = pd.read_csv(trypsin_prot_file, sep='\t')
+double_pept = pd.read_csv(double_pept_file, sep='\t')
+# double_prot = pd.read_csv(double_prot_file, sep='\t')
+```
+
+```{python}
+print(double_pept.columns.to_list())
+print(trypsin_pept.columns.to_list())
+```
+
+
+```{python}
+ProteinID_col_prot = "Majority protein IDs"
+ProteinID_col_pept = "Leading razor protein"
+PeptCounts_col = "Peptide counts (all)"
+```
+
+
+```{python}
+trypsin_ctrl_cols = ['LFQ intensity MRC5_C_T_Mock_1', 'LFQ intensity MRC5_C_T_Mock_2', 'LFQ intensity MRC5_C_T_Mock_3', 'LFQ intensity MRC5_C_T_Mock_4', 'LFQ intensity MRC5_C_T_Mock_5']
+trypsin_treat_cols = ['LFQ intensity MRC5_C_T_Infected_1', 'LFQ intensity MRC5_C_T_Infected_2', 'LFQ intensity MRC5_C_T_Infected_3', 'LFQ intensity MRC5_C_T_Infected_4', 'LFQ intensity MRC5_C_T_Infected_5']
+trypsin_int_cols = trypsin_ctrl_cols + trypsin_treat_cols
+double_ctrl_cols = ['LFQ intensity MRC5_C_DD_Mock_1', 'LFQ intensity MRC5_C_DD_Mock_2', 'LFQ intensity MRC5_C_DD_Mock_3', 'LFQ intensity MRC5_C_DD_Mock_4', 'LFQ intensity MRC5_C_DD_Mock_5']
+double_treat_cols = ['LFQ intensity MRC5_C_DD_Infected_1', 'LFQ intensity MRC5_C_DD_Infected_2', 'LFQ intensity MRC5_C_DD_Infected_3', 'LFQ intensity MRC5_C_DD_Infected_4', 'LFQ intensity MRC5_C_DD_Infected_5']
+double_int_cols = double_ctrl_cols + double_treat_cols
+```
+
+## Host-pathogen Lung Primary Cells 2023-08-02
+
+```{python}
+data_folder = "LIP_Primary_Exp1"
+result_folder = str(datetime.datetime.now()) + '_' + data_folder
+fasta_file = "./data/" + data_folder + "/uniprot-proteome_UP000005640+reviewed_yes.fasta"
+prot_seq_obj = SeqIO.parse(fasta_file, "fasta")
+prot_seqs = [seq_item for seq_item in prot_seq_obj]
+id_separator = '@'
+sig_thr = 0.05
+adj_thr = 0.1
+sig_num_thr = 1
+prot_missing_thr = 0.5
+pept_missing_thr = 0.5
+min_pept_count = 1
+len(prot_seqs)
+```
+
+```{python}
+prot_info_cols = ['id', 'Uniprot', 'Gene names', 'Protein names', "Treat/Control", "Treat/Control_pval", "Scalar"]
+info_cols = ['id', 'Sequence', 'Uniprot', 'Gene names', 'Protein names', 'Amino acid before', 'Last amino acid', 'Length', 'Start position', 'End position', 'Missed cleavages', "Scalar", "Ctrl missingness", "Treat missingness", "Total missingness", "Control", "Treat", "Treat/Control", "Treat/Control_pval", "Treat/Control_adj-p", "Treat/Control_adj-p_BY", "Treat/Control_adj-p_bonferroni", "Sig Pept num"]
+```
+
+### Primary
+
+```{python}
+sample = "Primary"
+workdir = "./data/" + data_folder + "/" + sample + "/"
+result_dir = "./results/" + result_folder + "/" + sample + '/'
+Path(result_dir).mkdir(parents=True, exist_ok=True)
+```
+
+```{python}
+trypsin_pept_file = workdir + "Trypsin only/peptides.txt"
+trypsin_prot_file = workdir + "Trypsin only/proteinGroups.txt"
+double_pept_file = workdir + "Double digest/peptides.txt"
+# double_prot_file = workdir + "Double digest/proteinGroups.txt"
+```
+
+```{python}
+trypsin_pept = pd.read_csv(trypsin_pept_file, sep='\t')
+trypsin_prot = pd.read_csv(trypsin_prot_file, sep='\t')
+double_pept = pd.read_csv(double_pept_file, sep='\t')
+# double_prot = pd.read_csv(double_prot_file, sep='\t')
+```
+
+```{python}
+print(double_pept.columns.to_list())
+print(trypsin_pept.columns.to_list())
+```
+
+
+```{python}
+ProteinID_col_prot = "Majority protein IDs"
+ProteinID_col_pept = "Leading razor protein"
+PeptCounts_col = "Peptide counts (all)"
+```
+
+
+```{python}
+trypsin_ctrl_cols = ['LFQ intensity Mock_1', 'LFQ intensity Mock_2', 'LFQ intensity Mock_3', 'LFQ intensity Mock_4', 'LFQ intensity Mock_5']
+trypsin_treat_cols = ['LFQ intensity Infected_1', 'LFQ intensity Infected_2', 'LFQ intensity Infected_3', 'LFQ intensity Infected_4', 'LFQ intensity Infected_5']
+trypsin_int_cols = trypsin_ctrl_cols + trypsin_treat_cols
+double_ctrl_cols = ['LFQ intensity Mock_1', 'LFQ intensity Mock_2', 'LFQ intensity Mock_3', 'LFQ intensity Mock_4', 'LFQ intensity Mock_5']
+double_treat_cols = ['LFQ intensity Infected_1', 'LFQ intensity Infected_2', 'LFQ intensity Infected_3', 'LFQ intensity Infected_4', 'LFQ intensity Infected_5']
+double_int_cols = double_ctrl_cols + double_treat_cols
+```
+
+
+## Host-pathogen 2023-11-09
+
+```{python}
+data_folder = "LiP_NuEx_Semispecific_Exp2"
+result_folder = str(datetime.datetime.now()) + '_' + data_folder
+fasta_file = "./data/" + data_folder + "/uniprot-proteome_UP000005640+reviewed_yes.fasta"
+prot_seq_obj = SeqIO.parse(fasta_file, "fasta")
+prot_seqs = [seq_item for seq_item in prot_seq_obj]
+id_separator = '@'
+sig_thr = 0.05
+adj_thr = 0.1
+sig_num_thr = 1
+prot_missing_thr = 0.5
+pept_missing_thr = 0.5
+min_pept_count = 1
+len(prot_seqs)
+```
+
+```{python}
+prot_info_cols = ['id', 'Uniprot', 'Gene names', 'Protein names', "Treat/Control", "Treat/Control_pval", "Scalar"]
+info_cols = ['id', 'Sequence', 'Uniprot', 'Gene names', 'Protein names', 'Amino acid before', 'Last amino acid', 'Length', 'Start position', 'End position', 'Missed cleavages', "Scalar", "Ctrl missingness", "Treat missingness", "Total missingness", "Control", "Treat", "Treat/Control", "Treat/Control_pval", "Treat/Control_adj-p", "Treat/Control_adj-p_BY", "Treat/Control_adj-p_bonferroni", "Sig Pept num"]
+```
+
+### A549
+
+```{python}
+sample = "A549"
+workdir = "./data/" + data_folder + "/" + sample + "/"
+result_dir = "./results/" + result_folder + "/" + sample + '/'
+Path(result_dir).mkdir(parents=True, exist_ok=True)
+```
+
+```{python}
+trypsin_pept_file = workdir + "Trypsin only/peptides.txt"
+trypsin_prot_file = workdir + "Trypsin only/proteinGroups.txt"
+double_pept_file = workdir + "Double digest/peptides.txt"
+# double_prot_file = workdir + "Double digest/proteinGroups.txt"
+```
+
+```{python}
+trypsin_pept = pd.read_csv(trypsin_pept_file, sep='\t')
+trypsin_prot = pd.read_csv(trypsin_prot_file, sep='\t')
+double_pept = pd.read_csv(double_pept_file, sep='\t')
+# double_prot = pd.read_csv(double_prot_file, sep='\t')
+```
+
+```{python}
+print(double_pept.columns.to_list())
+print(trypsin_pept.columns.to_list())
+```
+
+
+```{python}
+ProteinID_col_prot = "Majority protein IDs"
+ProteinID_col_pept = "Leading razor protein"
+PeptCounts_col = "Peptide counts (all)"
+```
+
+
+```{python}
+trypsin_ctrl_cols = ['LFQ intensity A549_T_Mock_1', 'LFQ intensity A549_T_Mock_2', 'LFQ intensity A549_T_Mock_3', 'LFQ intensity A549_T_Mock_4', 'LFQ intensity A549_T_Mock_5']
+trypsin_treat_cols = ['LFQ intensity A549_T_Infected_1', 'LFQ intensity A549_T_Infected_2', 'LFQ intensity A549_T_Infected_3', 'LFQ intensity A549_T_Infected_4', 'LFQ intensity A549_T_Infected_5']
+trypsin_int_cols = trypsin_ctrl_cols + trypsin_treat_cols
+double_ctrl_cols = ['LFQ intensity A549_DD_Mock_1', 'LFQ intensity A549_DD_Mock_2', 'LFQ intensity A549_DD_Mock_3', 'LFQ intensity A549_DD_Mock_4', 'LFQ intensity A549_DD_Mock_5']
+double_treat_cols = ['LFQ intensity A549_DD_Infected_1', 'LFQ intensity A549_DD_Infected_2', 'LFQ intensity A549_DD_Infected_3', 'LFQ intensity A549_DD_Infected_4', 'LFQ intensity A549_DD_Infected_5']
+double_int_cols = double_ctrl_cols + double_treat_cols
+```
+
+### MRC5
+
+```{python}
+sample = "MRC5"
+workdir = "./data/" + data_folder + "/" + sample + "/"
+result_dir = "./results/" + result_folder + "/" + sample + '/'
+Path(result_dir).mkdir(parents=True, exist_ok=True)
+```
+
+```{python}
+trypsin_pept_file = workdir + "Trypsin only/peptides.txt"
+trypsin_prot_file = workdir + "Trypsin only/proteinGroups.txt"
+double_pept_file = workdir + "Double digest/peptides.txt"
+# double_prot_file = workdir + "Double digest/proteinGroups.txt"
+```
+
+```{python}
+trypsin_pept = pd.read_csv(trypsin_pept_file, sep='\t')
+trypsin_prot = pd.read_csv(trypsin_prot_file, sep='\t')
+double_pept = pd.read_csv(double_pept_file, sep='\t')
+# double_prot = pd.read_csv(double_prot_file, sep='\t')
+```
+
+```{python}
+print(double_pept.columns.to_list())
+print(trypsin_pept.columns.to_list())
+```
+
+
+```{python}
+ProteinID_col_prot = "Majority protein IDs"
+ProteinID_col_pept = "Leading razor protein"
+PeptCounts_col = "Peptide counts (all)"
+```
+
+
+```{python}
+trypsin_ctrl_cols = ['LFQ intensity MRC5_T_Mock_1', 'LFQ intensity MRC5_T_Mock_2', 'LFQ intensity MRC5_T_Mock_3', 'LFQ intensity MRC5_T_Mock_4', 'LFQ intensity MRC5_T_Mock_5']
+trypsin_treat_cols = ['LFQ intensity MRC5_T_Infected_1', 'LFQ intensity MRC5_T_Infected_2', 'LFQ intensity MRC5_T_Infected_3', 'LFQ intensity MRC5_T_Infected_4', 'LFQ intensity MRC5_T_Infected_5']
+trypsin_int_cols = trypsin_ctrl_cols + trypsin_treat_cols
+double_ctrl_cols = ['LFQ intensity MRC5_DD_Mock_1', 'LFQ intensity MRC5_DD_Mock_2', 'LFQ intensity MRC5_DD_Mock_3', 'LFQ intensity MRC5_DD_Mock_4', 'LFQ intensity MRC5_DD_Mock_5']
+double_treat_cols = ['LFQ intensity MRC5_DD_Infected_1', 'LFQ intensity MRC5_DD_Infected_2', 'LFQ intensity MRC5_DD_Infected_3', 'LFQ intensity MRC5_DD_Infected_4', 'LFQ intensity MRC5_DD_Infected_5']
+double_int_cols = double_ctrl_cols + double_treat_cols
+```
+
+
+
+#################################################################################
+#################################################################################
+
+# The analysis pipeline
+
+## Pre-processing the data
+
+```{python}
+print(trypsin_pept.shape)
+print(double_pept.shape)
+print(trypsin_prot.shape)
+```
+
+
+```{python}
+trypsin_pept = trypsin_pept[(trypsin_pept["Reverse"].isna()) & (trypsin_pept["Potential contaminant"].isna()) & (~trypsin_pept[ProteinID_col_pept].str.contains("(?i)Contaminant")) & (~trypsin_pept[ProteinID_col_pept].str.contains("(?i)REV__")) & (~trypsin_pept[ProteinID_col_pept].str.contains("(?i)CON__"))].copy()
+
+trypsin_pept["Uniprot"] = trypsin_pept[ProteinID_col_pept].copy()
+
+trypsin_prot = trypsin_prot[(trypsin_prot["Only identified by site"].isna()) & (trypsin_prot["Reverse"].isna()) & (trypsin_prot["Potential contaminant"].isna()) & (~trypsin_prot[ProteinID_col_prot].str.contains("(?i)Contaminant")) & (~trypsin_prot[ProteinID_col_prot].str.contains("(?i)REV__")) & (~trypsin_prot[ProteinID_col_prot].str.contains("CON__"))].copy()
+
+trypsin_prot["Uniprot"] = [ids.split(';')[0] for ids in trypsin_prot[ProteinID_col_prot]]
+
+double_pept = double_pept[(double_pept["Reverse"].isna()) & (double_pept["Potential contaminant"].isna()) & (~double_pept[ProteinID_col_pept].str.contains("(?i)Contaminant")) & (~double_pept[ProteinID_col_pept].str.contains("(?i)REV__")) & (~double_pept[ProteinID_col_pept].str.contains("(?i)CON__"))].copy()
+
+double_pept["Uniprot"] = double_pept[ProteinID_col_pept].copy()
+
+# double_prot = double_prot[(double_prot["Only identified by site"].isna()) & (double_prot["Reverse"].isna()) & (double_prot["Potential contaminant"].isna()) & (~double_prot[ProteinID_col_prot].str.contains("(?i)Contaminant")) & (~double_prot[ProteinID_col_prot].str.contains("(?i)REV__")) & (~double_prot[ProteinID_col_prot].str.contains("(?i)CON__"))]
+
+# double_prot["Uniprot"] = [ids.split(';')[0] for ids in double_prot[ProteinID_col_prot]]
+```
+
+```{python}
+print(trypsin_pept.shape)
+print(double_pept.shape)
+print(trypsin_prot.shape)
+```
+
+
+```{python}
+# Filtering out the protein groups with less than 2 peptides
+trypsin_prot["Pept count"] = [int(count.split(';')[0]) for count in trypsin_prot[PeptCounts_col]]
+trypsin_prot = trypsin_prot[trypsin_prot["Pept count"] >= min_pept_count].copy()
+print(trypsin_prot.shape)
+```
+
+
+```{python}
+trypsin_pept[trypsin_int_cols] = np.log2(trypsin_pept[trypsin_int_cols].replace(0, np.nan))
+double_pept[double_int_cols] = np.log2(double_pept[double_int_cols].replace(0, np.nan))
+trypsin_prot[trypsin_int_cols] = np.log2(trypsin_prot[trypsin_int_cols].replace(0, np.nan))
+# double_prot[double_int_cols] = np.log2(double_prot[double_int_cols].replace(0, np.nan))
+```
+
+```{python}
+# Filtering by missingness
+trypsin_prot["Ctrl missingness"] = trypsin_prot[trypsin_ctrl_cols].isna().sum(axis=1)
+trypsin_prot["Treat missingness"] = trypsin_prot[trypsin_treat_cols].isna().sum(axis=1)
+trypsin_prot["Total missingness"] = trypsin_prot["Ctrl missingness"] + trypsin_prot["Treat missingness"]
+# trypsin_prot["Total missingness"] = trypsin_prot[trypsin_int_cols].isna().sum(axis=1)
+trypsin_prot = trypsin_prot[~((trypsin_prot["Ctrl missingness"] > prot_missing_thr * len(trypsin_ctrl_cols)) | (trypsin_prot["Treat missingness"] > prot_missing_thr * len(trypsin_treat_cols)))].copy()
+print(trypsin_prot.shape)
+```
+
+```{python}
+median_correction_T = trypsin_pept[trypsin_int_cols].median(axis=0, skipna=True) - trypsin_pept[trypsin_int_cols].median(axis=0, skipna=True).mean()
+median_correction_DD = double_pept[double_int_cols].median(axis=0, skipna=True) - double_pept[double_int_cols].median(axis=0, skipna=True).mean()
+median_correction_prot = trypsin_prot[trypsin_int_cols].median(axis=0, skipna=True) - trypsin_prot[trypsin_int_cols].median(axis=0, skipna=True).mean()
+```
+
+```{python}
+trypsin_pept[trypsin_int_cols] = trypsin_pept[trypsin_int_cols].sub(median_correction_T, axis=1)
+double_pept[double_int_cols] = double_pept[double_int_cols].sub(median_correction_DD, axis=1)
+trypsin_prot[trypsin_int_cols] = trypsin_prot[trypsin_int_cols].sub(median_correction_prot, axis=1)
+```
+
+```{python}
+# trypsin_pept["Uniprot"] = [[splited.split('|')[0] for splited in id.split(';')] for id in trypsin_pept["Uniprot"]]
+# trypsin_pept = trypsin_pept.explode("Uniprot")
+# double_pept["Uniprot"] = [[splited for splited in id.split(';')] for id in double_pept["Uniprot"]]
+# double_pept = double_pept.explode("Uniprot")
+# trypsin_prot["Uniprot"] = [[splited.split('|')[1] for splited in id.split(';')] for id in trypsin_prot["majority.protein.ids"]]
+# trypsin_prot = trypsin_prot.explode("Uniprot")
+```
+
+```{python}
+trypsin_pept["id"] = trypsin_pept["Uniprot"] + id_separator + trypsin_pept["Sequence"]
+double_pept["id"] = double_pept["Uniprot"] + id_separator + double_pept["Sequence"]
+trypsin_prot["id"] = trypsin_prot["Uniprot"]
+```
+
+```{python}
+trypsin_pept.index = trypsin_pept["id"]
+double_pept.index = double_pept["id"]
+trypsin_prot.index = trypsin_prot["id"]
+```
+
+## Analyzing the data
+
+```{python}
+trypsin_prot["Treat/Control"] = (trypsin_prot[trypsin_treat_cols].mean(axis=1) - trypsin_prot[trypsin_ctrl_cols].mean(axis=1)).fillna(0)
+
+trypsin_prot["Treat/Control_pval"] = sp.stats.ttest_ind(trypsin_prot[trypsin_treat_cols], trypsin_prot[trypsin_ctrl_cols], axis=1, nan_policy='omit').pvalue
+# trypsin_prot["Treat/Control_pval"] = trypsin_prot["Treat/Control_pval"].fillna(0)
+
+# trypsin_prot["Treat/Control_adj-p"] = adjusted_p_value(trypsin_prot["Treat/Control_pval"])
+trypsin_prot["Treat/Control_adj-p"] = sp.stats.false_discovery_control(trypsin_prot["Treat/Control_pval"].fillna(1))
+trypsin_prot["Treat/Control_adj-p_BY"] = sp.stats.false_discovery_control(trypsin_prot["Treat/Control_pval"].fillna(1), method = 'by')
+trypsin_prot["Treat/Control_adj-p_bonferroni"] = multitest.multipletests(trypsin_prot["Treat/Control_pval"].fillna(1), method='bonferroni')[1]
+
+trypsin_prot["Scalar"] = [trypsin_prot["Treat/Control"][i] if p < sig_thr else 0 for i,p in enumerate(trypsin_prot["Treat/Control_pval"])]
+
+scalar_dict = dict(zip(trypsin_prot.index, trypsin_prot["Scalar"]))
+print(trypsin_prot.shape)
+```
+
+```{python}
+double_pept_w = double_pept.copy()
+double_pept_w["Scalar"] = [scalar_dict.get(uniprot_id, 0) for uniprot_id in double_pept_w["Uniprot"]]
+double_pept_w[double_treat_cols] = double_pept_w[double_treat_cols].subtract(double_pept_w["Scalar"], axis=0)
+print(double_pept_w.shape)
+double_pept_w["Ctrl missingness"] = double_pept_w[double_ctrl_cols].isna().sum(axis=1)
+double_pept_w["Treat missingness"] = double_pept_w[double_treat_cols].isna().sum(axis=1)
+double_pept_w["Total missingness"] = double_pept_w["Ctrl missingness"] + double_pept_w["Treat missingness"]
+double_pept_w = double_pept_w[double_pept_w["Total missingness"] < len(double_int_cols)].copy()
+print(double_pept_w.shape)
+double_pept_w = double_pept_w[~((double_pept_w["Ctrl missingness"] > pept_missing_thr * len(double_ctrl_cols)) & (double_pept_w["Ctrl missingness"] < len(double_ctrl_cols))) & ~((double_pept_w["Treat missingness"] > pept_missing_thr * len(double_treat_cols)) & (double_pept_w["Treat missingness"] < len(double_treat_cols)))].copy()
+print(double_pept_w.shape)
+# double_pept_w[double_int_cols] = double_pept_w[double_int_cols].fillna(0)
+double_pept_w["Control"] = double_pept_w[double_ctrl_cols].mean(axis=1).fillna(0)
+double_pept_w["Treat"] = double_pept_w[double_treat_cols].mean(axis=1).fillna(0)
+double_pept_w["Treat/Control"] = double_pept_w["Treat"] - double_pept_w["Control"]
+double_pept_w["Treat/Control_pval"] = sp.stats.ttest_ind(double_pept_w[double_treat_cols], double_pept_w[double_ctrl_cols], axis=1, nan_policy='omit').pvalue
+double_pept_w["Treat/Control_pval"].fillna(0, inplace=True)
+
+# fillna0 = sp.stats.false_discovery_control(double_pept_w["Treat/Control_pval"].fillna(0))
+# fillna1 = sp.stats.false_discovery_control(double_pept_w["Treat/Control_pval"].fillna(1))
+# dropna = sp.stats.false_discovery_control(double_pept_w["Treat/Control_pval"].dropna())
+# len(fillna0[fillna0 < 0.05])
+# len(fillna1[fillna1 < 0.05])
+# len(dropna[dropna < 0.05])
+
+double_pept_w["Treat/Control_adj-p"] = sp.stats.false_discovery_control(double_pept_w["Treat/Control_pval"].fillna(0))
+double_pept_w["Treat/Control_adj-p_BY"] = sp.stats.false_discovery_control(double_pept_w["Treat/Control_pval"].fillna(0), method = 'by')
+double_pept_w["Treat/Control_adj-p_bonferroni"] = multitest.multipletests(double_pept_w["Treat/Control_pval"].fillna(0), method='bonferroni')[1]
+print(double_pept_w.shape)
+double_pept_sig = double_pept_w[double_pept_w["Treat/Control_pval"] < sig_thr].copy()
+print(double_pept_sig.shape)
+double_pept_nmrc = double_pept_w[~((double_pept_w["Ctrl missingness"] > pept_missing_thr * len(double_ctrl_cols))
+                                    | (double_pept_w["Treat missingness"] > pept_missing_thr * len(double_treat_cols)))].copy()
+print(double_pept_nmrc.shape)
+double_pept_sig_nmrc = double_pept_nmrc[(double_pept_w["Treat/Control_pval"] < sig_thr)].copy()
+print(double_pept_sig_nmrc.shape)
+```
+
+```{python}
+double_pept_sig_num_dict = double_pept_sig["Uniprot"].value_counts().to_dict()
+double_pept_sig["Sig Pept num"] = [double_pept_sig_num_dict.get(k, 0) for k in double_pept_sig["Uniprot"]]
+double_pept_w["Sig Pept num"] = [double_pept_sig_num_dict.get(k, 0) for k in double_pept_w["Uniprot"]]
+double_uniprot_ids = list(set(double_pept_w["Uniprot"]))
+double_sig_uniprot_ids = list(set(double_pept_sig["Uniprot"]))
+double_top_sig_uniprot_ids = [k for k,v in double_pept_sig_num_dict.items() if v > sig_num_thr]
+```
+
+```{python}
+double_pept_sig_nmrc_num_dict = double_pept_sig_nmrc["Uniprot"].value_counts().to_dict()
+double_pept_sig_nmrc["Sig Pept num"] = [double_pept_sig_nmrc_num_dict.get(k, 0) for k in double_pept_sig_nmrc["Uniprot"]]
+double_pept_nmrc["Sig Pept num"] = [double_pept_sig_nmrc_num_dict.get(k, 0) for k in double_pept_nmrc["Uniprot"]]
+DD_nmrc_uniprot_ids = list(set(double_pept_nmrc["Uniprot"]))
+double_sig_nmrc_uniprot_ids = list(set(double_pept_sig_nmrc["Uniprot"]))
+double_top_sig_nmrc_uniprot_ids = [k for k,v in double_pept_sig_nmrc_num_dict.items() if v > sig_num_thr]
+```
+
+```{python}
+trypsin_pept_w = trypsin_pept.copy()
+trypsin_pept_w["Scalar"] = [scalar_dict.get(uniprot_id, 0) for uniprot_id in trypsin_pept_w["Uniprot"]]
+trypsin_pept_w[trypsin_treat_cols] = trypsin_pept_w[trypsin_treat_cols].subtract(trypsin_pept_w["Scalar"], axis=0)
+print(trypsin_pept_w.shape)
+trypsin_pept_w["Ctrl missingness"] = trypsin_pept_w[trypsin_ctrl_cols].isna().sum(axis=1)
+trypsin_pept_w["Treat missingness"] = trypsin_pept_w[trypsin_treat_cols].isna().sum(axis=1)
+trypsin_pept_w["Total missingness"] = trypsin_pept_w["Ctrl missingness"] + trypsin_pept_w["Treat missingness"]
+trypsin_pept_w = trypsin_pept_w[trypsin_pept_w["Total missingness"] < len(trypsin_int_cols)].copy()
+print(trypsin_pept_w.shape)
+trypsin_pept_w = trypsin_pept_w[~((trypsin_pept_w["Ctrl missingness"] > pept_missing_thr * len(trypsin_ctrl_cols)) & (trypsin_pept_w["Ctrl missingness"] < len(trypsin_ctrl_cols))) & ~((trypsin_pept_w["Treat missingness"] > pept_missing_thr * len(trypsin_treat_cols)) & (trypsin_pept_w["Treat missingness"] < len(trypsin_treat_cols)))].copy()
+# trypsin_pept_w = trypsin_pept_w[~(trypsin_pept_w["Total missingness"] > pept_missing_thr * len(trypsin_int_cols))].copy()
+print(trypsin_pept_w.shape)
+# trypsin_pept_w[trypsin_int_cols] = trypsin_pept_w[trypsin_int_cols].fillna(0)
+trypsin_pept_w["Control"] = trypsin_pept_w[trypsin_ctrl_cols].mean(axis=1).fillna(0)
+trypsin_pept_w["Treat"] = trypsin_pept_w[trypsin_treat_cols].mean(axis=1).fillna(0)
+trypsin_pept_w["Treat/Control"] = trypsin_pept_w["Treat"] - trypsin_pept_w["Control"]
+trypsin_pept_w["Treat/Control_pval"] = sp.stats.ttest_ind(trypsin_pept_w[trypsin_treat_cols], trypsin_pept_w[trypsin_ctrl_cols], axis=1, nan_policy='omit').pvalue
+# trypsin_pept_w["Treat/Control_pval"].fillna(1, inplace=True)
+trypsin_pept_w["Treat/Control_adj-p"] = sp.stats.false_discovery_control(trypsin_pept_w["Treat/Control_pval"].fillna(1))
+trypsin_pept_w["Treat/Control_adj-p_BY"] = sp.stats.false_discovery_control(trypsin_pept_w["Treat/Control_pval"].fillna(1), method = 'by')
+trypsin_pept_w["Treat/Control_adj-p_bonferroni"] = multitest.multipletests(trypsin_pept_w["Treat/Control_pval"].fillna(1), method='bonferroni')[1]
+print(trypsin_pept_w.shape)
+trypsin_pept_sig = trypsin_pept_w[trypsin_pept_w["Treat/Control_pval"] < sig_thr].copy()
+print(trypsin_pept_sig.shape)
+trypsin_pept_nmrc = trypsin_pept_w[((trypsin_pept_w["Ctrl missingness"] < pept_missing_thr * len(trypsin_ctrl_cols))
+                                    & (trypsin_pept_w["Treat missingness"] < pept_missing_thr * len(trypsin_treat_cols)))].copy()
+print(trypsin_pept_nmrc.shape)
+trypsin_pept_sig_nmrc = trypsin_pept_w[((trypsin_pept_w["Treat/Control_pval"] < sig_thr)
+                                    & (trypsin_pept_w["Ctrl missingness"] < pept_missing_thr * len(trypsin_ctrl_cols))
+                                    & (trypsin_pept_w["Treat missingness"] < pept_missing_thr * len(trypsin_treat_cols)))].copy()
+print(trypsin_pept_sig_nmrc.shape)
+```
+
+```{python}
+trypsin_pept_sig_num_dict = trypsin_pept_sig["Uniprot"].value_counts().to_dict()
+trypsin_pept_sig["Sig Pept num"] = [trypsin_pept_sig_num_dict.get(k, 0) for k in trypsin_pept_sig["Uniprot"]]
+trypsin_pept_w["Sig Pept num"] = [trypsin_pept_sig_num_dict.get(k, 0) for k in trypsin_pept_w["Uniprot"]]
+trypsin_uniprot_ids = list(set(trypsin_pept_w["Uniprot"]))
+trypsin_sig_uniprot_ids = list(set(trypsin_pept_sig["Uniprot"]))
+trypsin_top_sig_uniprot_ids = [k for k,v in trypsin_pept_sig_num_dict.items() if v >= sig_num_thr]
+```
+
+```{python}
+trypsin_pept_sig_nmrc_num_dict = trypsin_pept_sig_nmrc["Uniprot"].value_counts().to_dict()
+trypsin_pept_sig_nmrc["Sig Pept num"] = [trypsin_pept_sig_nmrc_num_dict.get(k, 0) for k in trypsin_pept_sig_nmrc["Uniprot"]]
+trypsin_pept_nmrc["Sig Pept num"] = [trypsin_pept_sig_nmrc_num_dict.get(k, 0) for k in trypsin_pept_nmrc["Uniprot"]]
+T_nmrc_uniprot_ids = list(set(trypsin_pept_nmrc["Uniprot"]))
+trypsin_sig_nmrc_uniprot_ids = list(set(trypsin_pept_sig_nmrc["Uniprot"]))
+trypsin_top_sig_nmrc_uniprot_ids = [k for k,v in trypsin_pept_sig_nmrc_num_dict.items() if v > sig_num_thr]
+```
+
+```{python}
+prot_trypsin_cols = prot_info_cols + trypsin_int_cols
+trypsin_cols = info_cols + trypsin_int_cols
+double_cols = info_cols + double_int_cols
+```
+
+```{python}
+trypsin_prot[prot_trypsin_cols].to_csv(result_dir + sample + "_trypsin_prot_norm.tsv", sep='\t', index=None)
+trypsin_prot[prot_trypsin_cols].to_pickle(result_dir + sample + "_trypsin_prot_norm.pkl")
+double_pept_w[double_cols].to_csv(result_dir + sample + "_double_pept_norm.tsv", sep='\t', index=None)
+double_pept_w[double_cols].to_pickle(result_dir + sample + "_double_pept_norm.pkl")
+double_pept_sig[double_cols].to_csv(result_dir + sample + "_double_pept_norm_sig.tsv", sep='\t', index=None)
+double_pept_sig[double_cols].to_pickle(result_dir + sample + "_double_pept_norm_sig.pkl")
+double_pept_nmrc[double_cols].to_csv(result_dir + sample + "_double_pept_norm_nmrc.tsv", sep='\t', index=None)
+double_pept_nmrc[double_cols].to_pickle(result_dir + sample + "_double_pept_norm_nmrc.pkl")
+double_pept_sig_nmrc[double_cols].to_csv(result_dir + sample + "_double_pept_norm_sig_nmrc.tsv", sep='\t', index=None)
+double_pept_sig_nmrc[double_cols].to_pickle(result_dir + sample + "_double_pept_norm_sig_nmrc.pkl")
+trypsin_pept_w[trypsin_cols].to_csv(result_dir + sample + "_trypsin_pept_norm.tsv", sep='\t', index=None)
+trypsin_pept_w[trypsin_cols].to_pickle(result_dir + sample + "_trypsin_pept_norm.pkl")
+trypsin_pept_sig[trypsin_cols].to_csv(result_dir + sample + "_trypsin_pept_norm_sig.tsv", sep='\t', index=None)
+trypsin_pept_sig[trypsin_cols].to_pickle(result_dir + sample + "_trypsin_pept_norm_sig.pkl")
+trypsin_pept_nmrc[trypsin_cols].to_csv(result_dir + sample + "_trypsin_pept_norm_nmrc.tsv", sep='\t', index=None)
+trypsin_pept_nmrc[trypsin_cols].to_pickle(result_dir + sample + "_trypsin_pept_norm_nmrc.pkl")
+trypsin_pept_sig_nmrc[trypsin_cols].to_csv(result_dir + sample + "_trypsin_pept_norm_sig_nmrc.tsv", sep='\t', index=None)
+trypsin_pept_sig_nmrc[trypsin_cols].to_pickle(result_dir + sample + "_trypsin_pept_norm_sig_nmrc.pkl")
+trypsin_prot = pd.read_pickle(result_dir + sample + "_trypsin_prot_norm.pkl")
+double_pept_w = pd.read_pickle(result_dir + sample + "_double_pept_norm.pkl")
+double_pept_sig = pd.read_pickle(result_dir + sample + "_double_pept_norm_sig.pkl")
+double_pept_nmrc = pd.read_pickle(result_dir + sample + "_double_pept_norm_nmrc.pkl")
+double_pept_sig_nmrc = pd.read_pickle(result_dir + sample + "_double_pept_norm_sig_nmrc.pkl")
+trypsin_pept_w = pd.read_pickle(result_dir + sample + "_trypsin_pept_norm.pkl")
+trypsin_pept_sig = pd.read_pickle(result_dir + sample + "_trypsin_pept_norm_sig.pkl")
+trypsin_pept_nmrc = pd.read_pickle(result_dir + sample + "_trypsin_pept_norm_nmrc.pkl")
+trypsin_pept_sig_nmrc = pd.read_pickle(result_dir + sample + "_trypsin_pept_norm_sig_nmrc.pkl")
+```
+
+```{python}
+max_sig_num = max(double_pept_sig_num_dict.values())
+sig_dist = np.array([[i, len([k for k,v in double_pept_sig_num_dict.items() if v > i])] for i in range(max_sig_num)])
+```
+
+```{python}
+plt.bar(sig_dist[:,0], sig_dist[:,1])
+plt.yscale("log")
+plt.ylabel("# of proteins")
+plt.xlabel("Minimal number of sig pept per protein")
+plt.savefig(result_dir + sample + "_sig_pept_num_dist.pdf")
+plt.close()
+```
+
+```{python}
+from matplotlib_venn import venn2
+```
+
+```{python}
+prot_change = set(trypsin_prot[trypsin_prot["Treat/Control_pval"] < sig_thr]["Uniprot"])
+pept_change = set(double_pept_w[double_pept_w["Treat/Control_pval"] < sig_thr]["Uniprot"])
+venn2([prot_change, pept_change], ("Abundance change", "Structural change"))
+plt.savefig(result_dir + sample + "_changes_wo_filter_missingness.pdf")
+plt.show()
+plt.close()
+```
+
+```{python}
+prot_change = set(trypsin_prot[trypsin_prot["Treat/Control_pval"] < sig_thr]["Uniprot"])
+pept_change = set(double_pept_nmrc[double_pept_nmrc["Treat/Control_pval"] < sig_thr]["Uniprot"])
+venn2([prot_change, pept_change], ("Abundance change", "Structural change"))
+plt.savefig(result_dir + sample + "_changes_wt_filter_missingness.pdf")
+plt.show()
+plt.close()
+```
+
+
+#### Aligning the peptides
+
+```{python}
+pept_dir = result_dir + sample + "_pept_alignment/"
+Path(pept_dir).mkdir(parents=True, exist_ok=True)
+```
+
+```{python}
+for uniprot_id in double_top_sig_uniprot_ids:
+    # uniprot_id = double_top_sig_uniprot_ids[0]
+    if '|' in uniprot_id:
+        prot_seq_search = [seq for seq in prot_seqs if seq.id == uniprot_id]
+    else:
+        prot_seq_search = [seq for seq in prot_seqs if seq.id.split('|')[1] == uniprot_id]
+    if len(prot_seq_search) != 0:
+        prot_seq = prot_seq_search[0]
+        sequence = str(prot_seq.seq)
+        seq_len = len(sequence)
+        protein = double_pept_w[double_pept_w["Uniprot"] == uniprot_id].copy()
+        protein.reset_index(drop=True, inplace=True)
+        clean_pepts = [strip_peptide(pept, nip_off=False) for pept in protein["Sequence"].to_list()]
+        pept_start = [sequence.find(clean_pept) + 1 for clean_pept in clean_pepts]
+        pept_end = [sequence.find(clean_pept) + len(clean_pept) for clean_pept in clean_pepts]
+        protein["pept_start"] = pept_start
+        protein["pept_end"] = pept_end
+        # protein["front_lytic"] = [prot_seq[i-2] for i in pept_start]
+        # protein["end_lytic"] = [prot_seq[i-1] for i in pept_end]
+        protein["pept_type"] = ["Tryptic" if ((prot_seq[i-2] in "KR" or i == 2) and (prot_seq[j-1] in "KR" or j == seq_len)) else "Semi-tryptic" if (prot_seq[i-2] in "KR" or prot_seq[j-1] in "KR") else "Non-tryptic" for i,j in zip(pept_start, pept_end)]
+        protein = protein[protein["pept_type"] != "Non-tryptic"].copy()
+        protein.reset_index(drop=True, inplace=True)
+        protein["pept_id"] = [str(protein["pept_start"].to_list()[i]).zfill(4) + '-' + str(protein["pept_end"].to_list()[i]).zfill(4) + '@' + pept for i, pept in enumerate(protein["Sequence"].to_list())]
+        # protein
+        ceiled_fc = [3 if i > 3 else -3 if i < -3 else i for i in protein["Treat/Control"].to_list()]
+        foldchanges = np.zeros((protein.shape[0], seq_len))
+        for i in range(len(foldchanges)):
+            foldchanges[i, (protein["pept_start"].to_list()[i] - 1):(protein["pept_end"].to_list()[i] - 1)] = ceiled_fc[i]
+        fc_df = pd.DataFrame(foldchanges, index=protein["pept_id"], columns=[aa + str(i + 1) for i, aa in enumerate(list(sequence))]).sort_index().replace({0:np.nan})
+
+        plt.figure(figsize=(min(max(math.floor(seq_len/3), 5), 10), min(max(math.floor(protein.shape[0]/5), 3),6)))
+        sns.heatmap(fc_df,center=0, cmap="coolwarm")
+        plt.tight_layout()
+        plt.savefig(pept_dir + uniprot_id.replace('|','-') + "_double_pept_fc_alignments.pdf")
+        plt.close()
+```
+
+```{python}
+for uniprot_id in double_top_sig_uniprot_ids:
+    # uniprot_id = double_top_sig_uniprot_ids[0]
+    if '|' in uniprot_id:
+        prot_seq_search = [seq for seq in prot_seqs if seq.id == uniprot_id]
+    else:
+        prot_seq_search = [seq for seq in prot_seqs if seq.id.split('|')[1] == uniprot_id]
+    if len(prot_seq_search) != 0:
+        prot_seq = prot_seq_search[0]
+        sequence = str(prot_seq.seq)
+        seq_len = len(sequence)
+        protein = double_pept_sig[double_pept_sig["Uniprot"] == uniprot_id].copy()
+        protein.reset_index(drop=True, inplace=True)
+        clean_pepts = [strip_peptide(pept, nip_off=False) for pept in protein["Sequence"].to_list()]
+        pept_start = [sequence.find(clean_pept) + 1 for clean_pept in clean_pepts]
+        pept_end = [sequence.find(clean_pept) + len(clean_pept) for clean_pept in clean_pepts]
+        protein["pept_start"] = pept_start
+        protein["pept_end"] = pept_end
+        # protein["front_lytic"] = [prot_seq[i-2] for i in pept_start]
+        # protein["end_lytic"] = [prot_seq[i-1] for i in pept_end]
+        protein["pept_type"] = ["Tryptic" if ((prot_seq[i-2] in "KR" or i == 2) and (prot_seq[j-1] in "KR" or j == seq_len)) else "Semi-tryptic" if (prot_seq[i-2] in "KR" or prot_seq[j-1] in "KR") else "Non-tryptic" for i,j in zip(pept_start, pept_end)]
+        protein = protein[protein["pept_type"] != "Non-tryptic"].copy()
+        if protein.shape[0] > 0:
+            protein.reset_index(drop=True, inplace=True)
+            protein["pept_id"] = [str(protein["pept_start"].to_list()[i]).zfill(4) + '-' + str(protein["pept_end"].to_list()[i]).zfill(4) + '@' + pept for i, pept in enumerate(protein["Sequence"].to_list())]
+            # protein
+            ceiled_fc = [3 if i > 3 else -3 if i < -3 else i for i in protein["Treat/Control"].to_list()]
+            foldchanges = np.zeros((protein.shape[0], seq_len))
+            for i in range(len(foldchanges)):
+                foldchanges[i, (protein["pept_start"].to_list()[i] - 1):(protein["pept_end"].to_list()[i] - 1)] = ceiled_fc[i]
+            fc_df = pd.DataFrame(foldchanges, index=protein["pept_id"], columns=[aa + str(i + 1) for i, aa in enumerate(list(sequence))]).sort_index().replace({0:np.nan})
+
+            plt.figure(figsize=(min(max(math.floor(seq_len/3), 5), 10), min(max(math.floor(protein.shape[0]/5), 3),6)))
+            sns.heatmap(fc_df,center=0, cmap="coolwarm")
+            plt.tight_layout()
+            plt.savefig(pept_dir + uniprot_id.replace('|','-') + "_double_sig_pept_fc_alignments.pdf")
+            plt.close()
+```
+
+```{python}
+for uniprot_id in double_top_sig_uniprot_ids:
+    # uniprot_id = double_top_sig_uniprot_ids[0]
+    if '|' in uniprot_id:
+        prot_seq_search = [seq for seq in prot_seqs if seq.id == uniprot_id]
+    else:
+        prot_seq_search = [seq for seq in prot_seqs if seq.id.split('|')[1] == uniprot_id]
+    if len(prot_seq_search) != 0:
+        prot_seq = prot_seq_search[0]
+        sequence = str(prot_seq.seq)
+        seq_len = len(sequence)
+        protein = double_pept_sig[double_pept_sig["Uniprot"] == uniprot_id].copy()
+        protein.reset_index(drop=True, inplace=True)
+        clean_pepts = [strip_peptide(pept, nip_off=False) for pept in protein["Sequence"].to_list()]
+        pept_start = [sequence.find(clean_pept) + 1 for clean_pept in clean_pepts]
+        pept_end = [sequence.find(clean_pept) + len(clean_pept) for clean_pept in clean_pepts]
+        protein["pept_start"] = pept_start
+        protein["pept_end"] = pept_end
+        # protein["front_lytic"] = [prot_seq[i-2] for i in pept_start]
+        # protein["end_lytic"] = [prot_seq[i-1] for i in pept_end]
+        protein["pept_type"] = ["Tryptic" if ((prot_seq[i-2] in "KR" or i == 2) and (prot_seq[j-1] in "KR" or j == seq_len)) else "Semi-tryptic" if (prot_seq[i-2] in "KR" or prot_seq[j-1] in "KR") else "Non-tryptic" for i,j in zip(pept_start, pept_end)]
+        protein = protein[protein["pept_type"] == "Tryptic"].copy()
+        if protein.shape[0] > 0:
+            protein.reset_index(drop=True, inplace=True)
+            protein["pept_id"] = [str(protein["pept_start"].to_list()[i]).zfill(4) + '-' + str(protein["pept_end"].to_list()[i]).zfill(4) + '@' + pept for i, pept in enumerate(protein["Sequence"].to_list())]
+            # protein
+            ceiled_fc = [3 if i > 3 else -3 if i < -3 else i for i in protein["Treat/Control"].to_list()]
+            foldchanges = np.zeros((protein.shape[0], seq_len))
+            for i in range(len(foldchanges)):
+                foldchanges[i, (protein["pept_start"].to_list()[i] - 1):(protein["pept_end"].to_list()[i] - 1)] = ceiled_fc[i]
+            fc_df = pd.DataFrame(foldchanges, index=protein["pept_id"], columns=[aa + str(i + 1) for i, aa in enumerate(list(sequence))]).sort_index().replace({0:np.nan})
+
+            plt.figure(figsize=(min(max(math.floor(seq_len/3), 5), 10), min(max(math.floor(protein.shape[0]/5), 3),6)))
+            sns.heatmap(fc_df,center=0, cmap="coolwarm")
+            plt.tight_layout()
+            plt.savefig(pept_dir + uniprot_id.replace('|','-') + "_double_sig_trypsin_pept_fc_alignments.pdf")
+            plt.close()
+```
+
+```{python}
+for uniprot_id in double_top_sig_uniprot_ids:
+    # uniprot_id = double_top_sig_uniprot_ids[0]
+    if '|' in uniprot_id:
+        prot_seq_search = [seq for seq in prot_seqs if seq.id == uniprot_id]
+    else:
+        prot_seq_search = [seq for seq in prot_seqs if seq.id.split('|')[1] == uniprot_id]
+    if len(prot_seq_search) != 0:
+        prot_seq = prot_seq_search[0]
+        sequence = str(prot_seq.seq)
+        seq_len = len(sequence)
+        protein = double_pept_sig[double_pept_sig["Uniprot"] == uniprot_id].copy()
+        protein.reset_index(drop=True, inplace=True)
+        clean_pepts = [strip_peptide(pept, nip_off=False) for pept in protein["Sequence"].to_list()]
+        pept_start = [sequence.find(clean_pept) + 1 for clean_pept in clean_pepts]
+        pept_end = [sequence.find(clean_pept) + len(clean_pept) for clean_pept in clean_pepts]
+        protein["pept_start"] = pept_start
+        protein["pept_end"] = pept_end
+        # protein["front_lytic"] = [prot_seq[i-2] for i in pept_start]
+        # protein["end_lytic"] = [prot_seq[i-1] for i in pept_end]
+        protein["pept_type"] = ["Tryptic" if ((prot_seq[i-2] in "KR" or i == 2) and (prot_seq[j-1] in "KR" or j == seq_len)) else "Semi-tryptic" if (prot_seq[i-2] in "KR" or prot_seq[j-1] in "KR") else "Non-tryptic" for i,j in zip(pept_start, pept_end)]
+        protein = protein[protein["pept_type"] == "Semi-tryptic"].copy()
+        if protein.shape[0] > 0:
+            protein.reset_index(drop=True, inplace=True)
+            protein["pept_id"] = [str(protein["pept_start"].to_list()[i]).zfill(4) + '-' + str(protein["pept_end"].to_list()[i]).zfill(4) + '@' + pept for i, pept in enumerate(protein["Sequence"].to_list())]
+            # protein
+            ceiled_fc = [3 if i > 3 else -3 if i < -3 else i for i in protein["Treat/Control"].to_list()]
+            foldchanges = np.zeros((protein.shape[0], seq_len))
+            for i in range(len(foldchanges)):
+                foldchanges[i, (protein["pept_start"].to_list()[i] - 1):(protein["pept_end"].to_list()[i] - 1)] = ceiled_fc[i]
+            fc_df = pd.DataFrame(foldchanges, index=protein["pept_id"], columns=[aa + str(i + 1) for i, aa in enumerate(list(sequence))]).sort_index().replace({0:np.nan})
+
+            plt.figure(figsize=(min(max(math.floor(seq_len/3), 5), 10), min(max(math.floor(protein.shape[0]/5), 3),6)))
+            sns.heatmap(fc_df,center=0, cmap="coolwarm")
+            plt.tight_layout()
+            plt.savefig(pept_dir + uniprot_id.replace('|','-') + "_double_sig_semi_pept_fc_alignments.pdf")
+            plt.close()
+```
+
+#### Quantifying the peptide region
+
+```{python}
+color_levels = 20
+both_pal_vals = sns.color_palette("Greens", color_levels)
+up_pal_vals = sns.color_palette("Reds", color_levels)
+down_pal_vals = sns.color_palette("Blues", color_levels)
+insig_pal_vals = sns.color_palette("Greys", color_levels)
+```
+
+```{python}
+pept_dir = result_dir + sample + "_pept_quant/"
+Path(pept_dir).mkdir(parents=True, exist_ok=True)
+```
+
+
+##### Double sample
+
+```{python}
+# plotting_ids = []
+plotting_ids = double_sig_uniprot_ids
+intensity_cols = double_int_cols
+all_tryptic_regions = []
+all_semi_regions = []
+any_tryptic = []
+any_tryptic_sig = []
+pept_df = double_pept_nmrc.copy()
+all_uniprot_ids = list(set(pept_df["Uniprot"]))
+for uniprot_id in all_uniprot_ids:
+    # uniprot_id = double_top_sig_uniprot_ids[0]
+    if '|' in uniprot_id:
+        prot_seq_search = [seq for seq in prot_seqs if seq.id == uniprot_id]
+    else:
+        prot_seq_search = [seq for seq in prot_seqs if seq.id.split('|')[1] == uniprot_id]
+    if len(prot_seq_search) != 0:
+        prot_seq = prot_seq_search[0]
+        sequence = str(prot_seq.seq)
+        seq_len = len(sequence)
+        protein = pept_df[pept_df["Uniprot"] == uniprot_id].copy()
+        protein.reset_index(drop=True, inplace=True)
+        clean_pepts = [strip_peptide(pept, nip_off=False) for pept in protein["Sequence"].to_list()]
+        protein["clean_pepts"] = clean_pepts
+        protein["Protein description"] = prot_seq.description
+        protein["Protein length"] = seq_len
+        pept_start = [sequence.find(clean_pept) + 1 for clean_pept in clean_pepts]
+        pept_end = [sequence.find(clean_pept) + len(clean_pept) for clean_pept in clean_pepts]
+        protein["pept_start"] = pept_start
+        protein["pept_end"] = pept_end
+        # protein["front_lytic"] = [prot_seq[i-2] for i in pept_start]
+        # protein["end_lytic"] = [prot_seq[i-1] for i in pept_end]
+        protein["pept_type"] = ["Tryptic" if ((prot_seq[i-2] in "KR" or i == 2) and (prot_seq[j-1] in "KR" or j == seq_len)) else "Semi-tryptic" if (prot_seq[i-2] in "KR" or prot_seq[j-1] in "KR") else "Non-tryptic" for i,j in zip(pept_start, pept_end)]
+        protein["Tryp Pept num"] = protein[(protein["pept_type"] == "Tryptic")].copy().shape[0]
+        protein["Semi Pept num"] = protein[(protein["pept_type"] == "Semi-tryptic")].copy().shape[0]
+        sig_semi_pepts = protein[(protein["pept_type"] == "Semi-tryptic") & (protein["Treat/Control_pval"] < sig_thr)].copy()
+        protein["Sig Semi Pept num"] = sig_semi_pepts.shape[0]
+        protein["Sum FC of Sig Semi Pept"] = sig_semi_pepts["Treat/Control"].abs().sum()
+        protein["pept_id"] = [str(protein["pept_start"].to_list()[i]).zfill(4) + '-' + str(protein["pept_end"].to_list()[i]).zfill(4) + '@' + pept for i, pept in enumerate(protein["Sequence"].to_list())]
+        protein.index = protein["pept_id"]
+        tryptic = protein[protein["pept_type"] == "Tryptic"].copy().sort_index()
+        semitryptic = protein[protein["pept_type"] == "Semi-tryptic"].copy().sort_index()
+        tryptic["lytic_group"] = 0
+        semitryptic["lytic_group"] = 0
+        for i, idx in enumerate(tryptic.index.to_list()):
+            tryptic.loc[idx, "lytic_group"] = i+1
+            semitryptic.loc[((semitryptic["pept_start"] == tryptic.loc[idx, "pept_start"]) | (semitryptic["pept_end"] == tryptic.loc[idx, "pept_end"])), "lytic_group"] = i+1
+        protein_any_tryptic = pd.concat([tryptic, semitryptic]).copy()
+        protein_any_tryptic_sig = protein_any_tryptic[protein_any_tryptic["Treat/Control_pval"] < sig_thr].copy()
+        if uniprot_id in plotting_ids:
+            fc_diff_names = [aa + str(i+1) for i, aa in enumerate(list(sequence))]
+            tryptic_bar_code = [(1.0,1.0,1.0)] * len(fc_diff_names)
+            semi_bar_code = [(1.0,1.0,1.0)] * len(fc_diff_names)
+
+            tryptic_res = tryptic.copy()
+            if tryptic_res.shape[0] > 0:
+                tryptic_res["residue"] = [[res + str(sequence.find(clean_pept)+i+1) for i, res in enumerate(clean_pept)] for clean_pept in tryptic_res["clean_pepts"]]
+                tryptic_res = tryptic_res.explode("residue")
+                tryptic_res.index = tryptic_res["residue"]
+                tryptic_res[intensity_cols] = 2 ** (tryptic_res[intensity_cols])
+                tryptic_res_grouped = tryptic_res[intensity_cols].groupby("residue").sum(min_count=1)
+                tryptic_res_grouped = np.log2(tryptic_res_grouped)
+                tryptic_res_grouped["Uniprot"] = uniprot_id
+                tryptic_res_grouped["Site"] = tryptic_res_grouped.index.to_list()
+                tryptic_res_grouped["Pos"] = [int(re.sub(r"\D", "", site)) for site in tryptic_res_grouped["Site"]]
+                tryptic_res_grouped["Control"] = tryptic_res_grouped[double_ctrl_cols].mean(axis=1).fillna(0)
+                tryptic_res_grouped["Treat"] = tryptic_res_grouped[double_treat_cols].mean(axis=1).fillna(0)
+                tryptic_res_grouped["Treat/Control"] = tryptic_res_grouped["Treat"] - tryptic_res_grouped["Control"]
+                tryptic_res_grouped["Treat/Control_pval"] = sp.stats.ttest_ind(tryptic_res_grouped[double_treat_cols], tryptic_res_grouped[double_ctrl_cols], axis=1, nan_policy='omit').pvalue
+                tryptic_res_grouped["Treat/Control_pval"].fillna(0, inplace=True)
+                tryptic_res_grouped["Treat/Control_adj-p"] = sp.stats.false_discovery_control(tryptic_res_grouped["Treat/Control_pval"].fillna(0))
+                tryptic_res_grouped["Treat/Control_adj-p_BY"] = sp.stats.false_discovery_control(tryptic_res_grouped["Treat/Control_pval"].fillna(0), method = 'by')
+                tryptic_res_grouped["Treat/Control_adj-p_bonferroni"] = multitest.multipletests(tryptic_res_grouped["Treat/Control_pval"].fillna(0), method='bonferroni')[1]
+                # tryptic_res_grouped_sig = tryptic_res_grouped[tryptic_res_grouped["Treat/Control_pval"] < sig_thr].copy()
+                tryptic_res_grouped.sort_values(by=["Pos"], inplace=True)
+                tryptic_res_grouped_copy = tryptic_res_grouped[tryptic_res_grouped.columns.to_list()[-7:] + tryptic_res_grouped.columns.to_list()[:-7]].copy()
+                tryptic_res_grouped_copy.index = uniprot_id + '@' + tryptic_res_grouped_copy["Site"]
+                all_tryptic_regions.append(tryptic_res_grouped_copy)
+
+                tryptic_fc_diff = tryptic_res_grouped[["Site", "Pos", "Treat/Control", "Treat/Control_pval"]].copy()
+                tryptic_fc_diff.index = tryptic_fc_diff["Site"]
+                tryptic_fc_diff_max = tryptic_fc_diff["Treat/Control"].abs().max()
+                for i in range(tryptic_fc_diff.shape[0]):
+                    if tryptic_fc_diff.iloc[i, 2] > 0:
+                        if tryptic_fc_diff.iloc[i, 3] < 0.05:
+                            tryptic_bar_code[tryptic_fc_diff.iloc[i, 1] - 1] = up_pal_vals[np.ceil(min(abs(tryptic_fc_diff.iloc[i, 2]),3.322)/tryptic_fc_diff_max * color_levels).astype("int") - 1]
+                        else:
+                            tryptic_bar_code[tryptic_fc_diff.iloc[i, 1] - 1] = insig_pal_vals[np.ceil(min(abs(tryptic_fc_diff.iloc[i, 2]),3.322)/tryptic_fc_diff_max * color_levels).astype("int") - 1]
+                    else:
+                        if tryptic_fc_diff.iloc[i, 3] < 0.05:
+                            tryptic_bar_code[tryptic_fc_diff.iloc[i, 1] - 1] = down_pal_vals[np.ceil(min(abs(tryptic_fc_diff.iloc[i, 2]),3.322)/tryptic_fc_diff_max * color_levels).astype("int") - 1]
+                        else:
+                            tryptic_bar_code[tryptic_fc_diff.iloc[i, 1] - 1] = insig_pal_vals[np.ceil(min(abs(tryptic_fc_diff.iloc[i, 2]),3.322)/tryptic_fc_diff_max * color_levels).astype("int") - 1]
+
+            semi_res = semitryptic.copy()
+            if semi_res.shape[0] > 0:
+                semi_res["residue"] = [[res + str(sequence.find(clean_pept)+i+1) for i, res in enumerate(clean_pept)] for clean_pept in semi_res["clean_pepts"]]
+                semi_res = semi_res.explode("residue")
+                semi_res.index = semi_res["residue"]
+                semi_res[intensity_cols] = 2 ** (semi_res[intensity_cols])
+                semi_res_grouped = semi_res[intensity_cols].groupby("residue").sum(min_count=1)
+                semi_res_grouped = np.log2(semi_res_grouped)
+                semi_res_grouped["Uniprot"] = uniprot_id
+                semi_res_grouped["Site"] = semi_res_grouped.index.to_list()
+                semi_res_grouped["Pos"] = [int(re.sub(r"\D", "", site)) for site in semi_res_grouped["Site"]]
+                semi_res_grouped["Control"] = semi_res_grouped[double_ctrl_cols].mean(axis=1).fillna(0)
+                semi_res_grouped["Treat"] = semi_res_grouped[double_treat_cols].mean(axis=1).fillna(0)
+                semi_res_grouped["Treat/Control"] = semi_res_grouped["Treat"] - semi_res_grouped["Control"]
+                semi_res_grouped["Treat/Control_pval"] = sp.stats.ttest_ind(semi_res_grouped[double_treat_cols], semi_res_grouped[double_ctrl_cols], axis=1, nan_policy='omit').pvalue
+                semi_res_grouped["Treat/Control_pval"].fillna(0, inplace=True)
+                semi_res_grouped["Treat/Control_adj-p"] = sp.stats.false_discovery_control(semi_res_grouped["Treat/Control_pval"].fillna(0))
+                semi_res_grouped["Treat/Control_adj-p_BY"] = sp.stats.false_discovery_control(semi_res_grouped["Treat/Control_pval"].fillna(0), method = 'by')
+                semi_res_grouped["Treat/Control_adj-p_bonferroni"] = multitest.multipletests(semi_res_grouped["Treat/Control_pval"].fillna(0), method='bonferroni')[1]
+                # semi_res_grouped_sig = semi_res_grouped[semi_res_grouped["Treat/Control_pval"] < sig_thr].copy()
+                semi_res_grouped.sort_values(by=["Pos"], inplace=True)
+                semi_res_grouped_copy = semi_res_grouped[semi_res_grouped.columns.to_list()[-7:] + semi_res_grouped.columns.to_list()[:-7]].copy()
+                semi_res_grouped_copy.index = uniprot_id + '@' + semi_res_grouped_copy["Site"]
+                all_semi_regions.append(semi_res_grouped_copy)
+
+                semi_fc_diff = semi_res_grouped[["Site", "Pos", "Treat/Control", "Treat/Control_pval"]].copy()
+                semi_fc_diff.index = semi_fc_diff["Site"]
+                semi_fc_diff_max = semi_fc_diff["Treat/Control"].abs().max()
+                for i in range(semi_fc_diff.shape[0]):
+                    if semi_fc_diff.iloc[i, 2] > 0:
+                        if semi_fc_diff.iloc[i, 3] < 0.05:
+                            semi_bar_code[semi_fc_diff.iloc[i, 1] - 1] = up_pal_vals[np.ceil(min(abs(semi_fc_diff.iloc[i, 2]),3.322)/semi_fc_diff_max * color_levels).astype("int") - 1]
+                        else:
+                            semi_bar_code[semi_fc_diff.iloc[i, 1] - 1] = insig_pal_vals[np.ceil(min(abs(semi_fc_diff.iloc[i, 2]),3.322)/semi_fc_diff_max * color_levels).astype("int") - 1]
+                    else:
+                        if semi_fc_diff.iloc[i, 3] < 0.05:
+                            semi_bar_code[semi_fc_diff.iloc[i, 1] - 1] = down_pal_vals[np.ceil(min(abs(semi_fc_diff.iloc[i, 2]),3.322)/semi_fc_diff_max * color_levels).astype("int") - 1]
+                        else:
+                            semi_bar_code[semi_fc_diff.iloc[i, 1] - 1] = insig_pal_vals[np.ceil(min(abs(semi_fc_diff.iloc[i, 2]),3.322)/semi_fc_diff_max * color_levels).astype("int") - 1]
+
+            fig = plt.figure(figsize=(10,5))
+            ax = fig.add_subplot(2, 1, 1)
+            plot_barcode(tryptic_bar_code, barcode_name = uniprot_id + "_tryptic", ticklabel=[fc_diff_names[j] for j in np.arange(0,seq_len,np.ceil(seq_len/10).astype("int"))], ax=ax)
+            ax = fig.add_subplot(2, 1, 2)
+            plot_barcode(semi_bar_code, barcode_name = uniprot_id + "_semi-tryptic", ticklabel=[fc_diff_names[j] for j in np.arange(0,seq_len,np.ceil(seq_len/10).astype("int"))], ax=ax)
+            plt.tight_layout()
+            plt.savefig(pept_dir + uniprot_id.replace('|','-') + "_residue_any_tryptic_barcode.pdf")
+            plt.close()
+
+
+    any_tryptic.append(protein_any_tryptic)
+    any_tryptic_sig.append(protein_any_tryptic_sig)
+```
+
+```{python}
+new_info_cols = info_cols + ["Protein description", "Protein length", "Tryp Pept num", "Semi Pept num", "Sig Semi Pept num", "Sum FC of Sig Semi Pept", "pept_start", "pept_end", "pept_type", "lytic_group"]
+new_double_cols = new_info_cols + double_int_cols
+```
+
+
+```{python}
+any_tryptic_df = pd.concat(any_tryptic)
+any_tryptic_df[new_double_cols].to_csv(result_dir + sample + "_double_pept_annot.tsv", sep='\t', index=None)
+any_tryptic_df[new_double_cols].to_pickle(result_dir + sample + "_double_pept_annot.pkl")
+# any_tryptic_sig_df = pd.concat(any_tryptic_sig)
+# any_tryptic_sig_df[new_double_cols].to_csv(result_dir + sample + "_double_pept_sig_annot.tsv", sep='\t', index=None)
+# any_tryptic_sig_df[new_double_cols].to_pickle(result_dir + sample + "_double_pept_sig_annot.pkl")
+```
+
+```{python}
+proteome_tryptic_regions = pd.concat(all_tryptic_regions)
+proteome_tryptic_regions.to_csv(result_dir + sample + "_proteome_tryptic_region.tsv", sep='\t')
+proteome_tryptic_regions.to_pickle(result_dir + sample + "_proteome_tryptic_region.pkl")
+```
+
+```{python}
+proteome_semi_regions = pd.concat(all_semi_regions)
+proteome_semi_regions.to_csv(result_dir + sample + "_proteome_semi_regions.tsv", sep='\t')
+proteome_semi_regions.to_pickle(result_dir + sample + "_proteome_semi_regions.pkl")
+```
+
+#### Quantifying the significantlly changed peptide region
+
+```{python}
+color_levels = 20
+both_pal_vals = sns.color_palette("Greens", color_levels)
+up_pal_vals = sns.color_palette("Reds", color_levels)
+down_pal_vals = sns.color_palette("Blues", color_levels)
+insig_pal_vals = sns.color_palette("Greys", color_levels)
+```
+
+```{python}
+pept_dir = result_dir + sample + "_sig_pept_quant/"
+Path(pept_dir).mkdir(parents=True, exist_ok=True)
+```
+
+
+##### Double sample
+
+```{python}
+# plotting_ids = []
+plotting_ids = double_sig_uniprot_ids
+intensity_cols = double_int_cols
+all_tryptic_regions = []
+all_semi_regions = []
+any_tryptic = []
+any_tryptic_sig = []
+pept_df = double_pept_sig_nmrc.copy()
+all_uniprot_ids = list(set(pept_df["Uniprot"]))
+for uniprot_id in all_uniprot_ids:
+    # uniprot_id = double_top_sig_uniprot_ids[0]
+    if '|' in uniprot_id:
+        prot_seq_search = [seq for seq in prot_seqs if seq.id == uniprot_id]
+    else:
+        prot_seq_search = [seq for seq in prot_seqs if seq.id.split('|')[1] == uniprot_id]
+    if len(prot_seq_search) != 0:
+        prot_seq = prot_seq_search[0]
+        sequence = str(prot_seq.seq)
+        seq_len = len(sequence)
+        protein = pept_df[pept_df["Uniprot"] == uniprot_id].copy()
+        protein.reset_index(drop=True, inplace=True)
+        clean_pepts = [strip_peptide(pept, nip_off=False) for pept in protein["Sequence"].to_list()]
+        protein["clean_pepts"] = clean_pepts
+        protein["Protein description"] = prot_seq.description
+        protein["Protein length"] = seq_len
+        pept_start = [sequence.find(clean_pept) + 1 for clean_pept in clean_pepts]
+        pept_end = [sequence.find(clean_pept) + len(clean_pept) for clean_pept in clean_pepts]
+        protein["pept_start"] = pept_start
+        protein["pept_end"] = pept_end
+        # protein["front_lytic"] = [prot_seq[i-2] for i in pept_start]
+        # protein["end_lytic"] = [prot_seq[i-1] for i in pept_end]
+        protein["pept_type"] = ["Tryptic" if ((prot_seq[i-2] in "KR" or i == 2) and (prot_seq[j-1] in "KR" or j == seq_len)) else "Semi-tryptic" if (prot_seq[i-2] in "KR" or prot_seq[j-1] in "KR") else "Non-tryptic" for i,j in zip(pept_start, pept_end)]
+        protein["Tryp Pept num"] = protein[(protein["pept_type"] == "Tryptic")].copy().shape[0]
+        protein["Semi Pept num"] = protein[(protein["pept_type"] == "Semi-tryptic")].copy().shape[0]
+        sig_semi_pepts = protein[(protein["pept_type"] == "Semi-tryptic") & (protein["Treat/Control_pval"] < sig_thr)].copy()
+        protein["Sig Semi Pept num"] = sig_semi_pepts.shape[0]
+        protein["Sum FC of Sig Semi Pept"] = sig_semi_pepts["Treat/Control"].abs().sum()
+        protein["pept_id"] = [str(protein["pept_start"].to_list()[i]).zfill(4) + '-' + str(protein["pept_end"].to_list()[i]).zfill(4) + '@' + pept for i, pept in enumerate(protein["Sequence"].to_list())]
+        protein.index = protein["pept_id"]
+        tryptic = protein[protein["pept_type"] == "Tryptic"].copy().sort_index()
+        semitryptic = protein[protein["pept_type"] == "Semi-tryptic"].copy().sort_index()
+        tryptic["lytic_group"] = 0
+        semitryptic["lytic_group"] = 0
+        for i, idx in enumerate(tryptic.index.to_list()):
+            tryptic.loc[idx, "lytic_group"] = i+1
+            semitryptic.loc[((semitryptic["pept_start"] == tryptic.loc[idx, "pept_start"]) | (semitryptic["pept_end"] == tryptic.loc[idx, "pept_end"])), "lytic_group"] = i+1
+        protein_any_tryptic = pd.concat([tryptic, semitryptic]).copy()
+        protein_any_tryptic_sig = protein_any_tryptic[protein_any_tryptic["Treat/Control_pval"] < sig_thr].copy()
+        if uniprot_id in plotting_ids:
+            fc_diff_names = [aa + str(i+1) for i, aa in enumerate(list(sequence))]
+            tryptic_bar_code = [(1.0,1.0,1.0)] * len(fc_diff_names)
+            semi_bar_code = [(1.0,1.0,1.0)] * len(fc_diff_names)
+
+            tryptic_res = tryptic.copy()
+            if tryptic_res.shape[0] > 0:
+                tryptic_res["residue"] = [[res + str(sequence.find(clean_pept)+i+1) for i, res in enumerate(clean_pept)] for clean_pept in tryptic_res["clean_pepts"]]
+                tryptic_res = tryptic_res.explode("residue")
+                tryptic_res.index = tryptic_res["residue"]
+                tryptic_res[intensity_cols] = 2 ** (tryptic_res[intensity_cols])
+                tryptic_res_grouped = tryptic_res[intensity_cols].groupby("residue").sum(min_count=1)
+                tryptic_res_grouped = np.log2(tryptic_res_grouped)
+                tryptic_res_grouped["Uniprot"] = uniprot_id
+                tryptic_res_grouped["Site"] = tryptic_res_grouped.index.to_list()
+                tryptic_res_grouped["Pos"] = [int(re.sub(r"\D", "", site)) for site in tryptic_res_grouped["Site"]]
+                tryptic_res_grouped["Control"] = tryptic_res_grouped[double_ctrl_cols].mean(axis=1).fillna(0)
+                tryptic_res_grouped["Treat"] = tryptic_res_grouped[double_treat_cols].mean(axis=1).fillna(0)
+                tryptic_res_grouped["Treat/Control"] = tryptic_res_grouped["Treat"] - tryptic_res_grouped["Control"]
+                tryptic_res_grouped["Treat/Control_pval"] = sp.stats.ttest_ind(tryptic_res_grouped[double_treat_cols], tryptic_res_grouped[double_ctrl_cols], axis=1, nan_policy='omit').pvalue
+                tryptic_res_grouped["Treat/Control_pval"].fillna(0, inplace=True)
+                tryptic_res_grouped["Treat/Control_adj-p"] = sp.stats.false_discovery_control(tryptic_res_grouped["Treat/Control_pval"].fillna(0))
+                tryptic_res_grouped["Treat/Control_adj-p_BY"] = sp.stats.false_discovery_control(tryptic_res_grouped["Treat/Control_pval"].fillna(0), method = 'by')
+                tryptic_res_grouped["Treat/Control_adj-p_bonferroni"] = multitest.multipletests(tryptic_res_grouped["Treat/Control_pval"].fillna(0), method='bonferroni')[1]
+                # tryptic_res_grouped_sig = tryptic_res_grouped[tryptic_res_grouped["Treat/Control_pval"] < sig_thr].copy()
+                tryptic_res_grouped.sort_values(by=["Pos"], inplace=True)
+                tryptic_res_grouped_copy = tryptic_res_grouped[tryptic_res_grouped.columns.to_list()[-7:] + tryptic_res_grouped.columns.to_list()[:-7]].copy()
+                tryptic_res_grouped_copy.index = uniprot_id + '@' + tryptic_res_grouped_copy["Site"]
+                all_tryptic_regions.append(tryptic_res_grouped_copy)
+
+                tryptic_fc_diff = tryptic_res_grouped[["Site", "Pos", "Treat/Control", "Treat/Control_pval"]].copy()
+                tryptic_fc_diff.index = tryptic_fc_diff["Site"]
+                tryptic_fc_diff_max = tryptic_fc_diff["Treat/Control"].abs().max()
+                for i in range(tryptic_fc_diff.shape[0]):
+                    if tryptic_fc_diff.iloc[i, 2] > 0:
+                        if tryptic_fc_diff.iloc[i, 3] < 0.05:
+                            tryptic_bar_code[tryptic_fc_diff.iloc[i, 1] - 1] = up_pal_vals[np.ceil(min(abs(tryptic_fc_diff.iloc[i, 2]),3.322)/tryptic_fc_diff_max * color_levels).astype("int") - 1]
+                        else:
+                            tryptic_bar_code[tryptic_fc_diff.iloc[i, 1] - 1] = insig_pal_vals[np.ceil(min(abs(tryptic_fc_diff.iloc[i, 2]),3.322)/tryptic_fc_diff_max * color_levels).astype("int") - 1]
+                    else:
+                        if tryptic_fc_diff.iloc[i, 3] < 0.05:
+                            tryptic_bar_code[tryptic_fc_diff.iloc[i, 1] - 1] = down_pal_vals[np.ceil(min(abs(tryptic_fc_diff.iloc[i, 2]),3.322)/tryptic_fc_diff_max * color_levels).astype("int") - 1]
+                        else:
+                            tryptic_bar_code[tryptic_fc_diff.iloc[i, 1] - 1] = insig_pal_vals[np.ceil(min(abs(tryptic_fc_diff.iloc[i, 2]),3.322)/tryptic_fc_diff_max * color_levels).astype("int") - 1]
+
+            semi_res = semitryptic.copy()
+            if semi_res.shape[0] > 0:
+                semi_res["residue"] = [[res + str(sequence.find(clean_pept)+i+1) for i, res in enumerate(clean_pept)] for clean_pept in semi_res["clean_pepts"]]
+                semi_res = semi_res.explode("residue")
+                semi_res.index = semi_res["residue"]
+                semi_res[intensity_cols] = 2 ** (semi_res[intensity_cols])
+                semi_res_grouped = semi_res[intensity_cols].groupby("residue").sum(min_count=1)
+                semi_res_grouped = np.log2(semi_res_grouped)
+                semi_res_grouped["Uniprot"] = uniprot_id
+                semi_res_grouped["Site"] = semi_res_grouped.index.to_list()
+                semi_res_grouped["Pos"] = [int(re.sub(r"\D", "", site)) for site in semi_res_grouped["Site"]]
+                semi_res_grouped["Control"] = semi_res_grouped[double_ctrl_cols].mean(axis=1).fillna(0)
+                semi_res_grouped["Treat"] = semi_res_grouped[double_treat_cols].mean(axis=1).fillna(0)
+                semi_res_grouped["Treat/Control"] = semi_res_grouped["Treat"] - semi_res_grouped["Control"]
+                semi_res_grouped["Treat/Control_pval"] = sp.stats.ttest_ind(semi_res_grouped[double_treat_cols], semi_res_grouped[double_ctrl_cols], axis=1, nan_policy='omit').pvalue
+                semi_res_grouped["Treat/Control_pval"].fillna(0, inplace=True)
+                semi_res_grouped["Treat/Control_adj-p"] = sp.stats.false_discovery_control(semi_res_grouped["Treat/Control_pval"].fillna(0))
+                semi_res_grouped["Treat/Control_adj-p_BY"] = sp.stats.false_discovery_control(semi_res_grouped["Treat/Control_pval"].fillna(0), method = 'by')
+                semi_res_grouped["Treat/Control_adj-p_bonferroni"] = multitest.multipletests(semi_res_grouped["Treat/Control_pval"].fillna(0), method='bonferroni')[1]
+                # semi_res_grouped_sig = semi_res_grouped[semi_res_grouped["Treat/Control_pval"] < sig_thr].copy()
+                semi_res_grouped.sort_values(by=["Pos"], inplace=True)
+                semi_res_grouped_copy = semi_res_grouped[semi_res_grouped.columns.to_list()[-7:] + semi_res_grouped.columns.to_list()[:-7]].copy()
+                semi_res_grouped_copy.index = uniprot_id + '@' + semi_res_grouped_copy["Site"]
+                all_semi_regions.append(semi_res_grouped_copy)
+
+                semi_fc_diff = semi_res_grouped[["Site", "Pos", "Treat/Control", "Treat/Control_pval"]].copy()
+                semi_fc_diff.index = semi_fc_diff["Site"]
+                semi_fc_diff_max = semi_fc_diff["Treat/Control"].abs().max()
+                for i in range(semi_fc_diff.shape[0]):
+                    if semi_fc_diff.iloc[i, 2] > 0:
+                        if semi_fc_diff.iloc[i, 3] < 0.05:
+                            semi_bar_code[semi_fc_diff.iloc[i, 1] - 1] = up_pal_vals[np.ceil(min(abs(semi_fc_diff.iloc[i, 2]),3.322)/semi_fc_diff_max * color_levels).astype("int") - 1]
+                        else:
+                            semi_bar_code[semi_fc_diff.iloc[i, 1] - 1] = insig_pal_vals[np.ceil(min(abs(semi_fc_diff.iloc[i, 2]),3.322)/semi_fc_diff_max * color_levels).astype("int") - 1]
+                    else:
+                        if semi_fc_diff.iloc[i, 3] < 0.05:
+                            semi_bar_code[semi_fc_diff.iloc[i, 1] - 1] = down_pal_vals[np.ceil(min(abs(semi_fc_diff.iloc[i, 2]),3.322)/semi_fc_diff_max * color_levels).astype("int") - 1]
+                        else:
+                            semi_bar_code[semi_fc_diff.iloc[i, 1] - 1] = insig_pal_vals[np.ceil(min(abs(semi_fc_diff.iloc[i, 2]),3.322)/semi_fc_diff_max * color_levels).astype("int") - 1]
+
+            fig = plt.figure(figsize=(10,5))
+            ax = fig.add_subplot(2, 1, 1)
+            plot_barcode(tryptic_bar_code, barcode_name = uniprot_id + "_tryptic", ticklabel=[fc_diff_names[j] for j in np.arange(0,seq_len,np.ceil(seq_len/10).astype("int"))], ax=ax)
+            ax = fig.add_subplot(2, 1, 2)
+            plot_barcode(semi_bar_code, barcode_name = uniprot_id + "_semi-tryptic", ticklabel=[fc_diff_names[j] for j in np.arange(0,seq_len,np.ceil(seq_len/10).astype("int"))], ax=ax)
+            plt.tight_layout()
+            plt.savefig(pept_dir + uniprot_id.replace('|','-') + "_residue_any_tryptic_barcode.pdf")
+            plt.close()
+
+
+    any_tryptic.append(protein_any_tryptic)
+    any_tryptic_sig.append(protein_any_tryptic_sig)
+```
+
+```{python}
+new_info_cols = info_cols + ["Protein description", "Protein length", "Tryp Pept num", "Semi Pept num", "Sig Semi Pept num", "Sum FC of Sig Semi Pept", "pept_start", "pept_end", "pept_type", "lytic_group"]
+new_double_cols = new_info_cols + double_int_cols
+```
+
+
+```{python}
+# any_tryptic_df = pd.concat(any_tryptic)
+# any_tryptic_df[new_double_cols].to_csv(result_dir + sample + "_double_pept_annot.tsv", sep='\t', index=None)
+# any_tryptic_df[new_double_cols].to_pickle(result_dir + sample + "_double_pept_annot.pkl")
+any_tryptic_sig_df = pd.concat(any_tryptic_sig)
+any_tryptic_sig_df[new_double_cols].to_csv(result_dir + sample + "_double_pept_sig_annot.tsv", sep='\t', index=None)
+any_tryptic_sig_df[new_double_cols].to_pickle(result_dir + sample + "_double_pept_sig_annot.pkl")
+```
+
+```{python}
+proteome_tryptic_regions = pd.concat(all_tryptic_regions)
+proteome_tryptic_regions.to_csv(result_dir + sample + "_proteome_sig_tryptic_region.tsv", sep='\t')
+proteome_tryptic_regions.to_pickle(result_dir + sample + "_proteome_sig_tryptic_region.pkl")
+```
+
+```{python}
+proteome_semi_regions = pd.concat(all_semi_regions)
+proteome_semi_regions.to_csv(result_dir + sample + "_proteome_sig_semi_regions.tsv", sep='\t')
+proteome_semi_regions.to_pickle(result_dir + sample + "_proteome_sig_semi_regions.pkl")
+```
+
+
+##### Quantifying the trypsin data
+
+```{python}
+# plotting_ids = []
+plotting_ids = trypsin_sig_uniprot_ids
+intensity_cols = trypsin_int_cols
+all_tryptic_regions = []
+all_semi_regions = []
+any_tryptic = []
+any_tryptic_sig = []
+pept_df = trypsin_pept_nmrc.copy()
+all_uniprot_ids = list(set(pept_df["Uniprot"]))
+for uniprot_id in all_uniprot_ids:
+    # uniprot_id = trypsin_top_sig_uniprot_ids[0]
+    if '|' in uniprot_id:
+        prot_seq_search = [seq for seq in prot_seqs if seq.id == uniprot_id]
+    else:
+        prot_seq_search = [seq for seq in prot_seqs if seq.id.split('|')[1] == uniprot_id]
+    if len(prot_seq_search) != 0:
+        prot_seq = prot_seq_search[0]
+        sequence = str(prot_seq.seq)
+        seq_len = len(sequence)
+        protein = pept_df[pept_df["Uniprot"] == uniprot_id].copy()
+        protein.reset_index(drop=True, inplace=True)
+        clean_pepts = [strip_peptide(pept, nip_off=False) for pept in protein["Sequence"].to_list()]
+        protein["clean_pepts"] = clean_pepts
+        protein["Protein description"] = prot_seq.description
+        protein["Protein length"] = seq_len
+        pept_start = [sequence.find(clean_pept) + 1 for clean_pept in clean_pepts]
+        pept_end = [sequence.find(clean_pept) + len(clean_pept) for clean_pept in clean_pepts]
+        protein["pept_start"] = pept_start
+        protein["pept_end"] = pept_end
+        # protein["front_lytic"] = [prot_seq[i-2] for i in pept_start]
+        # protein["end_lytic"] = [prot_seq[i-1] for i in pept_end]
+        protein["pept_type"] = ["Tryptic" if ((prot_seq[i-2] in "KR" or i == 2) and (prot_seq[j-1] in "KR" or j == seq_len)) else "Semi-tryptic" if (prot_seq[i-2] in "KR" or prot_seq[j-1] in "KR") else "Non-tryptic" for i,j in zip(pept_start, pept_end)]
+        protein["Tryp Pept num"] = protein[(protein["pept_type"] == "Tryptic")].copy().shape[0]
+        protein["Semi Pept num"] = protein[(protein["pept_type"] == "Semi-tryptic")].copy().shape[0]
+        sig_semi_pepts = protein[(protein["pept_type"] == "Semi-tryptic") & (protein["Treat/Control_pval"] < sig_thr)].copy()
+        protein["Sig Semi Pept num"] = sig_semi_pepts.shape[0]
+        protein["Sum FC of Sig Semi Pept"] = sig_semi_pepts["Treat/Control"].abs().sum()
+        protein["pept_id"] = [str(protein["pept_start"].to_list()[i]).zfill(4) + '-' + str(protein["pept_end"].to_list()[i]).zfill(4) + '@' + pept for i, pept in enumerate(protein["Sequence"].to_list())]
+        protein.index = protein["pept_id"]
+        tryptic = protein[protein["pept_type"] == "Tryptic"].copy().sort_index()
+        semitryptic = protein[protein["pept_type"] == "Semi-tryptic"].copy().sort_index()
+        tryptic["lytic_group"] = 0
+        semitryptic["lytic_group"] = 0
+        for i, idx in enumerate(tryptic.index.to_list()):
+            tryptic.loc[idx, "lytic_group"] = i+1
+            semitryptic.loc[((semitryptic["pept_start"] == tryptic.loc[idx, "pept_start"]) | (semitryptic["pept_end"] == tryptic.loc[idx, "pept_end"])), "lytic_group"] = i+1
+        protein_any_tryptic = pd.concat([tryptic, semitryptic]).copy()
+        protein_any_tryptic_sig = protein_any_tryptic[protein_any_tryptic["Treat/Control_pval"] < sig_thr].copy()
+        if uniprot_id in plotting_ids:
+            fc_diff_names = [aa + str(i+1) for i, aa in enumerate(list(sequence))]
+            tryptic_bar_code = [(1.0,1.0,1.0)] * len(fc_diff_names)
+            semi_bar_code = [(1.0,1.0,1.0)] * len(fc_diff_names)
+
+            tryptic_res = tryptic.copy()
+            if tryptic_res.shape[0] > 0:
+                tryptic_res["residue"] = [[res + str(sequence.find(clean_pept)+i+1) for i, res in enumerate(clean_pept)] for clean_pept in tryptic_res["clean_pepts"]]
+                tryptic_res = tryptic_res.explode("residue")
+                tryptic_res.index = tryptic_res["residue"]
+                tryptic_res[intensity_cols] = 2 ** (tryptic_res[intensity_cols])
+                tryptic_res_grouped = tryptic_res[intensity_cols].groupby("residue").sum(min_count=1)
+                tryptic_res_grouped = np.log2(tryptic_res_grouped)
+                tryptic_res_grouped["Uniprot"] = uniprot_id
+                tryptic_res_grouped["Site"] = tryptic_res_grouped.index.to_list()
+                tryptic_res_grouped["Pos"] = [int(re.sub(r"\D", "", site)) for site in tryptic_res_grouped["Site"]]
+                tryptic_res_grouped["Control"] = tryptic_res_grouped[trypsin_ctrl_cols].mean(axis=1).fillna(0)
+                tryptic_res_grouped["Treat"] = tryptic_res_grouped[trypsin_treat_cols].mean(axis=1).fillna(0)
+                tryptic_res_grouped["Treat/Control"] = tryptic_res_grouped["Treat"] - tryptic_res_grouped["Control"]
+                tryptic_res_grouped["Treat/Control_pval"] = sp.stats.ttest_ind(tryptic_res_grouped[trypsin_treat_cols], tryptic_res_grouped[trypsin_ctrl_cols], axis=1, nan_policy='omit').pvalue
+                tryptic_res_grouped["Treat/Control_pval"].fillna(0, inplace=True)
+                tryptic_res_grouped["Treat/Control_adj-p"] = sp.stats.false_discovery_control(tryptic_res_grouped["Treat/Control_pval"].fillna(0))
+                tryptic_res_grouped["Treat/Control_adj-p_BY"] = sp.stats.false_discovery_control(tryptic_res_grouped["Treat/Control_pval"].fillna(0), method = 'by')
+                tryptic_res_grouped["Treat/Control_adj-p_bonferroni"] = multitest.multipletests(tryptic_res_grouped["Treat/Control_pval"].fillna(0), method='bonferroni')[1]
+                # tryptic_res_grouped_sig = tryptic_res_grouped[tryptic_res_grouped["Treat/Control_pval"] < sig_thr].copy()
+                tryptic_res_grouped.sort_values(by=["Pos"], inplace=True)
+                tryptic_res_grouped_copy = tryptic_res_grouped[tryptic_res_grouped.columns.to_list()[-7:] + tryptic_res_grouped.columns.to_list()[:-7]].copy()
+                tryptic_res_grouped_copy.index = uniprot_id + '@' + tryptic_res_grouped_copy["Site"]
+                all_tryptic_regions.append(tryptic_res_grouped_copy)
+
+                tryptic_fc_diff = tryptic_res_grouped[["Site", "Pos", "Treat/Control", "Treat/Control_pval"]].copy()
+                tryptic_fc_diff.index = tryptic_fc_diff["Site"]
+                tryptic_fc_diff_max = tryptic_fc_diff["Treat/Control"].abs().max()
+                for i in range(tryptic_fc_diff.shape[0]):
+                    if tryptic_fc_diff.iloc[i, 2] > 0:
+                        if tryptic_fc_diff.iloc[i, 3] < 0.05:
+                            tryptic_bar_code[tryptic_fc_diff.iloc[i, 1] - 1] = up_pal_vals[np.ceil(min(abs(tryptic_fc_diff.iloc[i, 2]),3.322)/tryptic_fc_diff_max * color_levels).astype("int") - 1]
+                        else:
+                            tryptic_bar_code[tryptic_fc_diff.iloc[i, 1] - 1] = insig_pal_vals[np.ceil(min(abs(tryptic_fc_diff.iloc[i, 2]),3.322)/tryptic_fc_diff_max * color_levels).astype("int") - 1]
+                    else:
+                        if tryptic_fc_diff.iloc[i, 3] < 0.05:
+                            tryptic_bar_code[tryptic_fc_diff.iloc[i, 1] - 1] = down_pal_vals[np.ceil(min(abs(tryptic_fc_diff.iloc[i, 2]),3.322)/tryptic_fc_diff_max * color_levels).astype("int") - 1]
+                        else:
+                            tryptic_bar_code[tryptic_fc_diff.iloc[i, 1] - 1] = insig_pal_vals[np.ceil(min(abs(tryptic_fc_diff.iloc[i, 2]),3.322)/tryptic_fc_diff_max * color_levels).astype("int") - 1]
+
+            semi_res = semitryptic.copy()
+            if semi_res.shape[0] > 0:
+                semi_res["residue"] = [[res + str(sequence.find(clean_pept)+i+1) for i, res in enumerate(clean_pept)] for clean_pept in semi_res["clean_pepts"]]
+                semi_res = semi_res.explode("residue")
+                semi_res.index = semi_res["residue"]
+                semi_res[intensity_cols] = 2 ** (semi_res[intensity_cols])
+                semi_res_grouped = semi_res[intensity_cols].groupby("residue").sum(min_count=1)
+                semi_res_grouped = np.log2(semi_res_grouped)
+                semi_res_grouped["Uniprot"] = uniprot_id
+                semi_res_grouped["Site"] = semi_res_grouped.index.to_list()
+                semi_res_grouped["Pos"] = [int(re.sub(r"\D", "", site)) for site in semi_res_grouped["Site"]]
+                semi_res_grouped["Control"] = semi_res_grouped[trypsin_ctrl_cols].mean(axis=1).fillna(0)
+                semi_res_grouped["Treat"] = semi_res_grouped[trypsin_treat_cols].mean(axis=1).fillna(0)
+                semi_res_grouped["Treat/Control"] = semi_res_grouped["Treat"] - semi_res_grouped["Control"]
+                semi_res_grouped["Treat/Control_pval"] = sp.stats.ttest_ind(semi_res_grouped[trypsin_treat_cols], semi_res_grouped[trypsin_ctrl_cols], axis=1, nan_policy='omit').pvalue
+                semi_res_grouped["Treat/Control_pval"].fillna(0, inplace=True)
+                semi_res_grouped["Treat/Control_adj-p"] = sp.stats.false_discovery_control(semi_res_grouped["Treat/Control_pval"].fillna(0))
+                semi_res_grouped["Treat/Control_adj-p_BY"] = sp.stats.false_discovery_control(semi_res_grouped["Treat/Control_pval"].fillna(0), method = 'by')
+                semi_res_grouped["Treat/Control_adj-p_bonferroni"] = multitest.multipletests(semi_res_grouped["Treat/Control_pval"].fillna(0), method='bonferroni')[1]
+                # semi_res_grouped_sig = semi_res_grouped[semi_res_grouped["Treat/Control_pval"] < sig_thr].copy()
+                semi_res_grouped.sort_values(by=["Pos"], inplace=True)
+                semi_res_grouped_copy = semi_res_grouped[semi_res_grouped.columns.to_list()[-7:] + semi_res_grouped.columns.to_list()[:-7]].copy()
+                semi_res_grouped_copy.index = uniprot_id + '@' + semi_res_grouped_copy["Site"]
+                all_semi_regions.append(semi_res_grouped_copy)
+
+                semi_fc_diff = semi_res_grouped[["Site", "Pos", "Treat/Control", "Treat/Control_pval"]].copy()
+                semi_fc_diff.index = semi_fc_diff["Site"]
+                semi_fc_diff_max = semi_fc_diff["Treat/Control"].abs().max()
+                for i in range(semi_fc_diff.shape[0]):
+                    if semi_fc_diff.iloc[i, 2] > 0:
+                        if semi_fc_diff.iloc[i, 3] < 0.05:
+                            semi_bar_code[semi_fc_diff.iloc[i, 1] - 1] = up_pal_vals[np.ceil(min(abs(semi_fc_diff.iloc[i, 2]),3.322)/semi_fc_diff_max * color_levels).astype("int") - 1]
+                        else:
+                            semi_bar_code[semi_fc_diff.iloc[i, 1] - 1] = insig_pal_vals[np.ceil(min(abs(semi_fc_diff.iloc[i, 2]),3.322)/semi_fc_diff_max * color_levels).astype("int") - 1]
+                    else:
+                        if semi_fc_diff.iloc[i, 3] < 0.05:
+                            semi_bar_code[semi_fc_diff.iloc[i, 1] - 1] = down_pal_vals[np.ceil(min(abs(semi_fc_diff.iloc[i, 2]),3.322)/semi_fc_diff_max * color_levels).astype("int") - 1]
+                        else:
+                            semi_bar_code[semi_fc_diff.iloc[i, 1] - 1] = insig_pal_vals[np.ceil(min(abs(semi_fc_diff.iloc[i, 2]),3.322)/semi_fc_diff_max * color_levels).astype("int") - 1]
+
+            # fig = plt.figure(figsize=(10,5))
+            # ax = fig.add_subplot(2, 1, 1)
+            # plot_barcode(tryptic_bar_code, barcode_name = uniprot_id + "_tryptic", ticklabel=[fc_diff_names[j] for j in np.arange(0,seq_len,np.ceil(seq_len/10).astype("int"))], ax=ax)
+            # ax = fig.add_subplot(2, 1, 2)
+            # plot_barcode(semi_bar_code, barcode_name = uniprot_id + "_semi-tryptic", ticklabel=[fc_diff_names[j] for j in np.arange(0,seq_len,np.ceil(seq_len/10).astype("int"))], ax=ax)
+            # plt.tight_layout()
+            # plt.savefig(pept_dir + uniprot_id.replace('|','-') + "_residue_any_tryptic_barcode.pdf")
+            # plt.close()
+
+
+    any_tryptic.append(protein_any_tryptic)
+    any_tryptic_sig.append(protein_any_tryptic_sig)
+```
+
+```{python}
+new_info_cols = info_cols + ["Protein description", "Protein length", "Tryp Pept num", "Semi Pept num", "Sig Semi Pept num", "Sum FC of Sig Semi Pept", "pept_start", "pept_end", "pept_type", "lytic_group"]
+new_trypsin_cols = new_info_cols + trypsin_int_cols
+```
+
+```{python}
+any_tryptic_df = pd.concat(any_tryptic)
+any_tryptic_df[new_trypsin_cols].to_csv(result_dir + sample + "_trypsin_pept_annot.tsv", sep='\t', index=None)
+any_tryptic_df[new_trypsin_cols].to_pickle(result_dir + sample + "_trypsin_pept_annot.pkl")
+# any_tryptic_sig_df = pd.concat(any_tryptic_sig)
+# any_tryptic_sig_df[new_trypsin_cols].to_csv(result_dir + sample + "_trypsin_pept_sig_annot.tsv", sep='\t', index=None)
+# any_tryptic_sig_df[new_trypsin_cols].to_pickle(result_dir + sample + "_trypsin_pept_sig_annot.pkl")
+```
+
+
+
+#### Quantifying and Barcoding with proteolytic sites
+
+```{python}
+color_levels = 20
+both_pal_vals = sns.color_palette("Greens", color_levels)
+up_pal_vals = sns.color_palette("Reds", color_levels)
+down_pal_vals = sns.color_palette("Blues", color_levels)
+insig_pal_vals = sns.color_palette("Greys", color_levels)
+```
+
+```{python}
+barcode_dir = result_dir + sample + "_barcodes/"
+Path(barcode_dir).mkdir(parents=True, exist_ok=True)
+intensity_cols = double_int_cols
+all_lytic_sites = []
+sig_lytic_sites = []
+semi_only = False
+pept_df = double_pept_nmrc.copy()
+all_uniprot_ids = list(set(pept_df["Uniprot"]))
+```
+
+```{python}
+for uniprot_id in all_uniprot_ids:
+    # uniprot_id = double_top_sig_uniprot_ids[0]
+    if '|' in uniprot_id:
+        prot_seq_search = [seq for seq in prot_seqs if seq.id == uniprot_id]
+    else:
+        prot_seq_search = [seq for seq in prot_seqs if seq.id.split('|')[1] == uniprot_id]
+    if len(prot_seq_search) > 0:
+        prot_seq = prot_seq_search[0]
+        sequence = str(prot_seq.seq)
+        seq_len = len(sequence)
+        protein = pept_df[pept_df["Uniprot"] == uniprot_id].copy()
+        protein.reset_index(drop=True, inplace=True)
+        clean_pepts = [strip_peptide(pept, nip_off=False) for pept in protein["Sequence"].to_list()]
+        protein["clean_pept"] = clean_pepts
+        pept_start = [sequence.find(clean_pept) + 1 for clean_pept in clean_pepts]
+        pept_end = [sequence.find(clean_pept) + len(clean_pept) for clean_pept in clean_pepts]
+        protein["pept_start"] = pept_start
+        protein["pept_end"] = pept_end
+        # protein["front_lytic"] = [prot_seq[i-2] for i in pept_start]
+        # protein["end_lytic"] = [prot_seq[i-1] for i in pept_end]
+        protein["pept_type"] = ["Tryptic" if ((prot_seq[i-2] in "KR" or i == 2) and (prot_seq[j-1] in "KR" or j == seq_len)) else "Semi-tryptic" if (prot_seq[i-2] in "KR" or prot_seq[j-1] in "KR") else "Non-tryptic" for i,j in zip(pept_start, pept_end)]
+
+        lyticsites = []
+        for clean_pept in clean_pepts:
+            start_lytic_pos = sequence.find(clean_pept)
+            end_lytic_pos = start_lytic_pos + len(clean_pept)
+            start_lytic_site = sequence[start_lytic_pos - 1]
+            end_lytic_site = sequence[end_lytic_pos - 1]
+            lyticsites.append([start_lytic_site + str(start_lytic_pos), end_lytic_site + str(end_lytic_pos)])
+
+        protein["Lytic site"] = lyticsites
+        pept_num = len(clean_pepts)
+        sig_num = sum(1 for i in protein["Treat/Control_pval"] if i < sig_thr)
+        semi_num = protein["pept_type"].to_list().count("Semi-tryptic")
+        non_num = protein["pept_type"].to_list().count("Non-tryptic")
+        prok_num = protein["pept_type"].to_list().count("Semi-tryptic") + protein["pept_type"].to_list().count("Non-tryptic")
+
+        if semi_only:
+            # Semi-tryptic peptide sites
+            protein2explode = protein[protein["pept_type"] == "Semi-tryptic"].copy()
+        else:
+            protein2explode = protein.copy()
+
+        if protein2explode.shape[0] > 0:
+            protein_lys = protein2explode.explode("Lytic site")
+            protein_lys.reset_index(drop=True, inplace=True)
+            protein_lys.index = protein_lys["Lytic site"]
+            # protein_lys[intensity_cols] = protein_lys[intensity_cols].replace(0, np.nan)
+            protein_lys[intensity_cols] = 2 ** (protein_lys[intensity_cols])
+            protein_lys_grouped = protein_lys[intensity_cols].groupby("Lytic site").sum(min_count=1)
+            protein_lys_grouped = np.log2(protein_lys_grouped)
+            # protein_lys_grouped = protein_lys_grouped.fillna(0)
+
+            protein_lys_grouped["Uniprot"] = uniprot_id
+            protein_lys_grouped["Site"] = protein_lys_grouped.index.to_list()
+            protein_lys_grouped.index = uniprot_id + '@' + protein_lys_grouped["Site"]
+            protein_lys_grouped["Pos"] = [int(re.sub(r"\D", "", site)) for site in protein_lys_grouped["Site"]]
+            protein_lys_grouped["Lytic site type"] = ["Trypsin" if 'K' in i or 'R' in i else "ProK" for i in protein_lys_grouped.index]
+            protein_lys_grouped["Pept num"] = pept_num
+            protein_lys_grouped["Sig pept num"] = sig_num
+            protein_lys_grouped["Partial tryptic num"] = semi_num
+            protein_lys_grouped["Non-tryptic num"] = non_num
+            protein_lys_grouped["ProK num"] = prok_num
+            protein_lys_grouped["Ctrl missingness"] = protein_lys_grouped[double_ctrl_cols].isna().sum(axis=1)
+            protein_lys_grouped["Treat missingness"] = protein_lys_grouped[double_treat_cols].isna().sum(axis=1)
+            protein_lys_grouped["Total missingness"] = protein_lys_grouped["Ctrl missingness"] + protein_lys_grouped["Treat missingness"]
+            protein_lys_grouped = protein_lys_grouped[protein_lys_grouped["Total missingness"] < len(intensity_cols)]
+            protein_lys_grouped["Control"] = protein_lys_grouped[double_ctrl_cols].mean(axis=1).fillna(0)
+            protein_lys_grouped["Treat"] = protein_lys_grouped[double_treat_cols].mean(axis=1).fillna(0)
+            protein_lys_grouped["Treat/Control"] = protein_lys_grouped["Treat"] - protein_lys_grouped["Control"]
+            protein_lys_grouped["Treat/Control_pval"] = sp.stats.ttest_ind(protein_lys_grouped[double_treat_cols], protein_lys_grouped[double_ctrl_cols], axis=1, nan_policy='omit').pvalue
+            protein_lys_grouped["Treat/Control_pval"].fillna(0, inplace=True)
+            protein_lys_grouped["Treat/Control_adj-p"] = sp.stats.false_discovery_control(protein_lys_grouped["Treat/Control_pval"].fillna(0))
+            protein_lys_grouped["Treat/Control_adj-p_BY"] = sp.stats.false_discovery_control(protein_lys_grouped["Treat/Control_pval"].fillna(0), method = 'by')
+            protein_lys_grouped["Treat/Control_adj-p_bonferroni"] = multitest.multipletests(protein_lys_grouped["Treat/Control_pval"].fillna(0), method='bonferroni')[1]
+            protein_lys_grouped_sig = protein_lys_grouped[protein_lys_grouped["Treat/Control_pval"] < sig_thr].copy()
+            protein_lys_grouped["Sig site num"] = protein_lys_grouped_sig.shape[0]
+            sig_prok_num = protein_lys_grouped_sig[protein_lys_grouped_sig["Lytic site type"] == "ProK"].shape[0]
+            protein_lys_grouped["Sig ProK num"] = sig_prok_num
+            protein_lys_grouped_sig["Sig ProK num"] = sig_prok_num
+
+            protein_lys_grouped.sort_values(by=["Pos"], inplace=True)
+            protein_lys_grouped = protein_lys_grouped[protein_lys_grouped.columns.to_list()[-18:] + protein_lys_grouped.columns.to_list()[:-18]]
+            protein_lys_grouped_sig = protein_lys_grouped_sig[protein_lys_grouped_sig.columns.to_list()[-17:] + protein_lys_grouped_sig.columns.to_list()[:-17]]
+            all_lytic_sites.append(protein_lys_grouped)
+            sig_lytic_sites.append(protein_lys_grouped_sig)
+
+            if uniprot_id in double_sig_uniprot_ids:
+                protein_lys_prok = protein_lys_grouped[protein_lys_grouped["Lytic site type"] == "ProK"].copy()
+                lys_fc_diff = protein_lys_prok[["Site", "Pos", "Treat/Control", "Treat/Control_pval"]].copy()
+                lys_fc_diff.index = lys_fc_diff["Site"]
+                lys_fc_diff_max = lys_fc_diff["Treat/Control"].abs().max()
+                fc_diff_names = [aa + str(i+1) for i, aa in enumerate(list(sequence))]
+                bar_code = [(1.0,1.0,1.0)] * len(fc_diff_names)
+                for i in range(lys_fc_diff.shape[0]):
+                    if lys_fc_diff.iloc[i, 2] > 0:
+                        if lys_fc_diff.iloc[i, 3] < 0.05:
+                            bar_code[lys_fc_diff.iloc[i, 1] - 1] = up_pal_vals[np.ceil(min(abs(lys_fc_diff.iloc[i, 2]),3.322)/lys_fc_diff_max * color_levels).astype("int") - 1]
+                        else:
+                            bar_code[lys_fc_diff.iloc[i, 1] - 1] = insig_pal_vals[np.ceil(min(abs(lys_fc_diff.iloc[i, 2]),3.322)/lys_fc_diff_max * color_levels).astype("int") - 1]
+                    else:
+                        if lys_fc_diff.iloc[i, 3] < 0.05:
+                            bar_code[lys_fc_diff.iloc[i, 1] - 1] = down_pal_vals[np.ceil(min(abs(lys_fc_diff.iloc[i, 2]),3.322)/lys_fc_diff_max * color_levels).astype("int") - 1]
+                        else:
+                            bar_code[lys_fc_diff.iloc[i, 1] - 1] = insig_pal_vals[np.ceil(min(abs(lys_fc_diff.iloc[i, 2]),3.322)/lys_fc_diff_max * color_levels).astype("int") - 1]
+
+                # plot_barcode(bar_code, barcode_name = uniprot_id, ticklabel=[aa[0] for aa in lys_fc_diff["lys"]], size = (lys_fc_diff.shape[0]//10,2))
+                # plot_barcode(bar_code, barcode_name = uniprot_id, ticklabel=[aa[0] for aa in lys_fc_diff["lys"]], size = (10,2))
+                # plt.tight_layout()
+                # plt.savefig(barcode_dir + uniprot_id + "_protKsite_all_nosep_barcode_wt_filter_small.pdf", dpi=100)
+                # plt.close()
+                plot_barcode(bar_code, barcode_name = uniprot_id, ticklabel=[fc_diff_names[j] for j in np.arange(0,seq_len,np.ceil(seq_len/10).astype("int"))], size = (min(max(math.floor(seq_len/3), 10), 50), min(max(math.floor(protein_lys_prok.shape[0]/5), 6),30)))
+                plt.tight_layout()
+                if semi_only:
+                    plt.savefig(barcode_dir + uniprot_id.replace('|','-') + "_protKsite_semi_nosep_barcode_wt_filter.pdf", dpi=100)
+                else:
+                    plt.savefig(barcode_dir + uniprot_id.replace('|','-') + "_protKsite_all_nosep_barcode_wt_filter.pdf", dpi=100)
+                plt.close()
+
+if semi_only:
+    proteome_lytic_sites = pd.concat(all_lytic_sites)
+    proteome_lytic_sites.to_csv(result_dir + sample + "_proteome_semi_sites.tsv", sep='\t')
+    proteome_lytic_sites.to_pickle(result_dir + sample + "_proteome_semi_sites.pkl")
+
+    proteome_lytic_sites_sig = pd.concat(sig_lytic_sites)
+    proteome_lytic_sites_sig.to_csv(result_dir + sample + "_proteome_semi_sites_sig.tsv", sep='\t')
+    proteome_lytic_sites_sig.to_pickle(result_dir + sample + "_proteome_semi_sites_sig.pkl")
+else:
+    proteome_lytic_sites = pd.concat(all_lytic_sites)
+    proteome_lytic_sites.to_csv(result_dir + sample + "_proteome_lytic_sites.tsv", sep='\t')
+    proteome_lytic_sites.to_pickle(result_dir + sample + "_proteome_lytic_sites.pkl")
+
+    proteome_lytic_sites_sig = pd.concat(sig_lytic_sites)
+    proteome_lytic_sites_sig.to_csv(result_dir + sample + "_proteome_lytic_sites_sig.tsv", sep='\t')
+    proteome_lytic_sites_sig.to_pickle(result_dir + sample + "_proteome_lytic_sites_sig.pkl")
+```
+
+```{python}
+pept_df = double_pept_sig_nmrc.copy()
+all_uniprot_ids = list(set(pept_df["Uniprot"]))
+```
+
+```{python}
+for uniprot_id in all_uniprot_ids:
+    # uniprot_id = double_top_sig_uniprot_ids[0]
+    if '|' in uniprot_id:
+        prot_seq_search = [seq for seq in prot_seqs if seq.id == uniprot_id]
+    else:
+        prot_seq_search = [seq for seq in prot_seqs if seq.id.split('|')[1] == uniprot_id]
+    if len(prot_seq_search) > 0:
+        prot_seq = prot_seq_search[0]
+        sequence = str(prot_seq.seq)
+        seq_len = len(sequence)
+        protein = pept_df[pept_df["Uniprot"] == uniprot_id].copy()
+        protein.reset_index(drop=True, inplace=True)
+        clean_pepts = [strip_peptide(pept, nip_off=False) for pept in protein["Sequence"].to_list()]
+        protein["clean_pept"] = clean_pepts
+        pept_start = [sequence.find(clean_pept) + 1 for clean_pept in clean_pepts]
+        pept_end = [sequence.find(clean_pept) + len(clean_pept) for clean_pept in clean_pepts]
+        protein["pept_start"] = pept_start
+        protein["pept_end"] = pept_end
+        # protein["front_lytic"] = [prot_seq[i-2] for i in pept_start]
+        # protein["end_lytic"] = [prot_seq[i-1] for i in pept_end]
+        protein["pept_type"] = ["Tryptic" if ((prot_seq[i-2] in "KR" or i == 2) and (prot_seq[j-1] in "KR" or j == seq_len)) else "Semi-tryptic" if (prot_seq[i-2] in "KR" or prot_seq[j-1] in "KR") else "Non-tryptic" for i,j in zip(pept_start, pept_end)]
+
+        lyticsites = []
+        for clean_pept in clean_pepts:
+            start_lytic_pos = sequence.find(clean_pept)
+            end_lytic_pos = start_lytic_pos + len(clean_pept)
+            start_lytic_site = sequence[start_lytic_pos - 1]
+            end_lytic_site = sequence[end_lytic_pos - 1]
+            lyticsites.append([start_lytic_site + str(start_lytic_pos), end_lytic_site + str(end_lytic_pos)])
+
+        protein["Lytic site"] = lyticsites
+        pept_num = len(clean_pepts)
+        sig_num = sum(1 for i in protein["Treat/Control_pval"] if i < sig_thr)
+        semi_num = protein["pept_type"].to_list().count("Semi-tryptic")
+        non_num = protein["pept_type"].to_list().count("Non-tryptic")
+        prok_num = protein["pept_type"].to_list().count("Semi-tryptic") + protein["pept_type"].to_list().count("Non-tryptic")
+
+        if semi_only:
+            # Semi-tryptic peptide sites
+            protein2explode = protein[protein["pept_type"] == "Semi-tryptic"].copy()
+        else:
+            protein2explode = protein.copy()
+
+        if protein2explode.shape[0] > 0:
+            protein_lys = protein2explode.explode("Lytic site")
+            protein_lys.reset_index(drop=True, inplace=True)
+            protein_lys.index = protein_lys["Lytic site"]
+            # protein_lys[intensity_cols] = protein_lys[intensity_cols].replace(0, np.nan)
+            protein_lys[intensity_cols] = 2 ** (protein_lys[intensity_cols])
+            protein_lys_grouped = protein_lys[intensity_cols].groupby("Lytic site").sum(min_count=1)
+            protein_lys_grouped = np.log2(protein_lys_grouped)
+            # protein_lys_grouped = protein_lys_grouped.fillna(0)
+
+            protein_lys_grouped["Uniprot"] = uniprot_id
+            protein_lys_grouped["Site"] = protein_lys_grouped.index.to_list()
+            protein_lys_grouped.index = uniprot_id + '@' + protein_lys_grouped["Site"]
+            protein_lys_grouped["Pos"] = [int(re.sub(r"\D", "", site)) for site in protein_lys_grouped["Site"]]
+            protein_lys_grouped["Lytic site type"] = ["Trypsin" if 'K' in i or 'R' in i else "ProK" for i in protein_lys_grouped.index]
+            protein_lys_grouped["Pept num"] = pept_num
+            protein_lys_grouped["Sig pept num"] = sig_num
+            protein_lys_grouped["Partial tryptic num"] = semi_num
+            protein_lys_grouped["Non-tryptic num"] = non_num
+            protein_lys_grouped["ProK num"] = prok_num
+            protein_lys_grouped["Ctrl missingness"] = protein_lys_grouped[double_ctrl_cols].isna().sum(axis=1)
+            protein_lys_grouped["Treat missingness"] = protein_lys_grouped[double_treat_cols].isna().sum(axis=1)
+            protein_lys_grouped["Total missingness"] = protein_lys_grouped["Ctrl missingness"] + protein_lys_grouped["Treat missingness"]
+            protein_lys_grouped = protein_lys_grouped[protein_lys_grouped["Total missingness"] < len(intensity_cols)]
+            protein_lys_grouped["Control"] = protein_lys_grouped[double_ctrl_cols].mean(axis=1).fillna(0)
+            protein_lys_grouped["Treat"] = protein_lys_grouped[double_treat_cols].mean(axis=1).fillna(0)
+            protein_lys_grouped["Treat/Control"] = protein_lys_grouped["Treat"] - protein_lys_grouped["Control"]
+            protein_lys_grouped["Treat/Control_pval"] = sp.stats.ttest_ind(protein_lys_grouped[double_treat_cols], protein_lys_grouped[double_ctrl_cols], axis=1, nan_policy='omit').pvalue
+            protein_lys_grouped["Treat/Control_pval"].fillna(0, inplace=True)
+            protein_lys_grouped["Treat/Control_adj-p"] = sp.stats.false_discovery_control(protein_lys_grouped["Treat/Control_pval"].fillna(0))
+            protein_lys_grouped["Treat/Control_adj-p_BY"] = sp.stats.false_discovery_control(protein_lys_grouped["Treat/Control_pval"].fillna(0), method = 'by')
+            protein_lys_grouped["Treat/Control_adj-p_bonferroni"] = multitest.multipletests(protein_lys_grouped["Treat/Control_pval"].fillna(0), method='bonferroni')[1]
+            protein_lys_grouped_sig = protein_lys_grouped[protein_lys_grouped["Treat/Control_pval"] < sig_thr].copy()
+            protein_lys_grouped["Sig site num"] = protein_lys_grouped_sig.shape[0]
+            sig_prok_num = protein_lys_grouped_sig[protein_lys_grouped_sig["Lytic site type"] == "ProK"].shape[0]
+            protein_lys_grouped["Sig ProK num"] = sig_prok_num
+            protein_lys_grouped_sig["Sig ProK num"] = sig_prok_num
+
+            protein_lys_grouped.sort_values(by=["Pos"], inplace=True)
+            protein_lys_grouped = protein_lys_grouped[protein_lys_grouped.columns.to_list()[-18:] + protein_lys_grouped.columns.to_list()[:-18]]
+            protein_lys_grouped_sig = protein_lys_grouped_sig[protein_lys_grouped_sig.columns.to_list()[-17:] + protein_lys_grouped_sig.columns.to_list()[:-17]]
+            all_lytic_sites.append(protein_lys_grouped)
+            sig_lytic_sites.append(protein_lys_grouped_sig)
+
+            if uniprot_id in double_sig_uniprot_ids:
+                protein_lys_prok = protein_lys_grouped[protein_lys_grouped["Lytic site type"] == "ProK"].copy()
+                lys_fc_diff = protein_lys_prok[["Site", "Pos", "Treat/Control", "Treat/Control_pval"]].copy()
+                lys_fc_diff.index = lys_fc_diff["Site"]
+                lys_fc_diff_max = lys_fc_diff["Treat/Control"].abs().max()
+                fc_diff_names = [aa + str(i+1) for i, aa in enumerate(list(sequence))]
+                bar_code = [(1.0,1.0,1.0)] * len(fc_diff_names)
+                for i in range(lys_fc_diff.shape[0]):
+                    if lys_fc_diff.iloc[i, 2] > 0:
+                        if lys_fc_diff.iloc[i, 3] < 0.05:
+                            bar_code[lys_fc_diff.iloc[i, 1] - 1] = up_pal_vals[np.ceil(min(abs(lys_fc_diff.iloc[i, 2]),3.322)/lys_fc_diff_max * color_levels).astype("int") - 1]
+                        else:
+                            bar_code[lys_fc_diff.iloc[i, 1] - 1] = insig_pal_vals[np.ceil(min(abs(lys_fc_diff.iloc[i, 2]),3.322)/lys_fc_diff_max * color_levels).astype("int") - 1]
+                    else:
+                        if lys_fc_diff.iloc[i, 3] < 0.05:
+                            bar_code[lys_fc_diff.iloc[i, 1] - 1] = down_pal_vals[np.ceil(min(abs(lys_fc_diff.iloc[i, 2]),3.322)/lys_fc_diff_max * color_levels).astype("int") - 1]
+                        else:
+                            bar_code[lys_fc_diff.iloc[i, 1] - 1] = insig_pal_vals[np.ceil(min(abs(lys_fc_diff.iloc[i, 2]),3.322)/lys_fc_diff_max * color_levels).astype("int") - 1]
+
+                # plot_barcode(bar_code, barcode_name = uniprot_id, ticklabel=[aa[0] for aa in lys_fc_diff["lys"]], size = (lys_fc_diff.shape[0]//10,2))
+                # plot_barcode(bar_code, barcode_name = uniprot_id, ticklabel=[aa[0] for aa in lys_fc_diff["lys"]], size = (10,2))
+                # plt.tight_layout()
+                # plt.savefig(barcode_dir + uniprot_id + "_protKsite_all_nosep_barcode_wt_filter_small.pdf", dpi=100)
+                # plt.close()
+                plot_barcode(bar_code, barcode_name = uniprot_id, ticklabel=[fc_diff_names[j] for j in np.arange(0,seq_len,np.ceil(seq_len/10).astype("int"))], size = (min(max(math.floor(seq_len/3), 10), 50), min(max(math.floor(protein_lys_prok.shape[0]/5), 6),30)))
+                plt.tight_layout()
+                if semi_only:
+                    plt.savefig(barcode_dir + uniprot_id.replace('|','-') + "_sig_protKsite_semi_nosep_barcode_wt_filter.pdf", dpi=100)
+                else:
+                    plt.savefig(barcode_dir + uniprot_id.replace('|','-') + "_sig_protKsite_all_nosep_barcode_wt_filter.pdf", dpi=100)
+                plt.close()
+
+if semi_only:
+    proteome_lytic_sites = pd.concat(all_lytic_sites)
+    proteome_lytic_sites.to_csv(result_dir + sample + "_sig_proteome_semi_sites.tsv", sep='\t')
+    proteome_lytic_sites.to_pickle(result_dir + sample + "_sig_proteome_semi_sites.pkl")
+
+    proteome_lytic_sites_sig = pd.concat(sig_lytic_sites)
+    proteome_lytic_sites_sig.to_csv(result_dir + sample + "_sig_proteome_semi_sites_sig.tsv", sep='\t')
+    proteome_lytic_sites_sig.to_pickle(result_dir + sample + "_sig_proteome_semi_sites_sig.pkl")
+else:
+    proteome_lytic_sites = pd.concat(all_lytic_sites)
+    proteome_lytic_sites.to_csv(result_dir + sample + "_sig_proteome_lytic_sites.tsv", sep='\t')
+    proteome_lytic_sites.to_pickle(result_dir + sample + "_sig_proteome_lytic_sites.pkl")
+
+    proteome_lytic_sites_sig = pd.concat(sig_lytic_sites)
+    proteome_lytic_sites_sig.to_csv(result_dir + sample + "_sig_proteome_lytic_sites_sig.tsv", sep='\t')
+    proteome_lytic_sites_sig.to_pickle(result_dir + sample + "_sig_proteome_lytic_sites_sig.pkl")
+```
