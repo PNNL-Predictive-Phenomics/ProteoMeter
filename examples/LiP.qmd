@@ -36,7 +36,7 @@ from utils import *
 ## Cyanobacteria 2023-01-09
 
 ```{python}
-fasta_file = "./data/LiP-Cyano-Exp2/ID_005856_9F874F1E.fasta"
+fasta_file = "./data/P1T1/Crona/uniprot-proteome_UP000005640+reviewed_yes.fasta"
 prot_seq_obj = SeqIO.parse(fasta_file, "fasta")
 prot_seqs = [seq_item for seq_item in prot_seq_obj]
 len(prot_seqs)
@@ -50,182 +50,29 @@ sig_num_thr = 1
 prot_missing_thr = 0.5
 pept_missing_thr = 0.5
 min_pept_count = 1
-sample = "Cyano"
-# sample = "A549"
-# sample = "MRC5"
-workdir = "./data/LiP-" + sample + "-Exp2/"
-result_dir = "./results/20230110_LiP/" + sample + '/'
+experiment_type = "P1T1"
+search_tool = "MaxQuant"
+sample = "Crona"
+data_type = "LiP"
+workdir = f"./data/{experiment_type}/{sample}/{data_type}"
+result_dir = f"./results/{experiment_type}/{sample}"
 Path(result_dir).mkdir(parents=True, exist_ok=True)
-```
-
-```{python}
-trypsin_pept_file = workdir + "Trypsin_only_samples/Semispecific_trypsin/peptides.txt"
-trypsin_prot_file = workdir + "Trypsin_only_samples/Semispecific_trypsin/proteinGroups.txt"
-double_pept_file = workdir + "Double_digested_samples/Semispecific_trypsin/peptides.txt"
-# double_prot_file = workdir + "Double_digested_samples/Semispecific_trypsin/proteinGroups.txt"
-```
-
-```{python}
-trypsin_pept = pd.read_csv(trypsin_pept_file, sep='\t')
-trypsin_prot = pd.read_csv(trypsin_prot_file, sep='\t')
-double_pept = pd.read_csv(double_pept_file, sep='\t')
-# double_prot = pd.read_csv(double_prot_file, sep='\t')
-```
-
-```{python}
-print(double_pept.columns.to_list())
-print(trypsin_pept.columns.to_list())
-```
-
-
-```{python}
-ProteinID_col_prot = "Majority protein IDs"
-ProteinID_col_pept = "Leading razor protein"
-PeptCounts_col = "Peptide counts (all)"
-```
-
-
-```{python}
-trypsin_ctrl_cols = ['Intensity Cyano_Light_T1', 'Intensity Cyano_Light_T2', 'Intensity Cyano_Light_T3', 'Intensity Cyano_Light_T4']
-trypsin_treat_cols = ['Intensity Cyano_Dark_T1', 'Intensity Cyano_Dark_T2', 'Intensity Cyano_Dark_T3', 'Intensity Cyano_Dark_T4']
-trypsin_int_cols = trypsin_ctrl_cols + trypsin_treat_cols
-double_ctrl_cols = ['Intensity Cyano_Light_DD1', 'Intensity Cyano_Light_DD2', 'Intensity Cyano_Light_DD3', 'Intensity Cyano_Light_DD4']
-double_treat_cols = ['Intensity Cyano_Dark_DD1', 'Intensity Cyano_Dark_DD2', 'Intensity Cyano_Dark_DD3', 'Intensity Cyano_Dark_DD4']
-double_int_cols = double_ctrl_cols + double_treat_cols
-```
-
-```{python}
-prot_info_cols = ['id', 'Uniprot', "Fasta headers", "Treat/Control", "Treat/Control_pval", "Scalar"]
-info_cols = ['id', 'Sequence', 'Uniprot', 'Amino acid before', 'Last amino acid', 'Length', 'Start position', 'End position', 'Missed cleavages', "Scalar", "Ctrl missingness", "Treat missingness", "Total missingness", "Control", "Treat", "Treat/Control", "Treat/Control_pval", "Treat/Control_adj-p", "Treat/Control_adj-p_BY", "Treat/Control_adj-p_bonferroni", "Sig Pept num"]
-```
-
-## Cyanobacteria 2023-10-18
-
-```{python}
-data_dir = "./data/LIP_Cyano_Exp3/"
-fasta_file = data_dir + "ID_005856_9F874F1E.fasta"
-prot_seq_obj = SeqIO.parse(fasta_file, "fasta")
-prot_seqs = [seq_item for seq_item in prot_seq_obj]
-len(prot_seqs)
-```
-
-```{python}
-prot_info_cols = ['id', 'Uniprot', "Fasta headers", "Treat/Control", "Treat/Control_pval", "Scalar"]
-info_cols = ['id', 'Sequence', 'Uniprot', 'Amino acid before', 'Last amino acid', 'Length', 'Start position', 'End position', 'Missed cleavages', "Scalar", "Ctrl missingness", "Treat missingness", "Total missingness", "Control", "Treat", "Treat/Control", "Treat/Control_pval", "Treat/Control_adj-p", "Treat/Control_adj-p_BY", "Treat/Control_adj-p_bonferroni", "Sig Pept num"]
-```
-
-```{python}
-id_separator = '@'
-sig_thr = 0.05
-adj_thr = 0.1
-sig_num_thr = 1
-prot_missing_thr = 0.5
-pept_missing_thr = 0.5
-min_pept_count = 1
-# sample = "Dense"
-sample = "Dilute"
-# sample = "Dense2Dilute"
-workdir = data_dir + sample + "/"
-result_dir = "./results/20231025_LiP_Cyano_Exp3/" + sample + '/'
-Path(result_dir).mkdir(parents=True, exist_ok=True)
-```
-
-```{python}
-trypsin_pept_file = workdir + "Trypsin only/peptides.txt"
-trypsin_prot_file = workdir + "Trypsin only/proteinGroups.txt"
-double_pept_file = workdir + "Double digest/peptides.txt"
-# double_prot_file = workdir + "Double digest/proteinGroups.txt"
-```
-
-```{python}
-trypsin_pept = pd.read_csv(trypsin_pept_file, sep='\t')
-trypsin_prot = pd.read_csv(trypsin_prot_file, sep='\t')
-double_pept = pd.read_csv(double_pept_file, sep='\t')
-# double_prot = pd.read_csv(double_prot_file, sep='\t')
-```
-
-```{python}
-print(double_pept.columns.to_list())
-print(trypsin_pept.columns.to_list())
-```
-
-```{python}
-ProteinID_col_prot = "Majority protein IDs"
-ProteinID_col_pept = "Leading razor protein"
-PeptCounts_col = "Peptide counts (all)"
-```
-
-
-```{python}
-trypsin_ctrl_cols = ['LFQ intensity Dense_Light_T1', 'LFQ intensity Dense_Light_T2', 'LFQ intensity Dense_Light_T3', 'LFQ intensity Dense_Light_T4', 'LFQ intensity Dense_Light_T5']
-trypsin_treat_cols = ['LFQ intensity Dense_Dark_T1', 'LFQ intensity Dense_Dark_T2', 'LFQ intensity Dense_Dark_T3', 'LFQ intensity Dense_Dark_T4', 'LFQ intensity Dense_Dark_T5']
-trypsin_int_cols = trypsin_ctrl_cols + trypsin_treat_cols
-double_ctrl_cols = ['LFQ intensity Dense_Light_DD1', 'LFQ intensity Dense_Light_DD2', 'LFQ intensity Dense_Light_DD3', 'LFQ intensity Dense_Light_DD4', 'LFQ intensity Dense_Light_DD5']
-double_treat_cols = ['LFQ intensity Dense_Dark_DD1', 'LFQ intensity Dense_Dark_DD2', 'LFQ intensity Dense_Dark_DD3', 'LFQ intensity Dense_Dark_DD4', 'LFQ intensity Dense_Dark_DD5']
-double_int_cols = double_ctrl_cols + double_treat_cols
-```
-
-
-```{python}
-trypsin_ctrl_cols = ['LFQ intensity Dilute_Light_T1', 'LFQ intensity Dilute_Light_T2', 'LFQ intensity Dilute_Light_T3', 'LFQ intensity Dilute_Light_T4', 'LFQ intensity Dilute_Light_T5']
-trypsin_treat_cols = ['LFQ intensity Dilute_Dark_T1', 'LFQ intensity Dilute_Dark_T2', 'LFQ intensity Dilute_Dark_T3', 'LFQ intensity Dilute_Dark_T4', 'LFQ intensity Dilute_Dark_T5']
-trypsin_int_cols = trypsin_ctrl_cols + trypsin_treat_cols
-double_ctrl_cols = ['LFQ intensity Dilute_Light_DD1', 'LFQ intensity Dilute_Light_DD2', 'LFQ intensity Dilute_Light_DD3', 'LFQ intensity Dilute_Light_DD4', 'LFQ intensity Dilute_Light_DD5']
-double_treat_cols = ['LFQ intensity Dilute_Dark_DD1', 'LFQ intensity Dilute_Dark_DD2', 'LFQ intensity Dilute_Dark_DD3', 'LFQ intensity Dilute_Dark_DD4', 'LFQ intensity Dilute_Dark_DD5']
-double_int_cols = double_ctrl_cols + double_treat_cols
-```
-
-
-```{python}
-trypsin_ctrl_cols = ['LFQ intensity Dense_Light_T1', 'LFQ intensity Dense_Light_T2', 'LFQ intensity Dense_Light_T3', 'LFQ intensity Dense_Light_T4', 'LFQ intensity Dense_Light_T5']
-trypsin_treat_cols = ['LFQ intensity Dilute_Light_T1', 'LFQ intensity Dilute_Light_T2', 'LFQ intensity Dilute_Light_T3', 'LFQ intensity Dilute_Light_T4', 'LFQ intensity Dilute_Light_T5']
-trypsin_int_cols = trypsin_ctrl_cols + trypsin_treat_cols
-double_ctrl_cols = ['LFQ intensity Dense_Light_DD1', 'LFQ intensity Dense_Light_DD2', 'LFQ intensity Dense_Light_DD3', 'LFQ intensity Dense_Light_DD4', 'LFQ intensity Dense_Light_DD5']
-double_treat_cols = ['LFQ intensity Dilute_Light_DD1', 'LFQ intensity Dilute_Light_DD2', 'LFQ intensity Dilute_Light_DD3', 'LFQ intensity Dilute_Light_DD4', 'LFQ intensity Dilute_Light_DD5']
-double_int_cols = double_ctrl_cols + double_treat_cols
-```
-
-
-## Host-pathogen 2023-01-03
-
-```{python}
-fasta_file = "./data/LiP-Nuclear extracts-Exp2/uniprot-proteome_UP000005640+reviewed_yes.fasta"
-prot_seq_obj = SeqIO.parse(fasta_file, "fasta")
-prot_seqs = [seq_item for seq_item in prot_seq_obj]
-len(prot_seqs)
 ```
 
 ```{python}
 prot_info_cols = ['id', 'Uniprot', 'Gene names', 'Protein names', "Treat/Control", "Treat/Control_pval", "Scalar"]
-info_cols = ['id', 'Sequence', 'Uniprot', 'Gene names', 'Protein names', 'Amino acid before', 'Last amino acid', 'Length', 'Start position', 'End position', 'Missed cleavages', "Scalar", "Ctrl missingness", "Treat missingness", "Total missingness", "Control", "Treat", "Treat/Control", "Treat/Control_pval", "Treat/Control_adj-p", "Treat/Control_adj-p_BY", "Treat/Control_adj-p_bonferroni", "Sig Pept num"]
-```
-
-### A549
-
-```{python}
-id_separator = '@'
-sig_thr = 0.05
-adj_thr = 0.1
-sig_num_thr = 1
-prot_missing_thr = 0.5
-pept_missing_thr = 0.5
-min_pept_count = 1
-sample = "A549"
-# sample = "MRC5"
-workdir = "./data/LiP-Nuclear extracts-Exp2/" + sample + " Nuclear extracts/"
-result_dir = "./results/20230110_LiP/" + sample + '/'
-Path(result_dir).mkdir(parents=True, exist_ok=True)
+info_cols = ['id', 'Sequence', 'Uniprot', 'Gene names', 'Protein names', 'Amino acid before', 'Last amino acid', 'Length', 'Start position', 'End position', 'Missed cleavages', "Scalar", "Ctrl missingness", "Treat missingness", "Total missingness", "Control", "Treat", "Treat/Control", "Treat/Control_pval", "Treat/Control_adj-p", "Sig Pept num"]
 ```
 
 ```{python}
-trypsin_pept_file = workdir + "Label free_MaxQuant/Trypsin_only_samples/Semispecific_trypsin/peptides.txt"
-trypsin_prot_file = workdir + "Label free_MaxQuant/Trypsin_only_samples/Semispecific_trypsin/proteinGroups.txt"
-double_pept_file = workdir + "Label free_MaxQuant/Double_digested_samples/Semispecific_trypsin/peptides.txt"
-# double_prot_file = workdir + "Label free_MaxQuant/Double_digested_samples/Semispecific_trypsin/proteinGroups.txt"
+trypsin_pept_file = f"{workdir}/Trypsin only/peptides.txt"
+trypsin_prot_file = f"{workdir}/Trypsin only/proteinGroups.txt"
+double_pept_file = f"{workdir}/Double digest/peptides.txt"
+# double_prot_file = f"{workdir}/Double digest/proteinGroups.txt"
 ```
 
 ```{python}
-trypsin_pept = pd.read_csv(trypsin_pept_file, sep='\t')
+trypsin_pept = pd.read_table(trypsin_pept_file, sep='\t')
 trypsin_prot = pd.read_csv(trypsin_prot_file, sep='\t')
 double_pept = pd.read_csv(double_pept_file, sep='\t')
 # double_prot = pd.read_csv(double_prot_file, sep='\t')
@@ -238,248 +85,19 @@ print(trypsin_pept.columns.to_list())
 
 
 ```{python}
-ProteinID_col_prot = "Majority protein IDs"
-ProteinID_col_pept = "Leading razor protein"
-PeptCounts_col = "Peptide counts (all)"
+if ProteinID_col_pept is not None and ProteinID_col_prot is not None and PeptCounts_col is not None:
+    pass
+elif search_tool.lower() == "maxquant":
+    ProteinID_col_prot = "Majority protein IDs"
+    ProteinID_col_pept = "Leading razor protein"
+    PeptCounts_col = "Peptide counts (all)"
+else:
+    raise NotImplementedError("The error was triggered because either the search tool is not specified or not columns specification are not provided. Please specify the search tool or provide the columns for protein IDs, peptides as well as peptide counts.")
 ```
 
 
 ```{python}
-trypsin_ctrl_cols = ['Intensity A549_T_Mock_1', 'Intensity A549_T_Mock_2', 'Intensity A549_T_Mock_3', 'Intensity A549_T_Mock_4', 'Intensity A549_T_Mock_5']
-trypsin_treat_cols = ['Intensity A549_T_Infected_1', 'Intensity A549_T_Infected_2', 'Intensity A549_T_Infected_3', 'Intensity A549_T_Infected_4', 'Intensity A549_T_Infected_5']
-trypsin_int_cols = trypsin_ctrl_cols + trypsin_treat_cols
-double_ctrl_cols = ['Intensity A549_DD_Mock_1', 'Intensity A549_DD_Mock_2', 'Intensity A549_DD_Mock_3', 'Intensity A549_DD_Mock_4', 'Intensity A549_DD_Mock_5']
-double_treat_cols = ['Intensity A549_DD_Infected_1', 'Intensity A549_DD_Infected_2', 'Intensity A549_DD_Infected_3', 'Intensity A549_DD_Infected_4', 'Intensity A549_DD_Infected_5']
-double_int_cols = double_ctrl_cols + double_treat_cols
-```
-
-### MRC5
-
-```{python}
-id_separator = '@'
-sig_thr = 0.05
-adj_thr = 0.1
-sig_num_thr = 1
-prot_missing_thr = 0.5
-pept_missing_thr = 0.5
-min_pept_count = 1
-# sample = "A549"
-sample = "MRC5"
-workdir = "./data/LiP-Nuclear extracts-Exp2/" + sample + " Nuclear extracts/"
-fasta_file = "./data/LiP-Nuclear extracts-Exp2/uniprot-proteome_UP000005640+reviewed_yes.fasta"
-result_dir = "./results/20230110_LiP/" + sample + '/'
-Path(result_dir).mkdir(parents=True, exist_ok=True)
-```
-
-```{python}
-trypsin_pept_file = workdir + "Label free_MaxQuant/Trypsin_only_samples/Semispecific_trypsin/peptides.txt"
-trypsin_prot_file = workdir + "Label free_MaxQuant/Trypsin_only_samples/Semispecific_trypsin/proteinGroups.txt"
-double_pept_file = workdir + "Label free_MaxQuant/Double_digested_samples/Semispecific_trypsin/peptides.txt"
-# double_prot_file = workdir + "Label free_MaxQuant/Double_digested_samples/Semispecific_trypsin/proteinGroups.txt"
-```
-
-```{python}
-trypsin_pept = pd.read_csv(trypsin_pept_file, sep='\t')
-trypsin_prot = pd.read_csv(trypsin_prot_file, sep='\t')
-double_pept = pd.read_csv(double_pept_file, sep='\t')
-# double_prot = pd.read_csv(double_prot_file, sep='\t')
-```
-
-```{python}
-print(double_pept.columns.to_list())
-print(trypsin_pept.columns.to_list())
-```
-
-
-```{python}
-ProteinID_col_prot = "Majority protein IDs"
-ProteinID_col_pept = "Leading razor protein"
-PeptCounts_col = "Peptide counts (all)"
-```
-
-
-```{python}
-trypsin_ctrl_cols = ['Intensity MRC5_T_Mock_1', 'Intensity MRC5_T_Mock_2', 'Intensity MRC5_T_Mock_3', 'Intensity MRC5_T_Mock_4', 'Intensity MRC5_T_Mock_5']
-trypsin_treat_cols = ['Intensity MRC5_T_Infected_1', 'Intensity MRC5_T_Infected_2', 'Intensity MRC5_T_Infected_3', 'Intensity MRC5_T_Infected_4', 'Intensity MRC5_T_Infected_5']
-trypsin_int_cols = trypsin_ctrl_cols + trypsin_treat_cols
-double_ctrl_cols = ['Intensity MRC5_DD_Mock_1', 'Intensity MRC5_DD_Mock_2', 'Intensity MRC5_DD_Mock_3', 'Intensity MRC5_DD_Mock_4', 'Intensity MRC5_DD_Mock_5']
-double_treat_cols = ['Intensity MRC5_DD_Infected_1', 'Intensity MRC5_DD_Infected_2', 'Intensity MRC5_DD_Infected_3', 'Intensity MRC5_DD_Infected_4', 'Intensity MRC5_DD_Infected_5']
-double_int_cols = double_ctrl_cols + double_treat_cols
-```
-
-## Host-pathogen 2023-06-12
-
-```{python}
-data_folder = "LIP_Lung_Cells_Exp_1"
-result_folder = "20230612_LiP"
-fasta_file = "./data/" + data_folder + "/uniprot-proteome_UP000005640+reviewed_yes.fasta"
-prot_seq_obj = SeqIO.parse(fasta_file, "fasta")
-prot_seqs = [seq_item for seq_item in prot_seq_obj]
-id_separator = '@'
-sig_thr = 0.05
-adj_thr = 0.1
-sig_num_thr = 1
-prot_missing_thr = 0.5
-pept_missing_thr = 0.5
-min_pept_count = 1
-len(prot_seqs)
-```
-
-```{python}
-prot_info_cols = ['id', 'Uniprot', 'Gene names', 'Protein names', "Treat/Control", "Treat/Control_pval", "Scalar"]
-info_cols = ['id', 'Sequence', 'Uniprot', 'Gene names', 'Protein names', 'Amino acid before', 'Last amino acid', 'Length', 'Start position', 'End position', 'Missed cleavages', "Scalar", "Ctrl missingness", "Treat missingness", "Total missingness", "Control", "Treat", "Treat/Control", "Treat/Control_pval", "Treat/Control_adj-p", "Treat/Control_adj-p_BY", "Treat/Control_adj-p_bonferroni", "Sig Pept num"]
-```
-
-### A549
-
-```{python}
-sample = "A549"
-workdir = "./data/" + data_folder + "/" + sample + "/"
-result_dir = "./results/" + result_folder + "/" + sample + '/'
-Path(result_dir).mkdir(parents=True, exist_ok=True)
-```
-
-```{python}
-trypsin_pept_file = workdir + "Trypsin only/peptides.txt"
-trypsin_prot_file = workdir + "Trypsin only/proteinGroups.txt"
-double_pept_file = workdir + "Double digest/peptides.txt"
-# double_prot_file = workdir + "Double digest/proteinGroups.txt"
-```
-
-```{python}
-trypsin_pept = pd.read_csv(trypsin_pept_file, sep='\t')
-trypsin_prot = pd.read_csv(trypsin_prot_file, sep='\t')
-double_pept = pd.read_csv(double_pept_file, sep='\t')
-# double_prot = pd.read_csv(double_prot_file, sep='\t')
-```
-
-```{python}
-print(double_pept.columns.to_list())
-print(trypsin_pept.columns.to_list())
-```
-
-
-```{python}
-ProteinID_col_prot = "Majority protein IDs"
-ProteinID_col_pept = "Leading razor protein"
-PeptCounts_col = "Peptide counts (all)"
-```
-
-
-```{python}
-trypsin_ctrl_cols = ['LFQ intensity A549_C_T_Mock_1', 'LFQ intensity A549_C_T_Mock_2', 'LFQ intensity A549_C_T_Mock_3', 'LFQ intensity A549_C_T_Mock_4', 'LFQ intensity A549_C_T_Mock_5']
-trypsin_treat_cols = ['LFQ intensity A549_C_T_Infected_1', 'LFQ intensity A549_C_T_Infected_2', 'LFQ intensity A549_C_T_Infected_3', 'LFQ intensity A549_C_T_Infected_4', 'LFQ intensity A549_C_T_Infected_5']
-trypsin_int_cols = trypsin_ctrl_cols + trypsin_treat_cols
-double_ctrl_cols = ['LFQ intensity A549_C_DD_Mock_1', 'LFQ intensity A549_C_DD_Mock_2', 'LFQ intensity A549_C_DD_Mock_3', 'LFQ intensity A549_C_DD_Mock_4', 'LFQ intensity A549_C_DD_Mock_5']
-double_treat_cols = ['LFQ intensity A549_C_DD_Infected_1', 'LFQ intensity A549_C_DD_Infected_2', 'LFQ intensity A549_C_DD_Infected_3', 'LFQ intensity A549_C_DD_Infected_4', 'LFQ intensity A549_C_DD_Infected_5']
-double_int_cols = double_ctrl_cols + double_treat_cols
-```
-
-### MRC5
-
-```{python}
-sample = "MRC5"
-workdir = "./data/" + data_folder + "/" + sample + "/"
-result_dir = "./results/" + result_folder + "/" + sample + '/'
-Path(result_dir).mkdir(parents=True, exist_ok=True)
-```
-
-```{python}
-trypsin_pept_file = workdir + "Trypsin only/peptides.txt"
-trypsin_prot_file = workdir + "Trypsin only/proteinGroups.txt"
-double_pept_file = workdir + "Double digest/peptides.txt"
-# double_prot_file = workdir + "Double digest/proteinGroups.txt"
-```
-
-```{python}
-trypsin_pept = pd.read_csv(trypsin_pept_file, sep='\t')
-trypsin_prot = pd.read_csv(trypsin_prot_file, sep='\t')
-double_pept = pd.read_csv(double_pept_file, sep='\t')
-# double_prot = pd.read_csv(double_prot_file, sep='\t')
-```
-
-```{python}
-print(double_pept.columns.to_list())
-print(trypsin_pept.columns.to_list())
-```
-
-
-```{python}
-ProteinID_col_prot = "Majority protein IDs"
-ProteinID_col_pept = "Leading razor protein"
-PeptCounts_col = "Peptide counts (all)"
-```
-
-
-```{python}
-trypsin_ctrl_cols = ['LFQ intensity MRC5_C_T_Mock_1', 'LFQ intensity MRC5_C_T_Mock_2', 'LFQ intensity MRC5_C_T_Mock_3', 'LFQ intensity MRC5_C_T_Mock_4', 'LFQ intensity MRC5_C_T_Mock_5']
-trypsin_treat_cols = ['LFQ intensity MRC5_C_T_Infected_1', 'LFQ intensity MRC5_C_T_Infected_2', 'LFQ intensity MRC5_C_T_Infected_3', 'LFQ intensity MRC5_C_T_Infected_4', 'LFQ intensity MRC5_C_T_Infected_5']
-trypsin_int_cols = trypsin_ctrl_cols + trypsin_treat_cols
-double_ctrl_cols = ['LFQ intensity MRC5_C_DD_Mock_1', 'LFQ intensity MRC5_C_DD_Mock_2', 'LFQ intensity MRC5_C_DD_Mock_3', 'LFQ intensity MRC5_C_DD_Mock_4', 'LFQ intensity MRC5_C_DD_Mock_5']
-double_treat_cols = ['LFQ intensity MRC5_C_DD_Infected_1', 'LFQ intensity MRC5_C_DD_Infected_2', 'LFQ intensity MRC5_C_DD_Infected_3', 'LFQ intensity MRC5_C_DD_Infected_4', 'LFQ intensity MRC5_C_DD_Infected_5']
-double_int_cols = double_ctrl_cols + double_treat_cols
-```
-
-## Host-pathogen Lung Primary Cells 2023-08-02
-
-```{python}
-data_folder = "LIP_Primary_Exp1"
-result_folder = str(datetime.datetime.now()) + '_' + data_folder
-fasta_file = "./data/" + data_folder + "/uniprot-proteome_UP000005640+reviewed_yes.fasta"
-prot_seq_obj = SeqIO.parse(fasta_file, "fasta")
-prot_seqs = [seq_item for seq_item in prot_seq_obj]
-id_separator = '@'
-sig_thr = 0.05
-adj_thr = 0.1
-sig_num_thr = 1
-prot_missing_thr = 0.5
-pept_missing_thr = 0.5
-min_pept_count = 1
-len(prot_seqs)
-```
-
-```{python}
-prot_info_cols = ['id', 'Uniprot', 'Gene names', 'Protein names', "Treat/Control", "Treat/Control_pval", "Scalar"]
-info_cols = ['id', 'Sequence', 'Uniprot', 'Gene names', 'Protein names', 'Amino acid before', 'Last amino acid', 'Length', 'Start position', 'End position', 'Missed cleavages', "Scalar", "Ctrl missingness", "Treat missingness", "Total missingness", "Control", "Treat", "Treat/Control", "Treat/Control_pval", "Treat/Control_adj-p", "Treat/Control_adj-p_BY", "Treat/Control_adj-p_bonferroni", "Sig Pept num"]
-```
-
-### Primary
-
-```{python}
-sample = "Primary"
-workdir = "./data/" + data_folder + "/" + sample + "/"
-result_dir = "./results/" + result_folder + "/" + sample + '/'
-Path(result_dir).mkdir(parents=True, exist_ok=True)
-```
-
-```{python}
-trypsin_pept_file = workdir + "Trypsin only/peptides.txt"
-trypsin_prot_file = workdir + "Trypsin only/proteinGroups.txt"
-double_pept_file = workdir + "Double digest/peptides.txt"
-# double_prot_file = workdir + "Double digest/proteinGroups.txt"
-```
-
-```{python}
-trypsin_pept = pd.read_csv(trypsin_pept_file, sep='\t')
-trypsin_prot = pd.read_csv(trypsin_prot_file, sep='\t')
-double_pept = pd.read_csv(double_pept_file, sep='\t')
-# double_prot = pd.read_csv(double_prot_file, sep='\t')
-```
-
-```{python}
-print(double_pept.columns.to_list())
-print(trypsin_pept.columns.to_list())
-```
-
-
-```{python}
-ProteinID_col_prot = "Majority protein IDs"
-ProteinID_col_pept = "Leading razor protein"
-PeptCounts_col = "Peptide counts (all)"
-```
-
-
-```{python}
+## Need to implement checking the quantification columns!!!
 trypsin_ctrl_cols = ['LFQ intensity Mock_1', 'LFQ intensity Mock_2', 'LFQ intensity Mock_3', 'LFQ intensity Mock_4', 'LFQ intensity Mock_5']
 trypsin_treat_cols = ['LFQ intensity Infected_1', 'LFQ intensity Infected_2', 'LFQ intensity Infected_3', 'LFQ intensity Infected_4', 'LFQ intensity Infected_5']
 trypsin_int_cols = trypsin_ctrl_cols + trypsin_treat_cols
@@ -487,121 +105,6 @@ double_ctrl_cols = ['LFQ intensity Mock_1', 'LFQ intensity Mock_2', 'LFQ intensi
 double_treat_cols = ['LFQ intensity Infected_1', 'LFQ intensity Infected_2', 'LFQ intensity Infected_3', 'LFQ intensity Infected_4', 'LFQ intensity Infected_5']
 double_int_cols = double_ctrl_cols + double_treat_cols
 ```
-
-
-## Host-pathogen 2023-11-09
-
-```{python}
-data_folder = "LiP_NuEx_Semispecific_Exp2"
-result_folder = str(datetime.datetime.now()) + '_' + data_folder
-fasta_file = "./data/" + data_folder + "/uniprot-proteome_UP000005640+reviewed_yes.fasta"
-prot_seq_obj = SeqIO.parse(fasta_file, "fasta")
-prot_seqs = [seq_item for seq_item in prot_seq_obj]
-id_separator = '@'
-sig_thr = 0.05
-adj_thr = 0.1
-sig_num_thr = 1
-prot_missing_thr = 0.5
-pept_missing_thr = 0.5
-min_pept_count = 1
-len(prot_seqs)
-```
-
-```{python}
-prot_info_cols = ['id', 'Uniprot', 'Gene names', 'Protein names', "Treat/Control", "Treat/Control_pval", "Scalar"]
-info_cols = ['id', 'Sequence', 'Uniprot', 'Gene names', 'Protein names', 'Amino acid before', 'Last amino acid', 'Length', 'Start position', 'End position', 'Missed cleavages', "Scalar", "Ctrl missingness", "Treat missingness", "Total missingness", "Control", "Treat", "Treat/Control", "Treat/Control_pval", "Treat/Control_adj-p", "Treat/Control_adj-p_BY", "Treat/Control_adj-p_bonferroni", "Sig Pept num"]
-```
-
-### A549
-
-```{python}
-sample = "A549"
-workdir = "./data/" + data_folder + "/" + sample + "/"
-result_dir = "./results/" + result_folder + "/" + sample + '/'
-Path(result_dir).mkdir(parents=True, exist_ok=True)
-```
-
-```{python}
-trypsin_pept_file = workdir + "Trypsin only/peptides.txt"
-trypsin_prot_file = workdir + "Trypsin only/proteinGroups.txt"
-double_pept_file = workdir + "Double digest/peptides.txt"
-# double_prot_file = workdir + "Double digest/proteinGroups.txt"
-```
-
-```{python}
-trypsin_pept = pd.read_csv(trypsin_pept_file, sep='\t')
-trypsin_prot = pd.read_csv(trypsin_prot_file, sep='\t')
-double_pept = pd.read_csv(double_pept_file, sep='\t')
-# double_prot = pd.read_csv(double_prot_file, sep='\t')
-```
-
-```{python}
-print(double_pept.columns.to_list())
-print(trypsin_pept.columns.to_list())
-```
-
-
-```{python}
-ProteinID_col_prot = "Majority protein IDs"
-ProteinID_col_pept = "Leading razor protein"
-PeptCounts_col = "Peptide counts (all)"
-```
-
-
-```{python}
-trypsin_ctrl_cols = ['LFQ intensity A549_T_Mock_1', 'LFQ intensity A549_T_Mock_2', 'LFQ intensity A549_T_Mock_3', 'LFQ intensity A549_T_Mock_4', 'LFQ intensity A549_T_Mock_5']
-trypsin_treat_cols = ['LFQ intensity A549_T_Infected_1', 'LFQ intensity A549_T_Infected_2', 'LFQ intensity A549_T_Infected_3', 'LFQ intensity A549_T_Infected_4', 'LFQ intensity A549_T_Infected_5']
-trypsin_int_cols = trypsin_ctrl_cols + trypsin_treat_cols
-double_ctrl_cols = ['LFQ intensity A549_DD_Mock_1', 'LFQ intensity A549_DD_Mock_2', 'LFQ intensity A549_DD_Mock_3', 'LFQ intensity A549_DD_Mock_4', 'LFQ intensity A549_DD_Mock_5']
-double_treat_cols = ['LFQ intensity A549_DD_Infected_1', 'LFQ intensity A549_DD_Infected_2', 'LFQ intensity A549_DD_Infected_3', 'LFQ intensity A549_DD_Infected_4', 'LFQ intensity A549_DD_Infected_5']
-double_int_cols = double_ctrl_cols + double_treat_cols
-```
-
-### MRC5
-
-```{python}
-sample = "MRC5"
-workdir = "./data/" + data_folder + "/" + sample + "/"
-result_dir = "./results/" + result_folder + "/" + sample + '/'
-Path(result_dir).mkdir(parents=True, exist_ok=True)
-```
-
-```{python}
-trypsin_pept_file = workdir + "Trypsin only/peptides.txt"
-trypsin_prot_file = workdir + "Trypsin only/proteinGroups.txt"
-double_pept_file = workdir + "Double digest/peptides.txt"
-# double_prot_file = workdir + "Double digest/proteinGroups.txt"
-```
-
-```{python}
-trypsin_pept = pd.read_csv(trypsin_pept_file, sep='\t')
-trypsin_prot = pd.read_csv(trypsin_prot_file, sep='\t')
-double_pept = pd.read_csv(double_pept_file, sep='\t')
-# double_prot = pd.read_csv(double_prot_file, sep='\t')
-```
-
-```{python}
-print(double_pept.columns.to_list())
-print(trypsin_pept.columns.to_list())
-```
-
-
-```{python}
-ProteinID_col_prot = "Majority protein IDs"
-ProteinID_col_pept = "Leading razor protein"
-PeptCounts_col = "Peptide counts (all)"
-```
-
-
-```{python}
-trypsin_ctrl_cols = ['LFQ intensity MRC5_T_Mock_1', 'LFQ intensity MRC5_T_Mock_2', 'LFQ intensity MRC5_T_Mock_3', 'LFQ intensity MRC5_T_Mock_4', 'LFQ intensity MRC5_T_Mock_5']
-trypsin_treat_cols = ['LFQ intensity MRC5_T_Infected_1', 'LFQ intensity MRC5_T_Infected_2', 'LFQ intensity MRC5_T_Infected_3', 'LFQ intensity MRC5_T_Infected_4', 'LFQ intensity MRC5_T_Infected_5']
-trypsin_int_cols = trypsin_ctrl_cols + trypsin_treat_cols
-double_ctrl_cols = ['LFQ intensity MRC5_DD_Mock_1', 'LFQ intensity MRC5_DD_Mock_2', 'LFQ intensity MRC5_DD_Mock_3', 'LFQ intensity MRC5_DD_Mock_4', 'LFQ intensity MRC5_DD_Mock_5']
-double_treat_cols = ['LFQ intensity MRC5_DD_Infected_1', 'LFQ intensity MRC5_DD_Infected_2', 'LFQ intensity MRC5_DD_Infected_3', 'LFQ intensity MRC5_DD_Infected_4', 'LFQ intensity MRC5_DD_Infected_5']
-double_int_cols = double_ctrl_cols + double_treat_cols
-```
-
 
 
 #################################################################################
@@ -619,21 +122,17 @@ print(trypsin_prot.shape)
 
 
 ```{python}
-trypsin_pept = trypsin_pept[(trypsin_pept["Reverse"].isna()) & (trypsin_pept["Potential contaminant"].isna()) & (~trypsin_pept[ProteinID_col_pept].str.contains("(?i)Contaminant")) & (~trypsin_pept[ProteinID_col_pept].str.contains("(?i)REV__")) & (~trypsin_pept[ProteinID_col_pept].str.contains("(?i)CON__"))].copy()
-
-trypsin_pept["Uniprot"] = trypsin_pept[ProteinID_col_pept].copy()
-
-trypsin_prot = trypsin_prot[(trypsin_prot["Only identified by site"].isna()) & (trypsin_prot["Reverse"].isna()) & (trypsin_prot["Potential contaminant"].isna()) & (~trypsin_prot[ProteinID_col_prot].str.contains("(?i)Contaminant")) & (~trypsin_prot[ProteinID_col_prot].str.contains("(?i)REV__")) & (~trypsin_prot[ProteinID_col_prot].str.contains("CON__"))].copy()
-
-trypsin_prot["Uniprot"] = [ids.split(';')[0] for ids in trypsin_prot[ProteinID_col_prot]]
-
-double_pept = double_pept[(double_pept["Reverse"].isna()) & (double_pept["Potential contaminant"].isna()) & (~double_pept[ProteinID_col_pept].str.contains("(?i)Contaminant")) & (~double_pept[ProteinID_col_pept].str.contains("(?i)REV__")) & (~double_pept[ProteinID_col_pept].str.contains("(?i)CON__"))].copy()
-
-double_pept["Uniprot"] = double_pept[ProteinID_col_pept].copy()
-
-# double_prot = double_prot[(double_prot["Only identified by site"].isna()) & (double_prot["Reverse"].isna()) & (double_prot["Potential contaminant"].isna()) & (~double_prot[ProteinID_col_prot].str.contains("(?i)Contaminant")) & (~double_prot[ProteinID_col_prot].str.contains("(?i)REV__")) & (~double_prot[ProteinID_col_prot].str.contains("(?i)CON__"))]
-
-# double_prot["Uniprot"] = [ids.split(';')[0] for ids in double_prot[ProteinID_col_prot]]
+if search_tool.lower() == "maxquant":
+    trypsin_pept = trypsin_pept[(trypsin_pept["Reverse"].isna()) & (trypsin_pept["Potential contaminant"].isna()) & (~trypsin_pept[ProteinID_col_pept].str.contains("(?i)Contaminant")) & (~trypsin_pept[ProteinID_col_pept].str.contains("(?i)REV__")) & (~trypsin_pept[ProteinID_col_pept].str.contains("(?i)CON__"))].copy()
+    trypsin_pept["Uniprot"] = trypsin_pept[ProteinID_col_pept].copy()
+    trypsin_prot = trypsin_prot[(trypsin_prot["Only identified by site"].isna()) & (trypsin_prot["Reverse"].isna()) & (trypsin_prot["Potential contaminant"].isna()) & (~trypsin_prot[ProteinID_col_prot].str.contains("(?i)Contaminant")) & (~trypsin_prot[ProteinID_col_prot].str.contains("(?i)REV__")) & (~trypsin_prot[ProteinID_col_prot].str.contains("CON__"))].copy()
+    trypsin_prot["Uniprot"] = [ids.split(';')[0] for ids in trypsin_prot[ProteinID_col_prot]]
+    double_pept = double_pept[(double_pept["Reverse"].isna()) & (double_pept["Potential contaminant"].isna()) & (~double_pept[ProteinID_col_pept].str.contains("(?i)Contaminant")) & (~double_pept[ProteinID_col_pept].str.contains("(?i)REV__")) & (~double_pept[ProteinID_col_pept].str.contains("(?i)CON__"))].copy()
+    double_pept["Uniprot"] = double_pept[ProteinID_col_pept].copy()
+    # double_prot = double_prot[(double_prot["Only identified by site"].isna()) & (double_prot["Reverse"].isna()) & (double_prot["Potential contaminant"].isna()) & (~double_prot[ProteinID_col_prot].str.contains("(?i)Contaminant")) & (~double_prot[ProteinID_col_prot].str.contains("(?i)REV__")) & (~double_prot[ProteinID_col_prot].str.contains("(?i)CON__"))]
+    # double_prot["Uniprot"] = [ids.split(';')[0] for ids in double_prot[ProteinID_col_prot]]
+else:
+    warnings.warn("Please specify the search tool or user need to filter the data by themselves. From here forward, data are treated as filtered already!", UserWarning)
 ```
 
 ```{python}
