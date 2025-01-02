@@ -15,7 +15,10 @@
   "ignore": [
     "src/oldstuff"
   ],
-  "reportMissingImports": true,
+  "typeCheckingMode": "strict",
   "reportMissingTypeStubs": false,
-  "pythonVersion": "3.11"
+  "reportUnnecessaryCast": "error",
+  "reportUnnecessaryTypeIgnoreComment": "error",
+  "reportUnknownMemberType": "none",
+  "pythonVersion": "3.10"
 }
