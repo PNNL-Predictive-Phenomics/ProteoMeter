@@ -1,11 +1,13 @@
 # type: ignore
-
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Thu Jan 18 09:02:15 2024
 
 @author: cies677
+
+>>> 1+1
+2
+>>> 1+2
+3
 """
 
 import csv

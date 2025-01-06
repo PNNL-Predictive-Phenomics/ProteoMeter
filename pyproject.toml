@@ -28,6 +28,7 @@ proteometer = { path = ".", editable = true }
 
 [tool.pixi.tasks]
 test = { cmd = "pytest tests" }
+doctest = { cmd = "python -m doctest src/proteometer/*.py" }
 lint = { cmd = "ruff check src tests" }
 typecheck = { cmd = "pyright src tests" }
 doc = { cmd = "sphinx-build -M html docs docs/_build" }
