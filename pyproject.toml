@@ -59,7 +59,7 @@ pythonpath = "src"
 
 [tool.pyright]
 exclude = ["docs", "PhenoMeters_proteometer.egg-info"]
-include = ["src"]
+include = ["src/proteometer"]
 typeCheckingMode = "strict"
 reportMissingTypeStubs = false
 reportUnnecessaryCast = "error"
