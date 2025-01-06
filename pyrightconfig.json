@@ -1,5 +1,4 @@
 {
-  "comments": "This is for pylance extension of vscode. Remove me if you're not intented to use vscode.",
   "exclude": [
     ".git",
     ".eggs",
@@ -12,9 +11,7 @@
     "**/__pycache__",
     "PhenoMeters_proteometer.egg-info"
   ],
-  "ignore": [
-    "src/oldstuff"
-  ],
+  "ignore": [],
   "typeCheckingMode": "strict",
   "reportMissingTypeStubs": false,
   "reportUnnecessaryCast": "error",
