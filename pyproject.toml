@@ -27,16 +27,20 @@ platforms = ["osx-64", "osx-arm64", "linux-64", "win-64", "linux-aarch64"]
 proteometer = { path = ".", editable = true }
 
 [tool.pixi.tasks]
+test = { cmd = "pytest tests" }
+lint = { cmd = "ruff check src tests" }
+typecheck = { cmd = "pyright src tests" }
 
 [tool.pixi.dependencies]
 python = ">=3.12.5,<3.13"
 
 [dependency-groups]
-dev = ["ruff", "pandas-stubs"]
+dev = ["pandas-stubs"]
 test = ["pytest"]
+lint = ["ruff", "pyright>=1.1.391,<2"]
 
 [tool.pixi.environments]
-default = { features = ["dev", "test"] }
+default = { features = ["dev", "test", "lint"] }
 test = { features = ["test"] }
 
 [tool.pytest.ini_options]
