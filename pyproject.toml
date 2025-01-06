@@ -56,3 +56,13 @@ docs = { features = ["docs"] }
 [tool.pytest.ini_options]
 addopts = ["--import-mode=importlib"]
 pythonpath = "src"
+
+[tool.pyright]
+exclude = ["docs", "PhenoMeters_proteometer.egg-info"]
+include = ["src"]
+typeCheckingMode = "strict"
+reportMissingTypeStubs = false
+reportUnnecessaryCast = "error"
+reportUnnecessaryTypeIgnoreComment = "error"
+reportUnknownMemberType = "none"
+pythonVersion = "3.10"
