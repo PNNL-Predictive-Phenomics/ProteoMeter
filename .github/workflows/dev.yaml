@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ pixi-migration ]
+  pull_request:
 
 jobs:
   test:
@@ -17,3 +17,4 @@ jobs:
     - run: pixi run lint
     - run: pixi run typecheck
     - run: pixi run test
+    - run: pixi run -e docs doc

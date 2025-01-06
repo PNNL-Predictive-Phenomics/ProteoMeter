@@ -30,6 +30,7 @@ proteometer = { path = ".", editable = true }
 test = { cmd = "pytest tests" }
 lint = { cmd = "ruff check src tests" }
 typecheck = { cmd = "pyright src tests" }
+doc = { cmd = "sphinx-build -M html docs docs/_build" }
 
 [tool.pixi.dependencies]
 python = ">=3.12.5,<3.13"
@@ -38,10 +39,18 @@ python = ">=3.12.5,<3.13"
 dev = ["pandas-stubs"]
 test = ["pytest"]
 lint = ["ruff", "pyright>=1.1.391,<2"]
+docs = [
+    "sphinx",
+    "sphinx-toolbox",
+    "pydata-sphinx-theme",
+    "sphinx-copybutton",
+    "sphinx-autoapi",
+]
 
 [tool.pixi.environments]
 default = { features = ["dev", "test", "lint"] }
 test = { features = ["test"] }
+docs = { features = ["docs"] }
 
 [tool.pytest.ini_options]
 addopts = ["--import-mode=importlib"]
