@@ -3,7 +3,6 @@ import numpy as np
 import pandas as pd
 import pingouin as pg
 import scipy as sp
-from inmoose.pycombat import pycombat_norm
 
 
 def adjusted_p_value(pd_series, ignore_na=True, filling_val=1):
