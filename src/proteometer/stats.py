@@ -249,39 +249,3 @@ def calculate_all_pairwise_scalars(
             prot, pairwise_ttest_group[0], sig_type, sig_thr
         )
     return prot
-
-
-# Batch corrrection using ComBat
-def combat_batch_correction(
-    df,
-    int_cols,
-    metadata,
-    batch_col="Batch",
-    sample_col="Sample",
-    covar_mod=None,
-    par_prior=True,
-    prior_plots=False,
-    mean_only=False,
-    ref_batch=None,
-    precision=None,
-    na_cov_action="raise",
-    **kwargs,
-):
-    df_combat = df.copy()
-    batch_dict = pd.Series(
-        metadata[batch_col].values, index=metadata[sample_col]
-    ).to_dict()
-    batch_indices = [batch_dict[int_col] for int_col in int_cols]
-    df_filtered = df_combat[df_combat[int_cols].isna().sum(axis=1) <= 0].copy()
-    df_filtered[int_cols] = pycombat_norm(
-        df_filtered[int_cols],
-        batch_indices,
-        covar_mod,
-        par_prior,
-        prior_plots,
-        mean_only,
-        ref_batch,
-        precision,
-        na_cov_action,
-    )
-    return df_filtered
