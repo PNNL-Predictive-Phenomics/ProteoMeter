@@ -43,7 +43,7 @@ python = ">=3.12.5,<3.13"
 [dependency-groups]
 dev = ["pandas-stubs"]
 test = ["pytest"]
-lint = ["ruff", "pyright>=1.1.391,<2"]
+lint = ["ruff", "pyright>=1.1.396,<2"]
 docs = [
     "sphinx",
     "sphinx-toolbox",
