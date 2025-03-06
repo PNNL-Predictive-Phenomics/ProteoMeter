@@ -77,15 +77,3 @@ def count_site_number_with_global_proteomics(
     for uniprot in site_number.index:
         df.loc[df[id_col] == uniprot, site_number_col] = site_number[uniprot]
     return df
-
-
-def select_lytic_sites(site_df, site_type="prok", site_type_col="Lytic site type"):
-    """_summary_
-
-    Args:
-        site_df (_type_): _description_
-        site_type (str, optional): _description_. Defaults to "prok".
-        site_type_col (str, optional): _description_. Defaults to "Lytic site type".
-    """
-    site_df_out = site_df[site_df[site_type_col] == site_type].copy()
-    return site_df_out

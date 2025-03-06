@@ -1,6 +1,5 @@
 # type: ignore
 import re
-from warnings import deprecated
 
 import numpy as np
 import pandas as pd
@@ -615,7 +614,18 @@ def LiP_rollup_to_lytic_site(
         return None
 
 
-@deprecated
+def select_lytic_sites(site_df, site_type="prok", site_type_col="Lytic site type"):
+    """_summary_
+
+    Args:
+        site_df (_type_): _description_
+        site_type (str, optional): _description_. Defaults to "prok".
+        site_type_col (str, optional): _description_. Defaults to "Lytic site type".
+    """
+    site_df_out = site_df[site_df[site_type_col] == site_type].copy()
+    return site_df_out
+
+
 def LiP_median_rollup_to_site(
     pept,
     int_cols,
@@ -633,10 +643,9 @@ def LiP_median_rollup_to_site(
     multiply_rollup_counts=True,
     ignore_NA=True,
 ):
-    pass
+    raise DeprecationWarning("Deprecated")
 
 
-@deprecated
 def LiP_mean_rollup_to_site(
     pept,
     int_cols,
@@ -654,10 +663,9 @@ def LiP_mean_rollup_to_site(
     multiply_rollup_counts=True,
     ignore_NA=True,
 ):
-    pass
+    raise DeprecationWarning("Deprecated")
 
 
-@deprecated
 def LiP_median_rollup_to_lytic_site(
     df,
     int_cols,
@@ -677,10 +685,9 @@ def LiP_median_rollup_to_lytic_site(
     ignore_NA=True,
     alternative_protease="ProK",
 ):
-    pass
+    raise DeprecationWarning("Deprecated")
 
 
-@deprecated
 def LiP_mean_rollup_to_lytic_site(
     df,
     int_cols,
@@ -700,4 +707,4 @@ def LiP_mean_rollup_to_lytic_site(
     ignore_NA=True,
     alternative_protease="ProK",
 ):
-    pass
+    raise DeprecationWarning("Deprecated")
