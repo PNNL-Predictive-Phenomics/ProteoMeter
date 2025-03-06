@@ -3180,7 +3180,7 @@ packages:
 - pypi: .
   name: proteometer
   version: 0.1.0
-  sha256: cde7a3ce76f0b43e9fbca5b6b200cb56457292233b163186ef5d371d880d4598
+  sha256: 38105340ddc3765905a53b4ed18b86643598eef2b4de515bf48a0a1052d49ce4
   requires_dist:
   - numpy>=2.2.1,<3
   - pandas>=2.2.3,<3

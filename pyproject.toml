@@ -35,10 +35,10 @@ doctest = { cmd = "python -m doctest src/proteometer/*.py" }
 lint = { cmd = "ruff check src tests" }
 typecheck = { cmd = "pyright src tests" }
 doc = { cmd = "sphinx-build -M html docs docs/_build" }
+all_checks = { cmd = "ruff check src tests && pyright src tests && python -m doctest src/proteometer/*.py && pytest tests" }
 
 [tool.pixi.dependencies]
 python = ">=3.12.5,<3.13"
-
 
 [dependency-groups]
 dev = ["pandas-stubs"]
