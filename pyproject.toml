@@ -13,6 +13,9 @@ dependencies = [
     "scipy>=1.14.1,<2",
     "statsmodels>=0.14.4,<0.15",
     "biopython>=1.84,<2",
+    "matplotlib>=3.10.1,<4",
+    "pingouin>=0.5.5,<0.6",
+    "seaborn>=0.13.2,<0.14",
 ]
 
 [build-system]
@@ -32,6 +35,7 @@ doctest = { cmd = "python -m doctest src/proteometer/*.py" }
 lint = { cmd = "ruff check src tests" }
 typecheck = { cmd = "pyright src tests" }
 doc = { cmd = "sphinx-build -M html docs docs/_build" }
+all_checks = { cmd = "ruff check src tests && pyright src tests && python -m doctest src/proteometer/*.py && pytest tests" }
 
 [tool.pixi.dependencies]
 python = ">=3.12.5,<3.13"
@@ -39,7 +43,7 @@ python = ">=3.12.5,<3.13"
 [dependency-groups]
 dev = ["pandas-stubs"]
 test = ["pytest"]
-lint = ["ruff", "pyright>=1.1.391,<2"]
+lint = ["ruff", "pyright>=1.1.396,<2"]
 docs = [
     "sphinx",
     "sphinx-toolbox",
