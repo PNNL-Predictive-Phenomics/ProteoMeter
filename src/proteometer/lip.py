@@ -179,7 +179,6 @@ def select_tryptic_pattern(
     return protein
 
 
-# This function is to analyze the trypic pattern of the peptides in LiP pept dataframe
 def analyze_tryptic_pattern(
     protein,
     sequence,
@@ -213,6 +212,9 @@ def analyze_tryptic_pattern(
         protein[(protein["pept_type"] == "Semi-tryptic")].copy().shape[0]
     )
 
+    pairwise_ttest_names = [
+        pairwise_ttest_group[0] for pairwise_ttest_group in pairwise_ttest_groups
+    ]
     if len(groups) > 2:
         sig_semi_pepts = protein[
             (protein["pept_type"] == "Semi-tryptic")
@@ -220,23 +222,20 @@ def analyze_tryptic_pattern(
         ].copy()
         protein[f"ANOVA_{anova_type} Sig Semi Pept num"] = sig_semi_pepts.shape[0]
 
-    pairwise_ttest_names = [
-        pairwise_ttest_group[0] for pairwise_ttest_group in pairwise_ttest_groups
-    ]
-    if sig_semi_pepts.shape[0] != 0:
-        protein[f"Max absFC of All ANOVA_{anova_type} Sig Semi Pept"] = np.nanmax(
-            sig_semi_pepts[pairwise_ttest_names].abs().values
-        )
-        protein[f"Sum absFC of All ANOVA_{anova_type} Sig Semi Pept"] = np.nansum(
-            sig_semi_pepts[pairwise_ttest_names].abs().values
-        )
-        protein[f"Median absFC of All ANOVA_{anova_type} Sig Semi Pept"] = np.nanmedian(
-            sig_semi_pepts[pairwise_ttest_names].abs().values
-        )
-    else:
-        protein[f"Max absFC of All ANOVA_{anova_type} Sig Semi Pept"] = np.nan
-        protein[f"Sum absFC of All ANOVA_{anova_type} Sig Semi Pept"] = np.nan
-        protein[f"Median absFC of All ANOVA_{anova_type} Sig Semi Pept"] = np.nan
+        if sig_semi_pepts.shape[0] != 0:
+            protein[f"Max absFC of All ANOVA_{anova_type} Sig Semi Pept"] = np.nanmax(
+                sig_semi_pepts[pairwise_ttest_names].abs().values
+            )
+            protein[f"Sum absFC of All ANOVA_{anova_type} Sig Semi Pept"] = np.nansum(
+                sig_semi_pepts[pairwise_ttest_names].abs().values
+            )
+            protein[f"Median absFC of All ANOVA_{anova_type} Sig Semi Pept"] = (
+                np.nanmedian(sig_semi_pepts[pairwise_ttest_names].abs().values)
+            )
+        else:
+            protein[f"Max absFC of All ANOVA_{anova_type} Sig Semi Pept"] = np.nan
+            protein[f"Sum absFC of All ANOVA_{anova_type} Sig Semi Pept"] = np.nan
+            protein[f"Median absFC of All ANOVA_{anova_type} Sig Semi Pept"] = np.nan
 
     for pairwise_ttest_name in pairwise_ttest_names:
         sig_semi_pepts = protein[
@@ -340,6 +339,7 @@ def LiP_rollup_to_site(
     Raises:
         ValueError: _description_
     """
+    raise DeprecationWarning("Deprecated")
     # seq_len = len(sequence)
     if clean_pept_col not in pept.columns.to_list():
         pept = get_tryptic_types(pept, sequence, peptide_col, clean_pept_col)
@@ -477,6 +477,7 @@ def LiP_rollup_to_lytic_site(
         sequence (_type_): _description_
         description (str, optional): _description_. Defaults to "".
     """
+    raise DeprecationWarning("Deprecated")
     protein = df.copy()
     # protein.reset_index(drop=True, inplace=True)
     seq_len = len(sequence)
