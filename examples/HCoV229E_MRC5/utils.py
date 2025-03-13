@@ -1063,16 +1063,16 @@ def analyze_tryptic_pattern(protein, sequence, pairwise_ttest_groups, groups, de
     if len(groups) > 2:
         sig_semi_pepts = protein[(protein["pept_type"] == "Semi-tryptic") & (protein[f"ANOVA_{anova_type}_{sig_type}"] < sig_thr)].copy()
         protein[f"ANOVA_{anova_type} Sig Semi Pept num"] = sig_semi_pepts.shape[0]
+        if sig_semi_pepts.shape[0] != 0:
+            protein[f"Max absFC of All ANOVA_{anova_type} Sig Semi Pept"] = np.nanmax(sig_semi_pepts[pairwise_ttest_names].abs().values)
+            protein[f"Sum absFC of All ANOVA_{anova_type} Sig Semi Pept"] = np.nansum(sig_semi_pepts[pairwise_ttest_names].abs().values)
+            protein[f"Median absFC of All ANOVA_{anova_type} Sig Semi Pept"] = np.nanmedian(sig_semi_pepts[pairwise_ttest_names].abs().values)
+        else:
+            protein[f"Max absFC of All ANOVA_{anova_type} Sig Semi Pept"] = np.nan
+            protein[f"Sum absFC of All ANOVA_{anova_type} Sig Semi Pept"] = np.nan
+            protein[f"Median absFC of All ANOVA_{anova_type} Sig Semi Pept"] = np.nan
 
     pairwise_ttest_names = [pairwise_ttest_group[0] for pairwise_ttest_group in pairwise_ttest_groups]
-    if sig_semi_pepts.shape[0] != 0:
-        protein[f"Max absFC of All ANOVA_{anova_type} Sig Semi Pept"] = np.nanmax(sig_semi_pepts[pairwise_ttest_names].abs().values)
-        protein[f"Sum absFC of All ANOVA_{anova_type} Sig Semi Pept"] = np.nansum(sig_semi_pepts[pairwise_ttest_names].abs().values)
-        protein[f"Median absFC of All ANOVA_{anova_type} Sig Semi Pept"] = np.nanmedian(sig_semi_pepts[pairwise_ttest_names].abs().values)
-    else:
-        protein[f"Max absFC of All ANOVA_{anova_type} Sig Semi Pept"] = np.nan
-        protein[f"Sum absFC of All ANOVA_{anova_type} Sig Semi Pept"] = np.nan
-        protein[f"Median absFC of All ANOVA_{anova_type} Sig Semi Pept"] = np.nan
 
     for pairwise_ttest_name in pairwise_ttest_names:
         sig_semi_pepts = protein[(protein["pept_type"] == "Semi-tryptic") & (protein[f"{pairwise_ttest_name}_{sig_type}"] < sig_thr)].copy()
