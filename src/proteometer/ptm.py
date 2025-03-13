@@ -62,6 +62,7 @@ def ptm_TMT_normalization(df2transform, global_pept, int_cols):
     Args:
         df2transform (_type_): _description_
     """
+    raise DeprecationWarning("Deprecated")
     global_filtered = global_pept[global_pept[int_cols].isna().sum(axis=1) == 0].copy()
     global_medians = global_filtered[int_cols].median(axis=0, skipna=True)
     df_transformed = df2transform.copy()
@@ -82,6 +83,7 @@ def ptm_batch_correction(
     sample_col="Sample",
     **kwargs,
 ):
+    raise DeprecationWarning("Deprecated")
     df = df4batcor.copy()
     metadata = metadata_ori.copy()
     if batch_correct_samples is None:
@@ -138,6 +140,7 @@ def ptm_rollup_to_site(
     Returns:
         _type_: _description_
     """
+    raise DeprecationWarning("Deprecated")
     df = df_ori.reset_index(drop=True)
     info_cols = [col for col in df.columns if col not in int_cols]
 
@@ -230,6 +233,7 @@ def ptm_median_rollup_to_site(
     Returns:
         _type_: _description_
     """
+    raise DeprecationWarning("Deprecated")
     df = df_ori.reset_index(drop=True)
     info_cols = [col for col in df.columns if col not in int_cols]
 
@@ -282,6 +286,7 @@ def ptm_mean_rollup_to_site(
     Returns:
         _type_: _description_
     """
+    raise DeprecationWarning("Deprecated")
     df = df_ori.reset_index(drop=True)
     info_cols = [col for col in df.columns if col not in int_cols]
 

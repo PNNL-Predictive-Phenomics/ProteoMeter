@@ -107,7 +107,7 @@ def median_normalization(
     return df_transformed
 
 
-def anova(df, anova_cols, metadata_ori, anova_factors=["Group"]):
+def anova(df, anova_cols, metadata_ori, anova_factors=["Group"], sample_col="Sample"):
     """_summary_
 
     Args:
@@ -119,7 +119,7 @@ def anova(df, anova_cols, metadata_ori, anova_factors=["Group"]):
     Returns:
         _type_: _description_
     """
-    metadata = metadata_ori[metadata_ori["Sample"].isin(anova_cols)].copy()
+    metadata = metadata_ori[metadata_ori[sample_col].isin(anova_cols)].copy()
 
     # df = df.drop(columns=["ANOVA_[one-way]_pval", "ANOVA_[one-way]_adj-p"], errors='ignore')
 
@@ -141,7 +141,7 @@ def anova(df, anova_cols, metadata_ori, anova_factors=["Group"]):
         df_id = row[0]
         df_f = row[1]
         df_f = pd.DataFrame(df_f).loc[anova_cols].astype(float)
-        df_f = pd.merge(df_f, metadata, left_index=True, right_on="Sample")
+        df_f = pd.merge(df_f, metadata, left_index=True, right_on=sample_col)
 
         try:
             aov_f = pg.anova(data=df_f, dv=df_id, between=anova_factors, detailed=True)
