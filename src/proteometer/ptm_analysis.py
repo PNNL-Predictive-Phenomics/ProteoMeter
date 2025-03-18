@@ -11,7 +11,7 @@ import proteometer.stats as stats
 from proteometer.utils import check_missingness, generate_index
 
 
-def lip_analysis(par: Params | None = None):
+def ptm_analysis(par: Params | None = None):
     if par is None:
         par = Params(ptm_version=True)
 
