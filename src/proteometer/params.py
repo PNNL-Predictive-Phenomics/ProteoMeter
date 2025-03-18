@@ -3,8 +3,9 @@ import os
 
 
 # TODO: make configurable by user with a config file
+# for now, the ptm_version parameter is a dirty hack to get things going
 class Params:
-    def __init__(self):
+    def __init__(self, ptm_version=False):
         self.working_dir = "."
         self.data_dir = f"{os.path.abspath(self.working_dir)}/data/LiP"  # same
         self.result_dir = f"{os.path.abspath(self.working_dir)}/results/LiP"  # same
@@ -16,6 +17,9 @@ class Params:
         self.global_prot_file = f"{self.data_dir}/trypsin_prot.tsv"
         self.global_pept_file = f"{self.data_dir}/trypsin_pept.tsv"
         self.double_pept_file = f"{self.data_dir}/double_pept.tsv"
+        self.redox_pept_file = f"{self.data_dir}/redox_pept.tsv"
+        self.phospho_pept_file = f"{self.data_dir}/phospho_pept.tsv"
+        self.acetyl_pept_file = f"{self.data_dir}/acetyl_pept.tsv"
 
         # Experiment information
         self.experiment_name = "Test"  # same
@@ -83,3 +87,12 @@ class Params:
         self.type_col = "Type"
         self.experiment_col = "Experiment"
         self.site_number_col = "site_number"
+
+        if ptm_version:
+            self.search_tool = "MSGF+"
+            self.experiment_type = "TMT"
+            self.log2_scale = True
+            self.user_ttest_pairs = [
+                ["Infected_8h", "Infected_16h"],
+                ["Infected_8h", "Infected_16h"],
+            ]
