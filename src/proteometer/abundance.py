@@ -97,5 +97,5 @@ def prot_abund_correction(pept, prot, cols2correct, uniprot_col, non_tt_cols=Non
 
 
 # Alias the function for PTM data
-def prot_abund_correction_TMT(pept, prot, cols2correct, uniprot_col, non_tt_cols=None):
+def prot_abund_correction_tmt(pept, prot, cols2correct, uniprot_col, non_tt_cols=None):
     return prot_abund_correction(pept, prot, cols2correct, uniprot_col, non_tt_cols)
