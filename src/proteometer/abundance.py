@@ -2,6 +2,10 @@
 import pandas as pd
 from stats import calculate_pairwise_scalars
 
+import proteometer.normalization as normalization
+import proteometer.stats as stats
+from proteometer.params import Params
+
 
 def get_prot_abund_scalars(
     prot, pairwise_ttest_name=None, sig_type="pval", sig_thr=0.05
@@ -99,3 +103,42 @@ def prot_abund_correction(pept, prot, cols2correct, uniprot_col, non_tt_cols=Non
 # Alias the function for PTM data
 def prot_abund_correction_tmt(pept, prot, cols2correct, uniprot_col, non_tt_cols=None):
     return prot_abund_correction(pept, prot, cols2correct, uniprot_col, non_tt_cols)
+
+
+def global_prot_normalization_and_stats(
+    global_prot: pd.DataFrame,
+    int_cols: list[str],
+    anova_cols: list[str],
+    pairwise_ttest_groups,
+    user_pairwise_ttest_groups,
+    metadata: pd.DataFrame,
+    par: Params,
+):
+    if not par.batch_correction:
+        global_prot = normalization.median_normalization(global_prot, int_cols)
+    else:
+        # NB: median normalization is only for global proteomics data, PTM data
+        # need to be normalized by global proteomics data
+        global_prot = normalization.median_normalization(
+            global_prot,
+            int_cols,
+            metadata,
+            par.batch_correct_samples,
+            batch_col=par.metadata_batch_col,
+            sample_col=par.metadata_sample_col,
+        )
+        # Batch correction
+        global_prot = normalization.batch_correction(
+            global_prot,
+            metadata,
+            par.batch_correct_samples,
+            batch_col=par.metadata_batch_col,
+            sample_col=par.metadata_sample_col,
+        )
+    if len(par.groups) > 2:
+        global_prot = stats.anova(global_prot, anova_cols, metadata)
+        global_prot = stats.anova(global_prot, anova_cols, metadata, par.anova_factors)
+    global_prot = stats.pairwise_ttest(global_prot, pairwise_ttest_groups)
+    global_prot = stats.pairwise_ttest(global_prot, user_pairwise_ttest_groups)
+
+    return global_prot

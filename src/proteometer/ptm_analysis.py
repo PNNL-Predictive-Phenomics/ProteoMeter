@@ -1,10 +1,10 @@
 # type: ignore
-import numpy as np
 import pandas as pd
 from params import Params
 
 import proteometer.abundance as abundance
 import proteometer.normalization as normalization
+import proteometer.parse_metadata as parse_metadata
 import proteometer.ptm as ptm
 import proteometer.rollup as rollup
 import proteometer.stats as stats
@@ -22,11 +22,11 @@ def ptm_analysis(par: Params | None = None):
     phospho_pept = pd.read_csv(par.phospho_pept_file, sep="\t")
     acetyl_pept = pd.read_csv(par.acetyl_pept_file, sep="\t")
 
-    int_cols = _int_columns(metadata, par)
-    anova_cols = _anova_columns(metadata, par)
-    group_cols = _group_columns(metadata, par)
-    pairwise_ttest_groups = _t_test_groups(metadata, par)
-    user_pairwise_ttest_groups = _user_t_test_groups(metadata, par)
+    int_cols = parse_metadata.int_columns(metadata, par)
+    anova_cols = parse_metadata.anova_columns(metadata, par)
+    group_cols = parse_metadata.group_columns(metadata, par)
+    pairwise_ttest_groups = parse_metadata.t_test_groups(metadata, par)
+    user_pairwise_ttest_groups = parse_metadata.user_t_test_groups(metadata, par)
 
     redox_pept = generate_index(
         redox_pept, par.uniprot_col, par.peptide_col, par.id_separator
@@ -49,7 +49,7 @@ def ptm_analysis(par: Params | None = None):
     # data; depending on normalization scheme, we may need to test significance
     # of deviations also, so statistics must be calculated for `global_prot`
     # before `global_pept` and `double_pept`
-    global_prot = _global_prot_normalization_and_stats(
+    global_prot = abundance.global_prot_normalization_and_stats(
         global_prot=global_prot,
         int_cols=int_cols,
         anova_cols=anova_cols,
@@ -94,160 +94,6 @@ def ptm_analysis(par: Params | None = None):
     all_ptms = check_missingness(all_ptms, par.groups, group_cols)
 
     return all_ptms
-
-
-def _group_columns(metadata: pd.DataFrame, par: Params):
-    control_groups = list(
-        metadata[
-            metadata[par.metadata_condition_col] == par.metadata_control_condition
-        ][par.metadata_group_col].unique()
-    )
-    control_group_cols = [
-        metadata[metadata[par.metadata_group_col] == group][
-            par.metadata_sample_col
-        ].to_list()
-        for group in control_groups
-    ]
-    treat_groups = list(
-        metadata[
-            metadata[par.metadata_condition_col] == par.metadata_treatment_condition
-        ][par.metadata_group_col].unique()
-    )
-    treat_group_cols = [
-        metadata[metadata[par.metadata_group_col] == group][
-            par.metadata_sample_col
-        ].to_list()
-        for group in treat_groups
-    ]
-    return control_group_cols + treat_group_cols
-
-
-def _int_columns(metadata: pd.DataFrame, par: Params):
-    return metadata[par.metadata_sample_col].to_list()
-
-
-def _anova_columns(metadata: pd.DataFrame, par: Params):
-    tt_groups = list(
-        metadata[metadata[par.metadata_condition_col] == par.pooled_chanel_condition][
-            par.metadata_group_col
-        ].unique()
-    )
-    tt_group_cols = [
-        metadata[metadata[par.metadata_group_col] == group][
-            par.metadata_sample_col
-        ].to_list()
-        for group in tt_groups
-    ]
-    anova_cols = [
-        sample
-        for sample in metadata[par.metadata_sample_col].values
-        if sample not in np.flatten(tt_group_cols)
-    ]
-    return anova_cols
-
-
-# TODO: get better types for t-test groups
-def _t_test_groups(metadata: pd.DataFrame, par: Params):
-    pairwise_pars = metadata[par.pairwise_factor].unique()
-    pairwise_ttest_groups = []
-    for pairwise_par in pairwise_pars:
-        for control_group in list(
-            set(
-                metadata[
-                    (
-                        metadata[par.metadata_condition_col]
-                        == par.metadata_control_condition
-                    )
-                    & (metadata[par.pairwise_factor] == pairwise_par)
-                ][par.metadata_group_col]
-            )
-        ):
-            for treat_group in list(
-                set(
-                    metadata[
-                        (
-                            metadata[par.metadata_condition_col]
-                            == par.metadata_treatment_condition
-                        )
-                        & (metadata[par.pairwise_factor] == pairwise_par)
-                    ][par.metadata_group_col]
-                )
-            ):
-                pairwise_ttest_groups.append(
-                    [
-                        f"{treat_group}/{control_group}",
-                        control_group,
-                        treat_group,
-                        metadata[metadata[par.metadata_group_col] == control_group][
-                            par.metadata_sample_col
-                        ].to_list(),
-                        metadata[metadata[par.metadata_group_col] == treat_group][
-                            par.metadata_sample_col
-                        ].to_list(),
-                    ]
-                )
-
-    return pairwise_ttest_groups
-
-
-def _user_t_test_groups(metadata: pd.DataFrame, par: Params):
-    user_pairwise_ttest_groups = []
-    for user_test_pair in par.user_ttest_pairs:
-        user_ctrl_group = user_test_pair[0]
-        user_treat_group = user_test_pair[1]
-        user_pairwise_ttest_groups.append(
-            [
-                f"{user_treat_group}/{user_ctrl_group}",
-                user_ctrl_group,
-                user_treat_group,
-                metadata[metadata[par.metadata_group_col] == user_ctrl_group][
-                    par.metadata_sample_col
-                ].to_list(),
-                metadata[metadata[par.metadata_group_col] == user_treat_group][
-                    par.metadata_sample_col
-                ].to_list(),
-            ]
-        )
-    return user_pairwise_ttest_groups
-
-
-def _global_prot_normalization_and_stats(
-    global_prot: pd.DataFrame,
-    int_cols: list[str],
-    anova_cols: list[str],
-    pairwise_ttest_groups,
-    user_pairwise_ttest_groups,
-    metadata: pd.DataFrame,
-    par: Params,
-):
-    if not par.batch_correction:
-        global_prot = normalization.median_normalization(global_prot, int_cols)
-    else:
-        # NB: median normalization is only for global proteomics data, PTM data
-        # need to be normalized by global proteomics data
-        global_prot = normalization.median_normalization(
-            global_prot,
-            int_cols,
-            metadata,
-            par.batch_correct_samples,
-            batch_col=par.metadata_batch_col,
-            sample_col=par.metadata_sample_col,
-        )
-        # Batch correction
-        global_prot = normalization.batch_correction(
-            global_prot,
-            metadata,
-            par.batch_correct_samples,
-            batch_col=par.metadata_batch_col,
-            sample_col=par.metadata_sample_col,
-        )
-    if len(par.groups) > 2:
-        global_prot = stats.anova(global_prot, anova_cols, metadata)
-        global_prot = stats.anova(global_prot, anova_cols, metadata, par.anova_factors)
-    global_prot = stats.pairwise_ttest(global_prot, pairwise_ttest_groups)
-    global_prot = stats.pairwise_ttest(global_prot, user_pairwise_ttest_groups)
-
-    return global_prot
 
 
 def _peptide_normalization_and_correction(
