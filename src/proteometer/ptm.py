@@ -315,7 +315,7 @@ def ptm_mean_rollup_to_site(
     return df
 
 
-def combine_multi_PTMs(
+def combine_multi_ptms(
     multi_proteomics,
     residue_col,
     uniprot_col,
