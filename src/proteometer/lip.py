@@ -450,7 +450,7 @@ def LiP_rollup_to_site(
 
 
 # This function is to analyze the digestion site pattern of the peptides in LiP pept dataframe
-def LiP_rollup_to_lytic_site(
+def rollup_to_lytic_site(
     df,
     int_cols,
     uniprot_col,
@@ -477,7 +477,6 @@ def LiP_rollup_to_lytic_site(
         sequence (_type_): _description_
         description (str, optional): _description_. Defaults to "".
     """
-    raise DeprecationWarning("Deprecated")
     protein = df.copy()
     # protein.reset_index(drop=True, inplace=True)
     seq_len = len(sequence)
