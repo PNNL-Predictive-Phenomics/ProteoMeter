@@ -1,6 +1,5 @@
 # type: ignore
 import pandas as pd
-from params import Params
 
 import proteometer.abundance as abundance
 import proteometer.fasta as fasta
@@ -8,6 +7,7 @@ import proteometer.lip as lip
 import proteometer.normalization as normalization
 import proteometer.parse_metadata as parse_metadata
 import proteometer.stats as stats
+from proteometer.params import Params
 from proteometer.utils import check_missingness, generate_index
 
 
@@ -23,7 +23,7 @@ def lip_analysis(par: Params | None = None):
 
     int_cols = parse_metadata.int_columns(metadata, par)
     anova_cols = parse_metadata.anova_columns(metadata, par)
-    group_cols = parse_metadata.group_columns(metadata, par)
+    group_cols, groups = parse_metadata.group_columns(metadata, par)
     pairwise_ttest_groups = parse_metadata.t_test_groups(metadata, par)
     user_pairwise_ttest_groups = parse_metadata.user_t_test_groups(metadata, par)
 
@@ -78,6 +78,7 @@ def lip_analysis(par: Params | None = None):
         prot_seqs,
         int_cols,
         anova_cols,
+        groups,
         pairwise_ttest_groups,
         user_pairwise_ttest_groups,
         metadata,
@@ -93,7 +94,7 @@ def lip_analysis(par: Params | None = None):
         .reset_index(drop=True)
     )
 
-    all_lips = check_missingness(all_lips, par.groups, group_cols)
+    all_lips = check_missingness(all_lips, groups, group_cols)
 
     return all_lips
 
@@ -154,10 +155,11 @@ def _double_site(
     prot_seqs,
     int_cols,
     anova_cols,
+    groups,
     pairwise_ttest_groups,
     user_pairwise_ttest_groups,
     metadata,
-    par,
+    par: Params,
 ):
     double_site = []
     for uniprot_id in double_pept[par.uniprot_col].unique():
@@ -191,7 +193,7 @@ def _double_site(
                 f"Protein {uniprot_id} has no peptides that could be mapped to the sequence. Skipping the protein."
             )
             continue
-        if len(par.groups) > 2:
+        if len(groups) > 2:
             pept_df_a = stats.anova(pept_df_r, anova_cols, metadata)
             pept_df_a = stats.anova(pept_df_a, anova_cols, metadata, par.anova_factors)
         pept_df_p = stats.pairwise_ttest(pept_df_a, pairwise_ttest_groups)
@@ -200,7 +202,7 @@ def _double_site(
     double_site = pd.concat(double_site).copy()
 
 
-def _annotate_global_prot(global_prot, par):
+def _annotate_global_prot(global_prot, par: Params):
     global_prot[par.type_col] = "Global"
     global_prot[par.experiment_col] = "LiP"
     global_prot[par.residue_col] = "GLB"
@@ -216,7 +218,7 @@ def _annotate_global_prot(global_prot, par):
     return global_prot
 
 
-def _annotate_double_site(double_site, par):
+def _annotate_double_site(double_site, par: Params):
     double_site[par.type_col] = [
         "Tryp"
         if (

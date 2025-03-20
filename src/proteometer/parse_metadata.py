@@ -28,7 +28,7 @@ def group_columns(metadata: pd.DataFrame, par: Params):
         ].to_list()
         for group in treat_groups
     ]
-    return control_group_cols + treat_group_cols
+    return control_group_cols + treat_group_cols, control_groups + treat_groups
 
 
 def int_columns(metadata: pd.DataFrame, par: Params):

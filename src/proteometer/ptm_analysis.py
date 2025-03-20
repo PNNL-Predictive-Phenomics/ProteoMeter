@@ -1,6 +1,5 @@
 # type: ignore
 import pandas as pd
-from params import Params
 
 import proteometer.abundance as abundance
 import proteometer.normalization as normalization
@@ -8,6 +7,7 @@ import proteometer.parse_metadata as parse_metadata
 import proteometer.ptm as ptm
 import proteometer.rollup as rollup
 import proteometer.stats as stats
+from proteometer.params import Params
 from proteometer.utils import check_missingness, generate_index
 
 
@@ -24,7 +24,7 @@ def ptm_analysis(par: Params | None = None):
 
     int_cols = parse_metadata.int_columns(metadata, par)
     anova_cols = parse_metadata.anova_columns(metadata, par)
-    group_cols = parse_metadata.group_columns(metadata, par)
+    group_cols, groups = parse_metadata.group_columns(metadata, par)
     pairwise_ttest_groups = parse_metadata.t_test_groups(metadata, par)
     user_pairwise_ttest_groups = parse_metadata.user_t_test_groups(metadata, par)
 
@@ -75,6 +75,7 @@ def ptm_analysis(par: Params | None = None):
         phospho=phospho,
         acetyl=acetyl,
         anova_cols=anova_cols,
+        groups=groups,
         pairwise_ttest_groups=pairwise_ttest_groups,
         user_pairwise_ttest_groups=user_pairwise_ttest_groups,
         metadata=metadata,
@@ -91,7 +92,7 @@ def ptm_analysis(par: Params | None = None):
         par.id_col,
     )
 
-    all_ptms = check_missingness(all_ptms, par.groups, group_cols)
+    all_ptms = check_missingness(all_ptms, groups, group_cols)
 
     return all_ptms
 
@@ -217,12 +218,13 @@ def _rollup_stats(
     phospho,
     acetyl,
     anova_cols,
+    groups,
     pairwise_ttest_groups,
     user_pairwise_ttest_groups,
     metadata,
-    par,
+    par: Params,
 ):
-    if len(par.groups) > 2:
+    if len(groups) > 2:
         redox = par.anova(redox, anova_cols, metadata)
         phospho = par.anova(phospho, anova_cols, metadata)
         acetyl = par.anova(acetyl, anova_cols, metadata)
