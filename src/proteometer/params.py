@@ -17,9 +17,16 @@ class Params:
         self.global_prot_file = f"{self.data_dir}/trypsin_prot.tsv"
         self.global_pept_file = f"{self.data_dir}/trypsin_pept.tsv"
         self.double_pept_file = f"{self.data_dir}/double_pept.tsv"
-        self.redox_pept_file = f"{self.data_dir}/redox_pept.tsv"
-        self.phospho_pept_file = f"{self.data_dir}/phospho_pept.tsv"
-        self.acetyl_pept_file = f"{self.data_dir}/acetyl_pept.tsv"
+
+        # self.redox_pept_file = f"{self.data_dir}/redox_pept.tsv"
+        # self.phospho_pept_file = f"{self.data_dir}/phospho_pept.tsv"
+        # self.acetyl_pept_file = f"{self.data_dir}/acetyl_pept.tsv"
+        self.ptm_names = ["acetyl", "phospho", "redox"]
+        self.ptm_pept_files = [
+            f"{self.data_dir}/acetyl_pept.tsv",
+            f"{self.data_dir}/phospho_pept.tsv",
+            f"{self.data_dir}/redox_pept.tsv",
+        ]
 
         # Experiment information
         self.experiment_name = "Test"  # same
@@ -59,10 +66,11 @@ class Params:
         ]
 
         ### Unique for PTM data
-        self.phospho_symbol = "#"
-        self.redox_symbol = "@"
-        self.acetyl_symbol = "@"
-        self.phospho_ascore_col = "AScore"
+        # self.phospho_symbol = "#"
+        # self.redox_symbol = "@"
+        # self.acetyl_symbol = "@"
+        self.ptm_symbols = ["@", "#", "@"]
+        # self.phospho_ascore_col = "AScore" # apperently not used
 
         self.id_separator = "@"  # same
         self.sig_thr = 0.05  # same
@@ -92,7 +100,3 @@ class Params:
             self.search_tool = "MSGF+"
             self.experiment_type = "TMT"
             self.log2_scale = True
-            self.user_ttest_pairs = [
-                ["Infected_8h", "Infected_16h"],
-                ["Infected_8h", "Infected_16h"],
-            ]
