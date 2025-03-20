@@ -64,7 +64,7 @@ def lip_analysis(par: Params | None = None):
         par=par,
     )
 
-    global_pept, double_pept = _peptide_normalization_and_correction(
+    double_pept = _peptide_normalization_and_correction(
         global_pept=global_pept,
         double_pept=double_pept,
         global_prot=global_prot,
@@ -111,18 +111,8 @@ def _peptide_normalization_and_correction(
         double_pept = normalization.tmt_normalization(
             double_pept, global_pept, int_cols
         )
-        if par.batch_correction:
-            global_pept = normalization.median_normalization(
-                global_pept,
-                int_cols,
-                metadata,
-                par.batch_correct_samples,
-                batch_col=par.metadata_batch_col,
-                sample_col=par.metadata_sample_col,
-            )
     else:
         double_pept = normalization.median_normalization(double_pept, int_cols)
-        global_pept = normalization.median_normalization(global_pept, int_cols)
 
     if par.batch_correction:
         double_pept = normalization.batch_correction(
@@ -132,22 +122,12 @@ def _peptide_normalization_and_correction(
             batch_col=par.metadata_batch_col,
             sample_col=par.metadata_sample_col,
         )
-        global_pept = normalization.batch_correction(
-            global_pept,
-            metadata,
-            par.batch_correct_samples,
-            batch_col=par.metadata_batch_col,
-            sample_col=par.metadata_sample_col,
-        )
 
     double_pept = abundance.prot_abund_correction(
         double_pept, global_prot, int_cols, par.uniprot_col
     )
-    global_pept = abundance.prot_abund_correction(
-        global_pept, global_prot, int_cols, par.uniprot_col
-    )
 
-    return global_pept, double_pept
+    return double_pept
 
 
 def _double_site(
