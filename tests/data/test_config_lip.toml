@@ -2,7 +2,7 @@
 data_dir = "./tests/data/LiP"
 results_dir = "./tests/data/LiP"
 fasta_file = "reference_proteome.fasta"
-metadata_file = "metadata.txt"
+metadata_file = "metadata.tsv"
 global_prot_file = "trypsin_prot.tsv"
 global_pept_file = "trypsin_pept.tsv"
 
