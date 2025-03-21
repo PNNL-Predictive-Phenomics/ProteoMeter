@@ -59,10 +59,12 @@ def ptm_analysis(par: Params | None = None):
         metadata=metadata,
         par=par,
     )
-    ptm_pept = [
-        abundance.prot_abund_correction(pept, global_prot, int_cols, par.uniprot_col)
-        for pept in ptm_pept
-    ]
+
+    if par.abundance_correction:
+        ptm_pept = [
+            abundance.prot_abund_correction(pept, global_prot, int_cols, par)
+            for pept in ptm_pept
+        ]
 
     ptm_rolled = [
         rollup.rollup_to_site(

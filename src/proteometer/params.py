@@ -40,7 +40,23 @@ class Params:
         self.pairwise_factor = "Time"
         self.anova_factors = ["Treatment", self.pairwise_factor]  # Optional
 
-        # normali the batch correction only for TMT data
+        # Abundance correction, generally recommended to help decompose effects
+        # of changing protein abundance from changes in the fraction of protein
+        # in a modified state and to reduce noise. However, sometimes only the
+        # total concentration of one protein form (e.g., its active form) is of
+        # interest, and so we may wish to skip this step when we don't care
+        # about the source of the change.
+        self.abundance_correction = True
+
+        # When global proteomics data and PTM/LiP data are drawn from the same
+        # samples (i.e., they are paired), we can use this pairing to correct
+        # for abundance changes. Otherwise, we must rely on a statistical test
+        # of the population averages (with threshhold given by
+        # `abudnance_unpaired_sig_thr`)
+        self.abundance_correction_paired_samples = True
+        self.abudnance_unpaired_sig_thr = 0.05
+
+        # normaly the batch correction only for TMT data
 
         # If it is TMT experiment then batch correction might be needed. User
         # need to provide a list of column names of samples are used for batch

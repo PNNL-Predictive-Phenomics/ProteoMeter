@@ -71,9 +71,11 @@ def lip_analysis(par: Params | None = None):
         metadata=metadata,
         par=par,
     )
-    double_pept = abundance.prot_abund_correction(
-        double_pept, global_prot, int_cols, par.uniprot_col
-    )
+
+    if par.abundance_correction:
+        double_pept = abundance.prot_abund_correction(
+            double_pept, global_prot, int_cols, par
+        )
 
     double_site = _double_site(
         double_pept,
