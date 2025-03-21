@@ -14,7 +14,7 @@ ptm_pept_files = ["acetyl_pept.tsv", "phospho_pept.tsv", "redox_pept.tsv"]
 
 [experiment]
 experiment_name = "Test"
-experiment_type = "TMT"
+experiment_type = "TMT"  # TMT or Label-free
 search_tool = "MSGF+"
 
 [statistics]
@@ -36,10 +36,10 @@ abundance_correction = true
 abundance_correction_paired_samples = true
 abundance_unpaired_sig_thr = 0.0
 batch_correction = true
-batch_correct_samples = ""
+batch_correct_samples = []
 pooled_chanel_condition = "Total"
 sig_thr = 0.05
-sig_type = "pval"
+sig_type = "pval"                          # pval or adj-p
 missing_thr = 0
 min_pept_count = 2
 log2_scale = true
