@@ -17,9 +17,16 @@ class Params:
         self.global_prot_file = f"{self.data_dir}/trypsin_prot.tsv"
         self.global_pept_file = f"{self.data_dir}/trypsin_pept.tsv"
         self.double_pept_file = f"{self.data_dir}/double_pept.tsv"
-        self.redox_pept_file = f"{self.data_dir}/redox_pept.tsv"
-        self.phospho_pept_file = f"{self.data_dir}/phospho_pept.tsv"
-        self.acetyl_pept_file = f"{self.data_dir}/acetyl_pept.tsv"
+
+        # self.redox_pept_file = f"{self.data_dir}/redox_pept.tsv"
+        # self.phospho_pept_file = f"{self.data_dir}/phospho_pept.tsv"
+        # self.acetyl_pept_file = f"{self.data_dir}/acetyl_pept.tsv"
+        self.ptm_names = ["acetyl", "phospho", "redox"]
+        self.ptm_pept_files = [
+            f"{self.data_dir}/acetyl_pept.tsv",
+            f"{self.data_dir}/phospho_pept.tsv",
+            f"{self.data_dir}/redox_pept.tsv",
+        ]
 
         # Experiment information
         self.experiment_name = "Test"  # same
@@ -33,7 +40,23 @@ class Params:
         self.pairwise_factor = "Time"
         self.anova_factors = ["Treatment", self.pairwise_factor]  # Optional
 
-        # normali the batch correction only for TMT data
+        # Abundance correction, generally recommended to help decompose effects
+        # of changing protein abundance from changes in the fraction of protein
+        # in a modified state and to reduce noise. However, sometimes only the
+        # total concentration of one protein form (e.g., its active form) is of
+        # interest, and so we may wish to skip this step when we don't care
+        # about the source of the change.
+        self.abundance_correction = True
+
+        # When global proteomics data and PTM/LiP data are drawn from the same
+        # samples (i.e., they are paired), we can use this pairing to correct
+        # for abundance changes. Otherwise, we must rely on a statistical test
+        # of the population averages (with threshhold given by
+        # `abudnance_unpaired_sig_thr`)
+        self.abundance_correction_paired_samples = True
+        self.abudnance_unpaired_sig_thr = 0.05
+
+        # normaly the batch correction only for TMT data
 
         # If it is TMT experiment then batch correction might be needed. User
         # need to provide a list of column names of samples are used for batch
@@ -59,10 +82,11 @@ class Params:
         ]
 
         ### Unique for PTM data
-        self.phospho_symbol = "#"
-        self.redox_symbol = "@"
-        self.acetyl_symbol = "@"
-        self.phospho_ascore_col = "AScore"
+        # self.phospho_symbol = "#"
+        # self.redox_symbol = "@"
+        # self.acetyl_symbol = "@"
+        self.ptm_symbols = ["@", "#", "@"]
+        # self.phospho_ascore_col = "AScore" # apperently not used
 
         self.id_separator = "@"  # same
         self.sig_thr = 0.05  # same
@@ -92,7 +116,3 @@ class Params:
             self.search_tool = "MSGF+"
             self.experiment_type = "TMT"
             self.log2_scale = True
-            self.user_ttest_pairs = [
-                ["Infected_8h", "Infected_16h"],
-                ["Infected_8h", "Infected_16h"],
-            ]

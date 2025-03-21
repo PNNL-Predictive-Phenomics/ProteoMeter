@@ -1,6 +1,32 @@
 # type: ignore
 import pandas as pd
 
+from proteometer.params import Params
+
+
+def peptide_normalization_and_correction(
+    global_pept: pd.DataFrame,
+    mod_pept: pd.DataFrame,
+    int_cols: list[str],
+    metadata: pd.DataFrame,
+    par: Params,
+):
+    if par.experiment_type == "TMT":
+        mod_pept = tmt_normalization(mod_pept, global_pept, int_cols)
+    else:
+        mod_pept = median_normalization(mod_pept, int_cols)
+
+    if par.batch_correction:
+        mod_pept = batch_correction(
+            mod_pept,
+            metadata,
+            par.batch_correct_samples,
+            batch_col=par.metadata_batch_col,
+            sample_col=par.metadata_sample_col,
+        )
+
+    return mod_pept
+
 
 def tmt_normalization(df2transform, global_pept, int_cols):
     """_summary_
