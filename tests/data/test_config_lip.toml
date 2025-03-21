@@ -1,6 +1,6 @@
 [paths]
-data_dir = "./data/LiP"
-results_dir = "./data/LiP"
+data_dir = "./tests/data/LiP"
+results_dir = "./tests/data/LiP"
 fasta_file = "reference_proteome.fasta"
 metadata_file = "metadata.txt"
 global_prot_file = "trypsin_prot.tsv"
