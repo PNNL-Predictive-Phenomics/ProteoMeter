@@ -1,44 +1,52 @@
-# type: ignore
 import os
+from typing import Literal
+
+import tomllib
 
 
-# TODO: make configurable by user with a config file
-# for now, the ptm_version parameter is a dirty hack to get things going
 class Params:
-    def __init__(self, ptm_version=False):
-        self.working_dir = "."
-        self.data_dir = f"{os.path.abspath(self.working_dir)}/data/LiP"  # same
-        self.result_dir = f"{os.path.abspath(self.working_dir)}/results/LiP"  # same
-        os.Path(self.result_dir).mkdir(parents=True, exist_ok=True)
+    def __init__(self, toml_file_path: str) -> None:
+        with open(toml_file_path, "rb") as toml_file:
+            cfg = tomllib.load(toml_file)
+        self.data_dir = f"{os.path.abspath(cfg['paths']['data_dir'])}"
+        self.result_dir = f"{os.path.abspath(cfg['paths']['results_dir'])}"
+        os.makedirs(self.result_dir, exist_ok=True)
 
         # All the required files
-        self.fasta_file = f"{self.data_dir}/reference_proteome.fasta"
-        self.metadata_file = f"{self.data_dir}/metadata.txt"  #
-        self.global_prot_file = f"{self.data_dir}/trypsin_prot.tsv"
-        self.global_pept_file = f"{self.data_dir}/trypsin_pept.tsv"
-        self.double_pept_file = f"{self.data_dir}/double_pept.tsv"
+        self.fasta_file = f"{self.data_dir}/{cfg['paths']['fasta_file']}"
+        self.metadata_file = f"{self.data_dir}/{cfg['paths']['metadata_file']}"
+        self.global_prot_file = f"{self.data_dir}/{cfg['paths']['global_prot_file']}"
+        self.global_pept_file = f"{self.data_dir}/{cfg['paths']['global_pept_file']}"
 
-        # self.redox_pept_file = f"{self.data_dir}/redox_pept.tsv"
-        # self.phospho_pept_file = f"{self.data_dir}/phospho_pept.tsv"
-        # self.acetyl_pept_file = f"{self.data_dir}/acetyl_pept.tsv"
-        self.ptm_names = ["acetyl", "phospho", "redox"]
+        self.double_pept_file = (
+            f"{self.data_dir}/{cfg['paths']['lip']['double_pept_file']}"
+        )
+
+        self.id_separator = str(cfg["symbols"]["id_separator"])
+
+        self.ptm_names = [str(x) for x in cfg["symbols"]["ptm"]["ptm_names"]]
         self.ptm_pept_files = [
-            f"{self.data_dir}/acetyl_pept.tsv",
-            f"{self.data_dir}/phospho_pept.tsv",
-            f"{self.data_dir}/redox_pept.tsv",
+            f"{self.data_dir}/{ptm_pept_file}"
+            for ptm_pept_file in cfg["paths"]["ptm"]["ptm_pept_files"]
         ]
+        self.ptm_symbols = [str(x) for x in cfg["symbols"]["ptm"]["ptm_symbols"]]
 
         # Experiment information
-        self.experiment_name = "Test"  # same
+        self.experiment_name = str(cfg["experiment"]["experiment_name"])
+        self.search_tool = str(cfg["experiment"]["search_tool"])
 
-        # this might not be necessary anymore, maybe fore preprocessing, but not
-        # here
-        self.search_tool = "FragPipe"
-        self.experiment_type = "Label-free"  # TMT or Label-free
+        if cfg["experiment"]["experiment_type"] not in {"TMT", "Label-free"}:
+            raise ValueError("Experiment type must be 'TMT' or 'Label-free'")
+        self.experiment_type: Literal["TMT", "Label-free"] = cfg["experiment"][
+            "experiment_type"
+        ]  # TMT or Label-free
 
         # Statistics setup
-        self.pairwise_factor = "Time"
-        self.anova_factors = ["Treatment", self.pairwise_factor]  # Optional
+        self.pairwise_factor = str(cfg["statistics"]["pairwise_factor"])
+        self.anova_factors = [str(x) for x in cfg["statistics"]["anova_factors"]]
+        self.user_ttest_pairs = [
+            [str(x) for x in y] for y in cfg["statistics"]["user_ttest_pairs"]
+        ]
 
         # Abundance correction, generally recommended to help decompose effects
         # of changing protein abundance from changes in the fraction of protein
@@ -46,73 +54,65 @@ class Params:
         # total concentration of one protein form (e.g., its active form) is of
         # interest, and so we may wish to skip this step when we don't care
         # about the source of the change.
-        self.abundance_correction = True
+        self.abundance_correction = bool(cfg["corrections"]["abundance_correction"])
 
         # When global proteomics data and PTM/LiP data are drawn from the same
         # samples (i.e., they are paired), we can use this pairing to correct
         # for abundance changes. Otherwise, we must rely on a statistical test
         # of the population averages (with threshhold given by
         # `abudnance_unpaired_sig_thr`)
-        self.abundance_correction_paired_samples = True
-        self.abudnance_unpaired_sig_thr = 0.05
-
-        # normaly the batch correction only for TMT data
-
-        # If it is TMT experiment then batch correction might be needed. User
-        # need to provide a list of column names of samples are used for batch
-        # correction. If "" provided, then batch_correct_samples should be all
-        # samples except the pooled channel samples
-        self.batch_correct_samples = ""
-
-        # TMT data are usually processed into log2 scale, but not always
-        self.log2_scale = False
-        # If there is multiple batches
-        self.batch_correction = (
-            True  # If False, then no batch correction will be performed
+        self.abundance_correction_paired_samples = bool(
+            cfg["corrections"]["abundance_correction_paired_samples"]
+        )
+        self.abudnance_unpaired_sig_thr = float(
+            cfg["corrections"]["abundance_unpaired_sig_thr"]
         )
 
-        # Unique to TMT data
-        self.pooled_chanel_condition = "Total"
-
-        # User defined pair-wise comparison groups, possibly need a function to
-        # generate from a list of group pairs
-        self.user_ttest_pairs = [
-            ["Infected_8h", "Infected_16h"],
-            ["Infected_8h", "Infected_16h"],
+        # normaly the batch correction only for TMT data
+        # If it is TMT experiment then batch correction might be needed. User
+        # need to provide a list of column names of samples are used for batch
+        # correction.
+        self.batch_correct_samples = [
+            str(x) for x in cfg["corrections"]["batch_correct_samples"]
         ]
 
-        ### Unique for PTM data
-        # self.phospho_symbol = "#"
-        # self.redox_symbol = "@"
-        # self.acetyl_symbol = "@"
-        self.ptm_symbols = ["@", "#", "@"]
-        # self.phospho_ascore_col = "AScore" # apperently not used
+        # TMT data are usually processed into log2 scale, but not always
+        self.log2_scale = bool(cfg["corrections"]["log2_scale"])
+        # If there are multiple batches
+        self.batch_correction = bool(cfg["corrections"]["batch_correction"])
 
-        self.id_separator = "@"  # same
-        self.sig_thr = 0.05  # same
-        self.sig_type = "pval"  # same either "pval" or "adj-p"
-        self.missing_thr = 0  # same
-        self.min_pept_count = 2  # unique to lip
+        # Unique to TMT data
+        self.pooled_chanel_condition = str(
+            cfg["corrections"]["pooled_chanel_condition"]
+        )
 
-        self.metadata_batch_col = "Batch"
-        self.metadata_sample_col = "Sample"
-        self.metadata_group_col = "Group"
-        self.metadata_condition_col = "Condition"
-        self.metadata_control_condition = "Control"
-        self.metadata_treatment_condition = "Treatment"
+        self.sig_thr = float(cfg["corrections"]["sig_thr"])
+
+        if cfg["corrections"]["sig_type"] not in {"pval", "adj-p"}:
+            raise ValueError("sig_type must be 'pval' or 'adj-p'")
+        self.sig_type: Literal["pval", "adj-p"] = cfg["corrections"]["sig_type"]
+
+        self.missing_thr = int(cfg["corrections"]["missing_thr"])
+        self.min_pept_count = int(cfg["corrections"]["min_pept_count"])
+
+        self.metadata_batch_col = str(cfg["metadata"]["metadata_batch_col"])
+        self.metadata_sample_col = str(cfg["metadata"]["metadata_sample_col"])
+        self.metadata_group_col = str(cfg["metadata"]["metadata_group_col"])
+        self.metadata_condition_col = str(cfg["metadata"]["metadata_condition_col"])
+        self.metadata_control_condition = str(
+            cfg["metadata"]["metadata_control_condition"]
+        )
+        self.metadata_treatment_condition = str(
+            cfg["metadata"]["metadata_treatment_condition"]
+        )
 
         # Output table columns
-        self.id_col = "id"
-        self.uniprot_col = "UniProt"
-        self.protein_col = "Protein"
-        self.peptide_col = "Peptide"
-        self.site_col = "Site"
-        self.residue_col = "Residue"
-        self.type_col = "Type"
-        self.experiment_col = "Experiment"
-        self.site_number_col = "site_number"
-
-        if ptm_version:
-            self.search_tool = "MSGF+"
-            self.experiment_type = "TMT"
-            self.log2_scale = True
+        self.id_col = str(cfg["data_columns"]["id_col"])
+        self.uniprot_col = str(cfg["data_columns"]["uniprot_col"])
+        self.protein_col = str(cfg["data_columns"]["protein_col"])
+        self.peptide_col = str(cfg["data_columns"]["peptide_col"])
+        self.site_col = str(cfg["data_columns"]["site_col"])
+        self.residue_col = str(cfg["data_columns"]["residue_col"])
+        self.type_col = str(cfg["data_columns"]["type_col"])
+        self.experiment_col = str(cfg["data_columns"]["experiment_col"])
+        self.site_number_col = str(cfg["data_columns"]["site_number_col"])

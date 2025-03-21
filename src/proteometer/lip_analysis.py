@@ -11,10 +11,7 @@ from proteometer.params import Params
 from proteometer.utils import check_missingness, generate_index
 
 
-def lip_analysis(par: Params | None = None):
-    if par is None:
-        par = Params()
-
+def lip_analysis(par: Params):
     prot_seqs = fasta.get_sequences_from_fasta(par.fasta_file)
     metadata = pd.read_csv(par.metadata_file, sep="\t")
     global_prot = pd.read_csv(par.global_prot_file, sep="\t")
