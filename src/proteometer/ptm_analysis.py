@@ -49,17 +49,25 @@ def ptm_analysis(par: Params):
         par=par,
     )
 
-    ptm_pept = normalization.peptide_normalization_and_correction(
-        global_pept=global_pept,
-        mod_pept=ptm_pept,
-        int_cols=int_cols,
-        metadata=metadata,
-        par=par,
-    )
+    ptm_pept = [
+        normalization.peptide_normalization_and_correction(
+            global_pept=global_pept,
+            mod_pept=pept,
+            int_cols=int_cols,
+            metadata=metadata,
+            par=par,
+        )
+        for pept in ptm_pept
+    ]
 
     if par.abundance_correction:
         ptm_pept = [
-            abundance.prot_abund_correction(pept, global_prot, int_cols, par)
+            abundance.prot_abund_correction(
+                pept,
+                global_prot,
+                par,
+                columns_to_correct=int_cols,
+            )
             for pept in ptm_pept
         ]
 
