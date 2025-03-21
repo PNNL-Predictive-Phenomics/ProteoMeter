@@ -1,44 +1,46 @@
 # type: ignore
 import os
+from configparser import ConfigParser
 
 
 # TODO: make configurable by user with a config file
 # for now, the ptm_version parameter is a dirty hack to get things going
 class Params:
-    def __init__(self, ptm_version=False):
-        self.working_dir = "."
-        self.data_dir = f"{os.path.abspath(self.working_dir)}/data/LiP"  # same
-        self.result_dir = f"{os.path.abspath(self.working_dir)}/results/LiP"  # same
+    def __init__(self, ini_file):
+        cfg = ConfigParser()
+        cfg.read(ini_file)
+        self.data_dir = f"{os.path.abspath(cfg['paths']['data_dir'])}"
+        self.result_dir = f"{os.path.abspath(cfg['paths']['results_dir'])}"
         os.Path(self.result_dir).mkdir(parents=True, exist_ok=True)
 
         # All the required files
-        self.fasta_file = f"{self.data_dir}/reference_proteome.fasta"
-        self.metadata_file = f"{self.data_dir}/metadata.txt"  #
-        self.global_prot_file = f"{self.data_dir}/trypsin_prot.tsv"
-        self.global_pept_file = f"{self.data_dir}/trypsin_pept.tsv"
-        self.double_pept_file = f"{self.data_dir}/double_pept.tsv"
+        self.fasta_file = f"{self.data_dir}/{cfg['paths']['fasta_file']}"
+        self.metadata_file = f"{self.data_dir}/{cfg['paths']['metadata_file']}"
+        self.global_prot_file = f"{self.data_dir}/{cfg['paths']['global_prot_file']}"
+        self.global_pept_file = f"{self.data_dir}/{cfg['paths']['global_pept_file']}"
 
-        # self.redox_pept_file = f"{self.data_dir}/redox_pept.tsv"
-        # self.phospho_pept_file = f"{self.data_dir}/phospho_pept.tsv"
-        # self.acetyl_pept_file = f"{self.data_dir}/acetyl_pept.tsv"
-        self.ptm_names = ["acetyl", "phospho", "redox"]
+        self.double_pept_file = (
+            f"{self.data_dir}/{cfg['paths.lip']['double_pept_file']}"
+        )
+
+        self.id_separator = cfg["symbols"]["id_separator"]
+
+        self.ptm_names = cfg["symbols.ptm"]["ptm_names"]
         self.ptm_pept_files = [
-            f"{self.data_dir}/acetyl_pept.tsv",
-            f"{self.data_dir}/phospho_pept.tsv",
-            f"{self.data_dir}/redox_pept.tsv",
+            f"{self.data_dir}/{ptm_pept_file}"
+            for ptm_pept_file in cfg["paths.ptm"]["ptm_pept_files"]
         ]
+        self.ptm_symbols = cfg["symbols.ptm"]["ptm_symbols"]
 
         # Experiment information
-        self.experiment_name = "Test"  # same
-
-        # this might not be necessary anymore, maybe fore preprocessing, but not
-        # here
-        self.search_tool = "FragPipe"
-        self.experiment_type = "Label-free"  # TMT or Label-free
+        self.experiment_name = cfg["experiment"]["experiment_name"]
+        self.search_tool = cfg["experiment"]["search_tool"]
+        self.experiment_type = cfg["experiment"]["experiment_type"]  # TMT or Label-free
 
         # Statistics setup
-        self.pairwise_factor = "Time"
-        self.anova_factors = ["Treatment", self.pairwise_factor]  # Optional
+        self.pairwise_factor = cfg["statistics"]["pairwise_factor"]
+        self.anova_factors = cfg["statistics"]["anova_factors"]  # Optional
+        self.user_ttest_pairs = cfg["statistics"]["user_ttest_pairs"]
 
         # Abundance correction, generally recommended to help decompose effects
         # of changing protein abundance from changes in the fraction of protein
@@ -46,73 +48,56 @@ class Params:
         # total concentration of one protein form (e.g., its active form) is of
         # interest, and so we may wish to skip this step when we don't care
         # about the source of the change.
-        self.abundance_correction = True
+        self.abundance_correction = cfg["corrections"]["abundance_correction"]
 
         # When global proteomics data and PTM/LiP data are drawn from the same
         # samples (i.e., they are paired), we can use this pairing to correct
         # for abundance changes. Otherwise, we must rely on a statistical test
         # of the population averages (with threshhold given by
         # `abudnance_unpaired_sig_thr`)
-        self.abundance_correction_paired_samples = True
-        self.abudnance_unpaired_sig_thr = 0.05
+        self.abundance_correction_paired_samples = cfg["corrections"][
+            "abundance_correction_paired_samples"
+        ]
+        self.abudnance_unpaired_sig_thr = cfg["corrections"][
+            "abundance_unpaired_sig_thr"
+        ]
 
         # normaly the batch correction only for TMT data
-
         # If it is TMT experiment then batch correction might be needed. User
         # need to provide a list of column names of samples are used for batch
         # correction. If "" provided, then batch_correct_samples should be all
         # samples except the pooled channel samples
-        self.batch_correct_samples = ""
+        self.batch_correct_samples = cfg["corrections"]["batch_correct_samples"]
 
         # TMT data are usually processed into log2 scale, but not always
-        self.log2_scale = False
-        # If there is multiple batches
-        self.batch_correction = (
-            True  # If False, then no batch correction will be performed
-        )
+        self.log2_scale = cfg["corrections"]["log2_scale"]
+        # If there are multiple batches
+        self.batch_correction = cfg["corrections"]["batch_correction"]
 
         # Unique to TMT data
-        self.pooled_chanel_condition = "Total"
+        self.pooled_chanel_condition = cfg["corrections"]["pooled_chanel_condition"]
 
-        # User defined pair-wise comparison groups, possibly need a function to
-        # generate from a list of group pairs
-        self.user_ttest_pairs = [
-            ["Infected_8h", "Infected_16h"],
-            ["Infected_8h", "Infected_16h"],
+        self.sig_thr = cfg["corrections"]["sig_thr"]
+        self.sig_type = cfg["corrections"]["sig_type"]  # "pval" or "adj-p"
+        self.missing_thr = cfg["corrections"]["missing_thr"]
+        self.min_pept_count = cfg["corrections"]["min_pept_count"]  # unique to lip
+
+        self.metadata_batch_col = cfg["metadata"]["metadata_batch_col"]
+        self.metadata_sample_col = cfg["metadata"]["metadata_sample_col"]
+        self.metadata_group_col = cfg["metadata"]["metadata_group_col"]
+        self.metadata_condition_col = cfg["metadata"]["metadata_condition_col"]
+        self.metadata_control_condition = cfg["metadata"]["metadata_control_condition"]
+        self.metadata_treatment_condition = cfg["metadata"][
+            "metadata_treatment_condition"
         ]
 
-        ### Unique for PTM data
-        # self.phospho_symbol = "#"
-        # self.redox_symbol = "@"
-        # self.acetyl_symbol = "@"
-        self.ptm_symbols = ["@", "#", "@"]
-        # self.phospho_ascore_col = "AScore" # apperently not used
-
-        self.id_separator = "@"  # same
-        self.sig_thr = 0.05  # same
-        self.sig_type = "pval"  # same either "pval" or "adj-p"
-        self.missing_thr = 0  # same
-        self.min_pept_count = 2  # unique to lip
-
-        self.metadata_batch_col = "Batch"
-        self.metadata_sample_col = "Sample"
-        self.metadata_group_col = "Group"
-        self.metadata_condition_col = "Condition"
-        self.metadata_control_condition = "Control"
-        self.metadata_treatment_condition = "Treatment"
-
         # Output table columns
-        self.id_col = "id"
-        self.uniprot_col = "UniProt"
-        self.protein_col = "Protein"
-        self.peptide_col = "Peptide"
-        self.site_col = "Site"
-        self.residue_col = "Residue"
-        self.type_col = "Type"
-        self.experiment_col = "Experiment"
-        self.site_number_col = "site_number"
-
-        if ptm_version:
-            self.search_tool = "MSGF+"
-            self.experiment_type = "TMT"
-            self.log2_scale = True
+        self.id_col = cfg["data.columns"]["id_col"]
+        self.uniprot_col = cfg["data.columns"]["uniprot_col"]
+        self.protein_col = cfg["data.columns"]["protein_col"]
+        self.peptide_col = cfg["data.columns"]["peptide_col"]
+        self.site_col = cfg["data.columns"]["site_col"]
+        self.residue_col = cfg["data.columns"]["residue_col"]
+        self.type_col = cfg["data.columns"]["type_col"]
+        self.experiment_col = cfg["data.columns"]["experiment_col"]
+        self.site_number_col = cfg["data.columns"]["site_number_col"]
