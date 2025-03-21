@@ -64,13 +64,15 @@ def lip_analysis(par: Params | None = None):
         par=par,
     )
 
-    double_pept = _peptide_normalization_and_correction(
+    double_pept = normalization.peptide_normalization_and_correction(
         global_pept=global_pept,
         double_pept=double_pept,
-        global_prot=global_prot,
         int_cols=int_cols,
         metadata=metadata,
         par=par,
+    )
+    double_pept = abundance.prot_abund_correction(
+        double_pept, global_prot, int_cols, par.uniprot_col
     )
 
     double_site = _double_site(
@@ -97,37 +99,6 @@ def lip_analysis(par: Params | None = None):
     all_lips = check_missingness(all_lips, groups, group_cols)
 
     return all_lips
-
-
-def _peptide_normalization_and_correction(
-    global_pept: pd.DataFrame,
-    double_pept: pd.DataFrame,
-    global_prot: pd.DataFrame,
-    int_cols: list[str],
-    metadata: pd.DataFrame,
-    par: Params,
-):
-    if par.experiment_type == "TMT":
-        double_pept = normalization.tmt_normalization(
-            double_pept, global_pept, int_cols
-        )
-    else:
-        double_pept = normalization.median_normalization(double_pept, int_cols)
-
-    if par.batch_correction:
-        double_pept = normalization.batch_correction(
-            double_pept,
-            metadata,
-            par.batch_correct_samples,
-            batch_col=par.metadata_batch_col,
-            sample_col=par.metadata_sample_col,
-        )
-
-    double_pept = abundance.prot_abund_correction(
-        double_pept, global_prot, int_cols, par.uniprot_col
-    )
-
-    return double_pept
 
 
 def _double_site(
@@ -162,7 +133,7 @@ def _double_site(
             int_cols,
             par.uniprot_col,
             prot_seq,
-            residue_col="Residue",
+            residue_col=par.residue_col,
             description=prot_desc,
             tryptic_pattern="all",
             peptide_col=par.peptide_col,

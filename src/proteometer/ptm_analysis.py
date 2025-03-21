@@ -52,14 +52,33 @@ def ptm_analysis(par: Params | None = None):
         par=par,
     )
 
-    ptm_rolled = _peptide_normalization_and_correction(
+    ptm_pept = normalization.peptide_normalization_and_correction(
         ptm_pept=ptm_pept,
         global_pept=global_pept,
-        global_prot=global_prot,
         int_cols=int_cols,
         metadata=metadata,
         par=par,
     )
+    ptm_pept = [
+        abundance.prot_abund_correction(pept, global_prot, int_cols, par.uniprot_col)
+        for pept in ptm_pept
+    ]
+
+    ptm_rolled = [
+        rollup.rollup_to_site(
+            pept,
+            int_cols,
+            par.uniprot_col,
+            par.peptide_col,
+            par.residue_col,
+            ";",
+            par.id_col,
+            par.id_separator,
+            par.site_col,
+            rollup_func="Sum",
+        )
+        for pept in ptm_pept
+    ]
 
     ptm_rolled = _rollup_stats(
         ptm_rolled=ptm_rolled,
@@ -86,60 +105,6 @@ def ptm_analysis(par: Params | None = None):
     all_ptms = check_missingness(all_ptms, groups, group_cols)
 
     return all_ptms
-
-
-def _peptide_normalization_and_correction(
-    ptm_pept: list[pd.DataFrame],
-    global_pept: pd.DataFrame,  # for TMT normalization
-    global_prot: pd.DataFrame,  # for abundance correction
-    int_cols: list[str],
-    metadata: pd.DataFrame,
-    par: Params,
-):
-    if par.experiment_type == "TMT":
-        ptm_pept = [
-            normalization.tmt_normalization(pept, global_pept, int_cols)
-            for pept in ptm_pept
-        ]
-    else:
-        ptm_pept = [
-            normalization.median_normalization(pept, int_cols) for pept in ptm_pept
-        ]
-
-    ptm_rolled = [
-        rollup.rollup_to_site(
-            pept,
-            int_cols,
-            par.uniprot_col,
-            par.peptide_col,
-            par.residue_col,
-            ";",
-            par.id_col,
-            par.id_separator,
-            par.site_col,
-            rollup_func="Sum",
-        )
-        for pept in ptm_pept
-    ]
-
-    if par.batch_correction:
-        ptm_rolled = [
-            normalization.batch_correction(
-                rolled,
-                metadata,
-                par.batch_correct_samples,
-                batch_col=par.metadata_batch_col,
-                sample_col=par.metadata_sample_col,
-            )
-            for rolled in ptm_rolled
-        ]
-
-    ptm_rolled = [
-        abundance.prot_abund_correction(rolled, global_prot, int_cols, par.uniprot_col)
-        for rolled in ptm_rolled
-    ]
-
-    return ptm_rolled
 
 
 def _rollup_stats(
