@@ -82,7 +82,6 @@ def ptm_analysis(par: Params):
     ptm_rolled = _rollup_stats(
         ptm_rolled=ptm_rolled,
         anova_cols=anova_cols,
-        groups=groups,
         pairwise_ttest_groups=pairwise_ttest_groups,
         user_pairwise_ttest_groups=user_pairwise_ttest_groups,
         metadata=metadata,
@@ -109,13 +108,12 @@ def ptm_analysis(par: Params):
 def _rollup_stats(
     ptm_rolled,
     anova_cols,
-    groups,
     pairwise_ttest_groups,
     user_pairwise_ttest_groups,
     metadata,
     par: Params,
 ):
-    if len(groups) > 2:
+    if anova_cols:
         ptm_rolled = [
             stats.anova(
                 rolled, anova_cols, metadata, par.anova_factors, par.metadata_sample_col

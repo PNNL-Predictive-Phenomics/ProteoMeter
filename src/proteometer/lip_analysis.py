@@ -79,7 +79,6 @@ def lip_analysis(par: Params):
         prot_seqs,
         int_cols,
         anova_cols,
-        groups,
         pairwise_ttest_groups,
         user_pairwise_ttest_groups,
         metadata,
@@ -105,7 +104,6 @@ def _double_site(
     prot_seqs,
     int_cols,
     anova_cols,
-    groups,
     pairwise_ttest_groups,
     user_pairwise_ttest_groups,
     metadata,
@@ -143,7 +141,7 @@ def _double_site(
                 f"Protein {uniprot_id} has no peptides that could be mapped to the sequence. Skipping the protein."
             )
             continue
-        if len(groups) > 2:
+        if anova_cols:
             pept_df_a = stats.anova(pept_df_r, anova_cols, metadata)
             pept_df_a = stats.anova(pept_df_a, anova_cols, metadata, par.anova_factors)
         pept_df_p = stats.pairwise_ttest(pept_df_a, pairwise_ttest_groups)
