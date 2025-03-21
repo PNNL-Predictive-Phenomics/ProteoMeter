@@ -50,7 +50,7 @@ def anova_columns(metadata: pd.DataFrame, par: Params):
     anova_cols = [
         sample
         for sample in metadata[par.metadata_sample_col].values
-        if sample not in np.flatten(tt_group_cols)
+        if sample not in np.ravel(tt_group_cols)
     ]
     return anova_cols
 
