@@ -15,13 +15,19 @@ search_tool = "FragPipe"
 pairwise_factor = "Time"
 anova_factors = ["Treatment", "Time"]
 user_ttest_pairs = [
-            ["Infected_8h", "Infected_16h"],
-            ["Infected_8h", "Infected_16h"],
-        ]
+    [
+        "Infected_8h",
+        "Infected_16h",
+    ],
+    [
+        "Infected_8h",
+        "Infected_16h",
+    ],
+]
 
 [corrections]
-abundance_correction = True
-abundance_correction_paired_samples = True
+abundance_correction = true
+abundance_correction_paired_samples = true
 abudnance_unpaired_sig_thr = 0.0
 batch_correct_samples = ""
 pooled_chanel_condition = "Total"
@@ -29,7 +35,7 @@ sig_thr = 0.05
 sig_type = "pval"
 missing_thr = 0
 min_pept_count = 2
-log2_scale = False
+log2_scale = false
 
 [metadata]
 metadata_batch_col = "Batch"

@@ -1,14 +1,12 @@
 # type: ignore
 import os
-from configparser import ConfigParser
+
+import tomllib
 
 
-# TODO: make configurable by user with a config file
-# for now, the ptm_version parameter is a dirty hack to get things going
 class Params:
-    def __init__(self, ini_file):
-        cfg = ConfigParser()
-        cfg.read(ini_file)
+    def __init__(self, toml_file):
+        cfg = tomllib.load(toml_file)
         self.data_dir = f"{os.path.abspath(cfg['paths']['data_dir'])}"
         self.result_dir = f"{os.path.abspath(cfg['paths']['results_dir'])}"
         os.Path(self.result_dir).mkdir(parents=True, exist_ok=True)
