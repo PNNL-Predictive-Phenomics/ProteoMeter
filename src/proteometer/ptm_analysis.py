@@ -50,8 +50,8 @@ def ptm_analysis(par: Params):
     )
 
     ptm_pept = normalization.peptide_normalization_and_correction(
-        ptm_pept=ptm_pept,
         global_pept=global_pept,
+        mod_pept=ptm_pept,
         int_cols=int_cols,
         metadata=metadata,
         par=par,

@@ -63,7 +63,7 @@ def lip_analysis(par: Params):
 
     double_pept = normalization.peptide_normalization_and_correction(
         global_pept=global_pept,
-        double_pept=double_pept,
+        mod_pept=double_pept,
         int_cols=int_cols,
         metadata=metadata,
         par=par,
