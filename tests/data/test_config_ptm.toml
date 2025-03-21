@@ -1,10 +1,16 @@
 [paths]
 data_dir = "./data/PTM"
-result_dir = "./data/PTM"
+results_dir = "./data/PTM"
 fasta_file = "reference_proteome.fasta"
 metadata_file = "metadata.txt"
 global_prot_file = "trypsin_prot.tsv"
 global_pept_file = "trypsin_pept.tsv"
+
+[paths.lip]
+double_pept_file = ""
+
+[paths.ptm]
+ptm_pept_files = ["acetyl_pept.tsv", "phospho_pept.tsv", "redox_pept.tsv"]
 
 [experiment]
 experiment_name = "Test"
@@ -28,7 +34,8 @@ user_ttest_pairs = [
 [corrections]
 abundance_correction = true
 abundance_correction_paired_samples = true
-abudnance_unpaired_sig_thr = 0.0
+abundance_unpaired_sig_thr = 0.0
+batch_correction = true
 batch_correct_samples = ""
 pooled_chanel_condition = "Total"
 sig_thr = 0.05
@@ -45,7 +52,7 @@ metadata_condition_col = "Condition"
 metadata_control_condition = "Control"
 metadata_treatment_condition = "Treatment"
 
-[data.columns]
+[data_columns]
 id_col = "id"
 uniprot_col = "UniProt"
 protein_col = "Protein"
@@ -58,13 +65,6 @@ site_number_col = "site_number"
 
 [symbols]
 id_separator = "@"
-
-[paths.lip]
-double_pept_file = ""
-
-[paths.ptm]
-ptm_pept_files = ["acetyl_pept.tsv", "phospho_pept.tsv", "redox_pept.tsv"]
-
 
 [symbols.ptm]
 ptm_names = ["acetyl", "phospho", "redox"]

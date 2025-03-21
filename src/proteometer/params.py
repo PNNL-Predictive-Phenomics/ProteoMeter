@@ -5,11 +5,12 @@ import tomllib
 
 
 class Params:
-    def __init__(self, toml_file):
-        cfg = tomllib.load(toml_file)
+    def __init__(self, toml_file_path: str) -> None:
+        with open(toml_file_path, "rb") as toml_file:
+            cfg = tomllib.load(toml_file)
         self.data_dir = f"{os.path.abspath(cfg['paths']['data_dir'])}"
         self.result_dir = f"{os.path.abspath(cfg['paths']['results_dir'])}"
-        os.Path(self.result_dir).mkdir(parents=True, exist_ok=True)
+        os.makedirs(self.result_dir, exist_ok=True)
 
         # All the required files
         self.fasta_file = f"{self.data_dir}/{cfg['paths']['fasta_file']}"
@@ -18,17 +19,17 @@ class Params:
         self.global_pept_file = f"{self.data_dir}/{cfg['paths']['global_pept_file']}"
 
         self.double_pept_file = (
-            f"{self.data_dir}/{cfg['paths.lip']['double_pept_file']}"
+            f"{self.data_dir}/{cfg['paths']['lip']['double_pept_file']}"
         )
 
         self.id_separator = cfg["symbols"]["id_separator"]
 
-        self.ptm_names = cfg["symbols.ptm"]["ptm_names"]
+        self.ptm_names = cfg["symbols"]["ptm"]["ptm_names"]
         self.ptm_pept_files = [
             f"{self.data_dir}/{ptm_pept_file}"
-            for ptm_pept_file in cfg["paths.ptm"]["ptm_pept_files"]
+            for ptm_pept_file in cfg["paths"]["ptm"]["ptm_pept_files"]
         ]
-        self.ptm_symbols = cfg["symbols.ptm"]["ptm_symbols"]
+        self.ptm_symbols = cfg["symbols"]["ptm"]["ptm_symbols"]
 
         # Experiment information
         self.experiment_name = cfg["experiment"]["experiment_name"]
@@ -90,12 +91,12 @@ class Params:
         ]
 
         # Output table columns
-        self.id_col = cfg["data.columns"]["id_col"]
-        self.uniprot_col = cfg["data.columns"]["uniprot_col"]
-        self.protein_col = cfg["data.columns"]["protein_col"]
-        self.peptide_col = cfg["data.columns"]["peptide_col"]
-        self.site_col = cfg["data.columns"]["site_col"]
-        self.residue_col = cfg["data.columns"]["residue_col"]
-        self.type_col = cfg["data.columns"]["type_col"]
-        self.experiment_col = cfg["data.columns"]["experiment_col"]
-        self.site_number_col = cfg["data.columns"]["site_number_col"]
+        self.id_col = cfg["data_columns"]["id_col"]
+        self.uniprot_col = cfg["data_columns"]["uniprot_col"]
+        self.protein_col = cfg["data_columns"]["protein_col"]
+        self.peptide_col = cfg["data_columns"]["peptide_col"]
+        self.site_col = cfg["data_columns"]["site_col"]
+        self.residue_col = cfg["data_columns"]["residue_col"]
+        self.type_col = cfg["data_columns"]["type_col"]
+        self.experiment_col = cfg["data_columns"]["experiment_col"]
+        self.site_number_col = cfg["data_columns"]["site_number_col"]
