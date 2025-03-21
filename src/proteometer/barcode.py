@@ -3,7 +3,8 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
-from lip import select_lytic_sites
+
+from proteometer.lip import select_lytic_sites
 
 
 def plot_barcode(pal, ticklabel=None, barcode_name=None, ax=None, size=(10, 2)):

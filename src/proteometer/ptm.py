@@ -3,8 +3,12 @@ import re
 
 import numpy as np
 import pandas as pd
-from peptide import nip_off_pept, strip_peptide
-from residue import count_site_number, count_site_number_with_global_proteomics
+
+from proteometer.peptide import nip_off_pept, strip_peptide
+from proteometer.residue import (
+    count_site_number,
+    count_site_number_with_global_proteomics,
+)
 
 
 def get_ptm_pos_in_pept(

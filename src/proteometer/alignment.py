@@ -3,7 +3,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from lip import select_tryptic_pattern
+
+from proteometer.lip import select_tryptic_pattern
 
 
 # #####!!!!!!!!! NEED to work on it!!!!!!!!!!!!!!#####

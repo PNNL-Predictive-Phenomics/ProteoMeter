@@ -1,6 +1,5 @@
 # type: ignore
 import pandas as pd
-from stats import calculate_pairwise_scalars
 
 import proteometer.normalization as normalization
 import proteometer.stats as stats
@@ -21,7 +20,9 @@ def get_prot_abund_scalars(
     Returns:
         _type_: _description_
     """
-    prot = calculate_pairwise_scalars(prot, pairwise_ttest_name, sig_type, sig_thr)
+    prot = stats.calculate_pairwise_scalars(
+        prot, pairwise_ttest_name, sig_type, sig_thr
+    )
     scalar_dict = dict(zip(prot.index, prot[f"{pairwise_ttest_name}_scalar"]))
     return scalar_dict
 

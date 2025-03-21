@@ -3,7 +3,8 @@ import re
 
 import numpy as np
 import pandas as pd
-from peptide import strip_peptide
+
+from proteometer.peptide import strip_peptide
 
 
 # This part is filtering all the contaminants and reverse hits
