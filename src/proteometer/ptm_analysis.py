@@ -11,10 +11,7 @@ from proteometer.params import Params
 from proteometer.utils import check_missingness, generate_index
 
 
-def ptm_analysis(par: Params | None = None):
-    if par is None:
-        par = Params(ptm_version=True)
-
+def ptm_analysis(par: Params):
     metadata = pd.read_csv(par.metadata_file, sep="\t")
     global_prot = pd.read_csv(par.global_prot_file, sep="\t")
     global_pept = pd.read_csv(par.global_pept_file, sep="\t")
