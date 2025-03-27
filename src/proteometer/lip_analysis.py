@@ -151,6 +151,7 @@ def _double_site(
         pept_df_p = stats.pairwise_ttest(pept_df_p, user_pairwise_ttest_groups)
         double_site.append(pept_df_p)
     double_site = pd.concat(double_site).copy()
+    return double_site
 
 
 def _annotate_global_prot(global_prot, par: Params):
