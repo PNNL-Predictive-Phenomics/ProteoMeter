@@ -3,6 +3,7 @@ import re
 
 import pandas as pd
 
+from proteometer.params import Params
 from proteometer.peptide import nip_off_pept, strip_peptide
 from proteometer.residue import (
     count_site_number,
@@ -58,40 +59,36 @@ def get_phosphositeplus_pos(mod_rsd):
     return [int(re.sub(r"[^0-9]+", "", mod)) for mod in mod_rsd]
 
 
-def combine_multi_ptms(
-    multi_proteomics,
-    residue_col,
-    uniprot_col,
-    site_col,
-    site_number_col,
-    id_separator="@",
-    id_col="id",
-    type_col="Type",
-    experiment_col="Experiment",
-):
+def combine_multi_ptms(multi_proteomics, par: Params):
     proteomics_list = []
     for key, value in multi_proteomics.items():
-        if key.lower() == "global":
+        if key == "global":
             prot = value
-            prot[type_col] = "global"
-            prot[experiment_col] = "PTM"
-            prot[residue_col] = "GLB"
-            prot[site_col] = prot[uniprot_col] + id_separator + prot[residue_col]
+            prot[par.type_col] = "global"
+            prot[par.experiment_col] = "PTM"
+            prot[par.residue_col] = "GLB"
+            prot[par.site_col] = (
+                prot[par.uniprot_col] + par.id_separator + prot[par.residue_col]
+            )
             proteomics_list.append(prot)
-        else:
+        elif key in par.ptm_names:
             ptm_df = value
-            ptm_df[type_col] = key
-            ptm_df[experiment_col] = "PTM"
-            ptm_df = count_site_number(ptm_df, uniprot_col, site_number_col)
+            ptm_df[par.type_col] = par.ptm_abbreviations[key]
+            ptm_df[par.experiment_col] = "PTM"
+            ptm_df = count_site_number(ptm_df, par.uniprot_col, par.site_number_col)
             proteomics_list.append(ptm_df)
+        else:
+            KeyError(
+                f"The key {key} is not recognized. Please check the input data and config file."
+            )
 
     all_ptms = (
         pd.concat(proteomics_list, axis=0, join="outer", ignore_index=True)
-        .sort_values(by=[id_col, type_col, experiment_col, site_col])
+        .sort_values(by=[par.id_col, par.type_col, par.experiment_col, par.site_col])
         .reset_index(drop=True)
     )
     all_ptms = count_site_number_with_global_proteomics(
-        all_ptms, uniprot_col, id_col, site_number_col
+        all_ptms, par.uniprot_col, par.id_col, par.site_number_col
     )
 
     return all_ptms

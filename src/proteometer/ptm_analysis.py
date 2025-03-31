@@ -98,15 +98,7 @@ def ptm_analysis(par: Params):
 
     ptm_dict = {"global": global_prot}
     ptm_dict.update({name: rolled for name, rolled in zip(par.ptm_names, ptm_rolled)})
-    all_ptms = ptm.combine_multi_ptms(
-        ptm_dict,
-        par.residue_col,
-        par.uniprot_col,
-        par.site_col,
-        par.site_number_col,
-        par.id_separator,
-        par.id_col,
-    )
+    all_ptms = ptm.combine_multi_ptms(ptm_dict, par)
 
     all_ptms = check_missingness(all_ptms, groups, group_cols)
 
