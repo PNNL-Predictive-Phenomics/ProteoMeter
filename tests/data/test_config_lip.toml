@@ -70,3 +70,4 @@ id_separator = "@"
 [symbols.ptm]
 ptm_names = []
 ptm_symbols = []
+ptm_abbreviations = []
