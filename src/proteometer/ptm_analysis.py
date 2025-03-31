@@ -49,17 +49,25 @@ def ptm_analysis(par: Params):
         par=par,
     )
 
-    ptm_pept = normalization.peptide_normalization_and_correction(
-        ptm_pept=ptm_pept,
-        global_pept=global_pept,
-        int_cols=int_cols,
-        metadata=metadata,
-        par=par,
-    )
+    ptm_pept = [
+        normalization.peptide_normalization_and_correction(
+            global_pept=global_pept,
+            mod_pept=pept,
+            int_cols=int_cols,
+            metadata=metadata,
+            par=par,
+        )
+        for pept in ptm_pept
+    ]
 
     if par.abundance_correction:
         ptm_pept = [
-            abundance.prot_abund_correction(pept, global_prot, int_cols, par)
+            abundance.prot_abund_correction(
+                pept,
+                global_prot,
+                par,
+                columns_to_correct=int_cols,
+            )
             for pept in ptm_pept
         ]
 
@@ -82,7 +90,6 @@ def ptm_analysis(par: Params):
     ptm_rolled = _rollup_stats(
         ptm_rolled=ptm_rolled,
         anova_cols=anova_cols,
-        groups=groups,
         pairwise_ttest_groups=pairwise_ttest_groups,
         user_pairwise_ttest_groups=user_pairwise_ttest_groups,
         metadata=metadata,
@@ -91,15 +98,7 @@ def ptm_analysis(par: Params):
 
     ptm_dict = {"global": global_prot}
     ptm_dict.update({name: rolled for name, rolled in zip(par.ptm_names, ptm_rolled)})
-    all_ptms = ptm.combine_multi_ptms(
-        ptm_dict,
-        par.residue_col,
-        par.uniprot_col,
-        par.site_col,
-        par.site_number_col,
-        par.id_separator,
-        par.id_col,
-    )
+    all_ptms = ptm.combine_multi_ptms(ptm_dict, par)
 
     all_ptms = check_missingness(all_ptms, groups, group_cols)
 
@@ -109,13 +108,12 @@ def ptm_analysis(par: Params):
 def _rollup_stats(
     ptm_rolled,
     anova_cols,
-    groups,
     pairwise_ttest_groups,
     user_pairwise_ttest_groups,
     metadata,
     par: Params,
 ):
-    if len(groups) > 2:
+    if anova_cols:
         ptm_rolled = [
             stats.anova(
                 rolled, anova_cols, metadata, par.anova_factors, par.metadata_sample_col

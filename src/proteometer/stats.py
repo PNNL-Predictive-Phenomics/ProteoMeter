@@ -1,24 +1,22 @@
 # type: ignore
+from collections.abc import Iterable
+from dataclasses import dataclass
+
 import numpy as np
 import pandas as pd
 import pingouin as pg
 import scipy as sp
 
 
-def adjusted_p_value(pd_series, ignore_na=True, filling_val=1):
-    output = pd_series.copy()
-    if pd_series.isna().sum() > 0:
-        # print("NAs present in pd_series.")
-        if ignore_na:
-            print("Ignoring NAs.")
-            # pd_series =
-        else:
-            # print("Filling NAs with " + str(filling_val))
-            output = sp.stats.false_discovery_control(pd_series.fillna(filling_val))
-    else:
-        # print("No NAs present in pd_series.")
-        output = sp.stats.false_discovery_control(pd_series)
-    return output
+@dataclass
+class TTestGroup:
+    treat_group: str
+    control_group: str
+    treat_samples: list[float]
+    control_samples: list[float]
+
+    def label(self):
+        return f"{self.treat_group}/{self.control_group}"
 
 
 def log2_transformation(df2transform, int_cols):
@@ -43,15 +41,13 @@ def anova(df, anova_cols, metadata_ori, anova_factors=["Group"], sample_col="Sam
     Returns:
         _type_: _description_
     """
-    metadata = metadata_ori[metadata_ori[sample_col].isin(anova_cols)].copy()
-
-    # df = df.drop(columns=["ANOVA_[one-way]_pval", "ANOVA_[one-way]_adj-p"], errors='ignore')
-
     if len(anova_factors) < 1:
-        print(
+        raise ValueError(
             "The anova_factors is empty. Please provide the factors for ANOVA analysis. The default factor is 'Group'."
         )
-        anova_factors = ["Group"]
+
+    metadata = metadata_ori[metadata_ori[sample_col].isin(anova_cols)].copy()
+
     anova_factor_names = [
         f"{anova_factors[i]} * {anova_factors[j]}" if i != j else f"{anova_factors[i]}"
         for i in range(len(anova_factors))
@@ -59,7 +55,6 @@ def anova(df, anova_cols, metadata_ori, anova_factors=["Group"], sample_col="Sam
     ]
 
     df_w = df[anova_cols].copy()
-    # f_stats = []
     f_stats_factors = []
     for row in df_w.iterrows():
         df_id = row[0]
@@ -81,7 +76,7 @@ def anova(df, anova_cols, metadata_ori, anova_factors=["Group"], sample_col="Sam
                     f"ANOVA_[{anova_factor_name}]_pval": np.nan
                     for anova_factor_name in anova_factor_names
                 }
-        # except AssertionError as e:
+
         except Exception as e:
             Warning(f"ANOVA failed for {df_id}: {e}")
             p_vals = {
@@ -110,29 +105,30 @@ def anova(df, anova_cols, metadata_ori, anova_factors=["Group"], sample_col="Sam
 # Here is the function to do the t-test This is same for both protide and
 # protein as well as rolled up protein data. Hopefully this is also the same for
 # PTM data
-def pairwise_ttest(df, pairwise_ttest_groups):
+def pairwise_ttest(df, pairwise_ttest_groups: Iterable[TTestGroup]):
     """_summary_
 
     Args:
         df (_type_): _description_
     """
     for pairwise_ttest_group in pairwise_ttest_groups:
-        df[pairwise_ttest_group[0]] = (
-            df[pairwise_ttest_group[4]].mean(axis=1)
-            - df[pairwise_ttest_group[3]].mean(axis=1)
+        label = pairwise_ttest_group.label()
+        df[label] = (
+            df[pairwise_ttest_group.treat_samples].mean(axis=1)
+            - df[pairwise_ttest_group.control_samples].mean(axis=1)
         ).fillna(0)
-        df[f"{pairwise_ttest_group[0]}_pval"] = sp.stats.ttest_ind(
-            df[pairwise_ttest_group[4]],
-            df[pairwise_ttest_group[3]],
+        df[f"{label}_pval"] = sp.stats.ttest_ind(
+            df[pairwise_ttest_group.treat_samples],
+            df[pairwise_ttest_group.control_samples],
             axis=1,
             nan_policy="omit",
         ).pvalue
-        df[f"{pairwise_ttest_group[0]}_adj-p"] = sp.stats.false_discovery_control(
-            df[f"{pairwise_ttest_group[0]}_pval"].fillna(1)
+        df[f"{label}_adj-p"] = sp.stats.false_discovery_control(
+            df[f"{label}_pval"].fillna(1)
         )
         df.loc[
-            df[f"{pairwise_ttest_group[0]}_pval"].isna(),
-            f"{pairwise_ttest_group[0]}_adj-p",
+            df[f"{label}_pval"].isna(),
+            f"{label}_adj-p",
         ] = np.nan
     return df
 
@@ -154,7 +150,7 @@ def calculate_pairwise_scalars(
 
 
 def calculate_all_pairwise_scalars(
-    prot, pairwise_ttest_groups, sig_type="pval", sig_thr=0.05
+    prot, pairwise_ttest_groups: Iterable[TTestGroup], sig_type="pval", sig_thr=0.05
 ):
     """_summary_
 
@@ -169,6 +165,6 @@ def calculate_all_pairwise_scalars(
     """
     for pairwise_ttest_group in pairwise_ttest_groups:
         prot = calculate_pairwise_scalars(
-            prot, pairwise_ttest_group[0], sig_type, sig_thr
+            prot, pairwise_ttest_group.label(), sig_type, sig_thr
         )
     return prot

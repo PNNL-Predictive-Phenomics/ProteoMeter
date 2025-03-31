@@ -1,6 +1,5 @@
 # type: ignore
 import pandas as pd
-from stats import calculate_pairwise_scalars
 
 import proteometer.normalization as normalization
 import proteometer.stats as stats
@@ -21,7 +20,9 @@ def get_prot_abund_scalars(
     Returns:
         _type_: _description_
     """
-    prot = calculate_pairwise_scalars(prot, pairwise_ttest_name, sig_type, sig_thr)
+    prot = stats.calculate_pairwise_scalars(
+        prot, pairwise_ttest_name, sig_type, sig_thr
+    )
     scalar_dict = dict(zip(prot.index, prot[f"{pairwise_ttest_name}_scalar"]))
     return scalar_dict
 
@@ -167,7 +168,7 @@ def global_prot_normalization_and_stats(
             batch_col=par.metadata_batch_col,
             sample_col=par.metadata_sample_col,
         )
-    if len(par.groups) > 2:
+    if anova_cols:
         global_prot = stats.anova(global_prot, anova_cols, metadata)
         global_prot = stats.anova(global_prot, anova_cols, metadata, par.anova_factors)
     global_prot = stats.pairwise_ttest(global_prot, pairwise_ttest_groups)

@@ -63,7 +63,7 @@ def lip_analysis(par: Params):
 
     double_pept = normalization.peptide_normalization_and_correction(
         global_pept=global_pept,
-        double_pept=double_pept,
+        mod_pept=double_pept,
         int_cols=int_cols,
         metadata=metadata,
         par=par,
@@ -71,7 +71,10 @@ def lip_analysis(par: Params):
 
     if par.abundance_correction:
         double_pept = abundance.prot_abund_correction(
-            double_pept, global_prot, int_cols, par
+            double_pept,
+            global_prot,
+            par,
+            columns_to_correct=int_cols,
         )
 
     double_site = _double_site(
@@ -79,7 +82,6 @@ def lip_analysis(par: Params):
         prot_seqs,
         int_cols,
         anova_cols,
-        groups,
         pairwise_ttest_groups,
         user_pairwise_ttest_groups,
         metadata,
@@ -105,7 +107,6 @@ def _double_site(
     prot_seqs,
     int_cols,
     anova_cols,
-    groups,
     pairwise_ttest_groups,
     user_pairwise_ttest_groups,
     metadata,
@@ -143,13 +144,14 @@ def _double_site(
                 f"Protein {uniprot_id} has no peptides that could be mapped to the sequence. Skipping the protein."
             )
             continue
-        if len(groups) > 2:
+        if anova_cols:
             pept_df_a = stats.anova(pept_df_r, anova_cols, metadata)
             pept_df_a = stats.anova(pept_df_a, anova_cols, metadata, par.anova_factors)
         pept_df_p = stats.pairwise_ttest(pept_df_a, pairwise_ttest_groups)
         pept_df_p = stats.pairwise_ttest(pept_df_p, user_pairwise_ttest_groups)
         double_site.append(pept_df_p)
     double_site = pd.concat(double_site).copy()
+    return double_site
 
 
 def _annotate_global_prot(global_prot, par: Params):

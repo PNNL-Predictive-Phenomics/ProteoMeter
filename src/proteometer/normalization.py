@@ -85,7 +85,7 @@ def median_normalization(
         df_transformed[int_cols] = df_transformed[int_cols].sub(
             median_correction_T, axis=1
         )
-        # df_transformed = df_transformed.replace([np.inf, -np.inf], np.nan)
+
         return df_transformed
 
     metadata = metadata_ori.copy()
@@ -117,11 +117,10 @@ def median_normalization(
         df_transformed[int_cols_per_batch] = df_transformed[int_cols_per_batch].sub(
             median_correction_T, axis=1
         )
-    # df_transformed = df_transformed.replace([np.inf, -np.inf], np.nan)
+
     return df_transformed
 
 
-# %%
 # Batch correction for PTM data
 def batch_correction(
     df4batcor,
@@ -144,10 +143,7 @@ def batch_correction(
                 & (metadata[sample_col].isin(batch_correct_samples))
             ][sample_col]
         ].copy()
-        # df_batch = df_batch[df_batch.isna().sum(axis=1) <= 0].copy()
         df_batch_means = df_batch.mean(axis=1).fillna(0)
-        # print(f"Batch {batch} means: {df_batch_means}")
-        # print(f"Batch {batch} mean: {df_batch_means.mean()}")
         batch_means.update({batch: df_batch_means})
     batch_means = pd.DataFrame(batch_means)
     batch_means_diffs = batch_means.sub(batch_means.mean(axis=1), axis=0)
@@ -159,5 +155,5 @@ def batch_correction(
         df[int_cols_per_batch] = df[int_cols_per_batch].sub(
             batch_means_diffs[batch], axis=0
         )
-    # df = df.replace([np.inf, -np.inf], np.nan)
+
     return df

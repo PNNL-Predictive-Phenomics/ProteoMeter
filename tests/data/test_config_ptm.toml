@@ -1,10 +1,10 @@
 [paths]
-data_dir = "./data/PTM"
-results_dir = "./data/PTM"
+data_dir = "./tests/data/PTM"
+results_dir = "./tests/data/PTM"
 fasta_file = "reference_proteome.fasta"
-metadata_file = "metadata.txt"
-global_prot_file = "trypsin_prot.tsv"
-global_pept_file = "trypsin_pept.tsv"
+metadata_file = "metadata.tsv"
+global_prot_file = "global_prot.tsv"
+global_pept_file = "global_pept.tsv"
 
 [paths.lip]
 double_pept_file = ""
@@ -69,3 +69,4 @@ id_separator = "@"
 [symbols.ptm]
 ptm_names = ["acetyl", "phospho", "redox"]
 ptm_symbols = ["@", "#", "@"]
+ptm_abbreviations = ["Ac", "Ph", "Ox"]

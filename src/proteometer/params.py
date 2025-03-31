@@ -29,7 +29,29 @@ class Params:
             f"{self.data_dir}/{ptm_pept_file}"
             for ptm_pept_file in cfg["paths"]["ptm"]["ptm_pept_files"]
         ]
+
+        if len(self.ptm_names) != len(self.ptm_pept_files):
+            raise ValueError(
+                "The number of ptm names must be equal to the number of ptm pept files"
+            )
+
         self.ptm_symbols = [str(x) for x in cfg["symbols"]["ptm"]["ptm_symbols"]]
+
+        if len(cfg["symbols"]["ptm"]["ptm_symbols"]) != len(self.ptm_names):
+            raise ValueError(
+                "The number of ptm names must be equal to the number of ptm symbols"
+            )
+
+        if len(cfg["symbols"]["ptm"]["ptm_abbreviations"]) != len(self.ptm_names):
+            raise ValueError(
+                "The number of ptm names must be equal to the number of ptm abbreviations"
+            )
+        self.ptm_abbreviations = {
+            name: str(x)
+            for name, x in zip(
+                self.ptm_names, cfg["symbols"]["ptm"]["ptm_abbreviations"]
+            )
+        }
 
         # Experiment information
         self.experiment_name = str(cfg["experiment"]["experiment_name"])

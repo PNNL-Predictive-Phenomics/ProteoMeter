@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 
 from proteometer.params import Params
+from proteometer.stats import TTestGroup
 
 
 def group_columns(metadata: pd.DataFrame, par: Params):
@@ -50,7 +51,7 @@ def anova_columns(metadata: pd.DataFrame, par: Params):
     anova_cols = [
         sample
         for sample in metadata[par.metadata_sample_col].values
-        if sample not in np.flatten(tt_group_cols)
+        if sample not in np.ravel(tt_group_cols)
     ]
     return anova_cols
 
@@ -82,19 +83,19 @@ def t_test_groups(metadata: pd.DataFrame, par: Params):
                     ][par.metadata_group_col]
                 )
             ):
-                pairwise_ttest_groups.append(
-                    [
-                        f"{treat_group}/{control_group}",
-                        control_group,
-                        treat_group,
-                        metadata[metadata[par.metadata_group_col] == control_group][
-                            par.metadata_sample_col
-                        ].to_list(),
-                        metadata[metadata[par.metadata_group_col] == treat_group][
-                            par.metadata_sample_col
-                        ].to_list(),
-                    ]
+                control_samples = metadata[
+                    metadata[par.metadata_group_col] == control_group
+                ][par.metadata_sample_col].to_list()
+                treat_samples = metadata[
+                    metadata[par.metadata_group_col] == treat_group
+                ][par.metadata_sample_col].to_list()
+                t_test_group = TTestGroup(
+                    treat_group=treat_group,
+                    control_group=control_group,
+                    treat_samples=treat_samples,
+                    control_samples=control_samples,
                 )
+                pairwise_ttest_groups.append(t_test_group)
 
     return pairwise_ttest_groups
 
@@ -104,17 +105,19 @@ def user_t_test_groups(metadata: pd.DataFrame, par: Params):
     for user_test_pair in par.user_ttest_pairs:
         user_ctrl_group = user_test_pair[0]
         user_treat_group = user_test_pair[1]
-        user_pairwise_ttest_groups.append(
-            [
-                f"{user_treat_group}/{user_ctrl_group}",
-                user_ctrl_group,
-                user_treat_group,
-                metadata[metadata[par.metadata_group_col] == user_ctrl_group][
-                    par.metadata_sample_col
-                ].to_list(),
-                metadata[metadata[par.metadata_group_col] == user_treat_group][
-                    par.metadata_sample_col
-                ].to_list(),
-            ]
+
+        control_samples = metadata[metadata[par.metadata_group_col] == user_ctrl_group][
+            par.metadata_sample_col
+        ].to_list()
+        treat_samples = metadata[metadata[par.metadata_group_col] == user_treat_group][
+            par.metadata_sample_col
+        ].to_list()
+        t_test_group = TTestGroup(
+            treat_group=user_treat_group,
+            control_group=user_ctrl_group,
+            treat_samples=treat_samples,
+            control_samples=control_samples,
         )
+
+        user_pairwise_ttest_groups.append(t_test_group)
     return user_pairwise_ttest_groups
