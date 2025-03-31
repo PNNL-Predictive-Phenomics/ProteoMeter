@@ -74,31 +74,17 @@ def combine_multi_ptms(
     for key, value in multi_proteomics.items():
         if key.lower() == "global":
             prot = value
-            prot[type_col] = "Global"
+            prot[type_col] = "global"
             prot[experiment_col] = "PTM"
             prot[residue_col] = "GLB"
             prot[site_col] = prot[uniprot_col] + id_separator + prot[residue_col]
             proteomics_list.append(prot)
-        elif key.lower() == "redox":
-            redox = value
-            redox[type_col] = "Ox"
-            redox[experiment_col] = "PTM"
-            redox = count_site_number(redox, uniprot_col, site_number_col)
-            proteomics_list.append(redox)
-        elif key.lower() == "phospho":
-            phospho = value
-            phospho[type_col] = "Ph"
-            phospho[experiment_col] = "PTM"
-            phospho = count_site_number(phospho, uniprot_col, site_number_col)
-            proteomics_list.append(phospho)
-        elif key.lower() == "acetyl":
-            acetyl = value
-            acetyl[type_col] = "Ac"
-            acetyl[experiment_col] = "PTM"
-            acetyl = count_site_number(acetyl, uniprot_col, site_number_col)
-            proteomics_list.append(acetyl)
         else:
-            KeyError(f"The key {key} is not recognized. Please check the input data.")
+            ptm_df = value
+            ptm_df[type_col] = key
+            ptm_df[experiment_col] = "PTM"
+            ptm_df = count_site_number(ptm_df, uniprot_col, site_number_col)
+            proteomics_list.append(ptm_df)
 
     all_ptms = (
         pd.concat(proteomics_list, axis=0, join="outer", ignore_index=True)
