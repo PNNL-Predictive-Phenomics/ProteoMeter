@@ -59,6 +59,59 @@ def get_phosphositeplus_pos(mod_rsd):
     return [int(re.sub(r"[^0-9]+", "", mod)) for mod in mod_rsd]
 
 
+def combine_multi_ptms(
+    multi_proteomics,
+    residue_col,
+    uniprot_col,
+    site_col,
+    site_number_col,
+    id_separator="@",
+    id_col="id",
+    type_col="Type",
+    experiment_col="Experiment",
+):
+    proteomics_list = []
+    for key, value in multi_proteomics.items():
+        if key.lower() == "global":
+            prot = value
+            prot[type_col] = "Global"
+            prot[experiment_col] = "PTM"
+            prot[residue_col] = "GLB"
+            prot[site_col] = prot[uniprot_col] + id_separator + prot[residue_col]
+            proteomics_list.append(prot)
+        elif key.lower() == "redox":
+            redox = value
+            redox[type_col] = "Ox"
+            redox[experiment_col] = "PTM"
+            redox = count_site_number(redox, uniprot_col, site_number_col)
+            proteomics_list.append(redox)
+        elif key.lower() == "phospho":
+            phospho = value
+            phospho[type_col] = "Ph"
+            phospho[experiment_col] = "PTM"
+            phospho = count_site_number(phospho, uniprot_col, site_number_col)
+            proteomics_list.append(phospho)
+        elif key.lower() == "acetyl":
+            acetyl = value
+            acetyl[type_col] = "Ac"
+            acetyl[experiment_col] = "PTM"
+            acetyl = count_site_number(acetyl, uniprot_col, site_number_col)
+            proteomics_list.append(acetyl)
+        else:
+            KeyError(f"The key {key} is not recognized. Please check the input data.")
+
+    all_ptms = (
+        pd.concat(proteomics_list, axis=0, join="outer", ignore_index=True)
+        .sort_values(by=[id_col, type_col, experiment_col, site_col])
+        .reset_index(drop=True)
+    )
+    all_ptms = count_site_number_with_global_proteomics(
+        all_ptms, uniprot_col, id_col, site_number_col
+    )
+
+    return all_ptms
+
+
 # To normalize the PTM data by the global protein medians
 def ptm_TMT_normalization(df2transform, global_pept, int_cols):
     """_summary_
@@ -317,56 +370,3 @@ def ptm_mean_rollup_to_site(
     df[int_cols] = df[int_cols].replace([np.inf, -np.inf], np.nan)
     df.index = df[id_col].to_list()
     return df
-
-
-def combine_multi_ptms(
-    multi_proteomics,
-    residue_col,
-    uniprot_col,
-    site_col,
-    site_number_col,
-    id_separator="@",
-    id_col="id",
-    type_col="Type",
-    experiment_col="Experiment",
-):
-    proteomics_list = []
-    for key, value in multi_proteomics.items():
-        if key.lower() == "global":
-            prot = value
-            prot[type_col] = "Global"
-            prot[experiment_col] = "PTM"
-            prot[residue_col] = "GLB"
-            prot[site_col] = prot[uniprot_col] + id_separator + prot[residue_col]
-            proteomics_list.append(prot)
-        elif key.lower() == "redox":
-            redox = value
-            redox[type_col] = "Ox"
-            redox[experiment_col] = "PTM"
-            redox = count_site_number(redox, uniprot_col, site_number_col)
-            proteomics_list.append(redox)
-        elif key.lower() == "phospho":
-            phospho = value
-            phospho[type_col] = "Ph"
-            phospho[experiment_col] = "PTM"
-            phospho = count_site_number(phospho, uniprot_col, site_number_col)
-            proteomics_list.append(phospho)
-        elif key.lower() == "acetyl":
-            acetyl = value
-            acetyl[type_col] = "Ac"
-            acetyl[experiment_col] = "PTM"
-            acetyl = count_site_number(acetyl, uniprot_col, site_number_col)
-            proteomics_list.append(acetyl)
-        else:
-            KeyError(f"The key {key} is not recognized. Please check the input data.")
-
-    all_ptms = (
-        pd.concat(proteomics_list, axis=0, join="outer", ignore_index=True)
-        .sort_values(by=[id_col, type_col, experiment_col, site_col])
-        .reset_index(drop=True)
-    )
-    all_ptms = count_site_number_with_global_proteomics(
-        all_ptms, uniprot_col, id_col, site_number_col
-    )
-
-    return all_ptms
