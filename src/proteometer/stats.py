@@ -5,22 +5,6 @@ import pingouin as pg
 import scipy as sp
 
 
-def adjusted_p_value(pd_series, ignore_na=True, filling_val=1):
-    output = pd_series.copy()
-    if pd_series.isna().sum() > 0:
-        # print("NAs present in pd_series.")
-        if ignore_na:
-            print("Ignoring NAs.")
-            # pd_series =
-        else:
-            # print("Filling NAs with " + str(filling_val))
-            output = sp.stats.false_discovery_control(pd_series.fillna(filling_val))
-    else:
-        # print("No NAs present in pd_series.")
-        output = sp.stats.false_discovery_control(pd_series)
-    return output
-
-
 def log2_transformation(df2transform, int_cols):
     """_summary_
 
@@ -43,15 +27,13 @@ def anova(df, anova_cols, metadata_ori, anova_factors=["Group"], sample_col="Sam
     Returns:
         _type_: _description_
     """
-    metadata = metadata_ori[metadata_ori[sample_col].isin(anova_cols)].copy()
-
-    # df = df.drop(columns=["ANOVA_[one-way]_pval", "ANOVA_[one-way]_adj-p"], errors='ignore')
-
     if len(anova_factors) < 1:
-        print(
+        raise ValueError(
             "The anova_factors is empty. Please provide the factors for ANOVA analysis. The default factor is 'Group'."
         )
-        anova_factors = ["Group"]
+
+    metadata = metadata_ori[metadata_ori[sample_col].isin(anova_cols)].copy()
+
     anova_factor_names = [
         f"{anova_factors[i]} * {anova_factors[j]}" if i != j else f"{anova_factors[i]}"
         for i in range(len(anova_factors))
@@ -59,7 +41,6 @@ def anova(df, anova_cols, metadata_ori, anova_factors=["Group"], sample_col="Sam
     ]
 
     df_w = df[anova_cols].copy()
-    # f_stats = []
     f_stats_factors = []
     for row in df_w.iterrows():
         df_id = row[0]
@@ -81,7 +62,7 @@ def anova(df, anova_cols, metadata_ori, anova_factors=["Group"], sample_col="Sam
                     f"ANOVA_[{anova_factor_name}]_pval": np.nan
                     for anova_factor_name in anova_factor_names
                 }
-        # except AssertionError as e:
+
         except Exception as e:
             Warning(f"ANOVA failed for {df_id}: {e}")
             p_vals = {
