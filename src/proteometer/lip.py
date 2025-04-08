@@ -8,7 +8,7 @@ from proteometer.peptide import strip_peptide
 
 
 # This part is filtering all the contaminants and reverse hits
-def filter_contaminants_reverse_pept(df, search_tool, ProteinID_col_pept, uniprot_col):
+def filter_contaminants_reverse_pept(df, search_tool, protein_id_col_pept, uniprot_col):
     """_summary_
 
     Args:
@@ -18,14 +18,14 @@ def filter_contaminants_reverse_pept(df, search_tool, ProteinID_col_pept, unipro
         df = df[
             (df["Reverse"].isna())
             & (df["Potential contaminant"].isna())
-            & (~df[ProteinID_col_pept].str.contains("(?i)Contaminant"))
-            & (~df[ProteinID_col_pept].str.contains("(?i)REV__"))
-            & (~df[ProteinID_col_pept].str.contains("(?i)CON__"))
+            & (~df[protein_id_col_pept].str.contains("(?i)Contaminant"))
+            & (~df[protein_id_col_pept].str.contains("(?i)REV__"))
+            & (~df[protein_id_col_pept].str.contains("(?i)CON__"))
         ].copy()
-        df[uniprot_col] = df[ProteinID_col_pept]
+        df[uniprot_col] = df[protein_id_col_pept]
     elif search_tool.lower() == "msfragger" or search_tool.lower() == "fragpipe":
-        df = df[(~df[ProteinID_col_pept].str.contains("(?i)contam_"))].copy()
-        df[uniprot_col] = df[ProteinID_col_pept]
+        df = df[(~df[protein_id_col_pept].str.contains("(?i)contam_"))].copy()
+        df[uniprot_col] = df[protein_id_col_pept]
     else:
         print(
             "The search tool is not specified or not supported yet. "
@@ -36,7 +36,7 @@ def filter_contaminants_reverse_pept(df, search_tool, ProteinID_col_pept, unipro
     return df
 
 
-def filter_contaminants_reverse_prot(df, search_tool, ProteinID_col_prot, uniprot_col):
+def filter_contaminants_reverse_prot(df, search_tool, protein_id_col_prot, uniprot_col):
     """_summary_
 
     Args:
@@ -47,14 +47,14 @@ def filter_contaminants_reverse_prot(df, search_tool, ProteinID_col_prot, unipro
             (df["Only identified by site"].isna())
             & (df["Reverse"].isna())
             & (df["Potential contaminant"].isna())
-            & (~df[ProteinID_col_prot].str.contains("(?i)Contaminant"))
-            & (~df[ProteinID_col_prot].str.contains("(?i)REV__"))
-            & (~df[ProteinID_col_prot].str.contains("CON__"))
+            & (~df[protein_id_col_prot].str.contains("(?i)Contaminant"))
+            & (~df[protein_id_col_prot].str.contains("(?i)REV__"))
+            & (~df[protein_id_col_prot].str.contains("CON__"))
         ].copy()
-        df[uniprot_col] = [ids.split(";")[0] for ids in df[ProteinID_col_prot]]
+        df[uniprot_col] = [ids.split(";")[0] for ids in df[protein_id_col_prot]]
     elif search_tool.lower() == "msfragger" or search_tool.lower() == "fragpipe":
-        df = df[(~df[ProteinID_col_prot].str.contains("(?i)contam_"))].copy()
-        df[uniprot_col] = df[ProteinID_col_prot]
+        df = df[(~df[protein_id_col_prot].str.contains("(?i)contam_"))].copy()
+        df[uniprot_col] = df[protein_id_col_prot]
     else:
         print(
             "The search tool is not specified or not supported yet. "
