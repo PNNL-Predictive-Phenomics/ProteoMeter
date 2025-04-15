@@ -1,4 +1,8 @@
-# type: ignore
+from __future__ import annotations
+
+from collections.abc import Iterable
+from typing import cast
+
 import pandas as pd
 
 import proteometer.normalization as normalization
@@ -7,8 +11,11 @@ from proteometer.params import Params
 
 
 def get_prot_abund_scalars(
-    prot, pairwise_ttest_name=None, sig_type="pval", sig_thr=0.05
-):
+    prot: pd.DataFrame,
+    pairwise_ttest_name: str,
+    sig_type: str = "pval",
+    sig_thr: float = 0.05,
+) -> dict[str, float]:
     """_summary_
 
     Args:
@@ -23,18 +30,23 @@ def get_prot_abund_scalars(
     prot = stats.calculate_pairwise_scalars(
         prot, pairwise_ttest_name, sig_type, sig_thr
     )
-    scalar_dict = dict(zip(prot.index, prot[f"{pairwise_ttest_name}_scalar"]))
+    scalar_dict = dict(
+        zip(
+            cast(Iterable[str], prot.index),
+            cast(Iterable[float], prot[f"{pairwise_ttest_name}_scalar"]),
+        )
+    )
     return scalar_dict
 
 
 def prot_abund_correction(
-    pept,
-    prot,
+    pept: pd.DataFrame,
+    prot: pd.DataFrame,
     par: Params,
-    columns_to_correct=None,
-    pairwise_ttest_groups=None,
-    non_tt_cols=None,
-):
+    columns_to_correct: Iterable[str] | None = None,
+    pairwise_ttest_groups: Iterable[stats.TTestGroup] | None = None,
+    non_tt_cols: Iterable[str] | None = None,
+) -> pd.DataFrame:
     if par.abundance_correction_paired_samples:
         if columns_to_correct is None:
             raise ValueError(
@@ -64,8 +76,13 @@ def prot_abund_correction(
 # correct the PTM or LiP data using the protein abundance scalars with
 # significantly changed proteins only
 def prot_abund_correction_sig_only(
-    pept, prot, pairwise_ttest_groups, uniprot_col, sig_type="pval", sig_thr=0.05
-):
+    pept: pd.DataFrame,
+    prot: pd.DataFrame,
+    pairwise_ttest_groups: Iterable[stats.TTestGroup],
+    uniprot_col: str,
+    sig_type: str = "pval",
+    sig_thr: float = 0.05,
+) -> pd.DataFrame:
     """_summary_
 
     Args:
@@ -80,26 +97,40 @@ def prot_abund_correction_sig_only(
         _type_: _description_
     """
     for pairwise_ttest_group in pairwise_ttest_groups:
-        if pairwise_ttest_group[0] not in prot.columns:
+        if pairwise_ttest_group.label() not in prot.columns:
             scalar_dict = get_prot_abund_scalars(
-                prot, pairwise_ttest_group[0], sig_type, sig_thr
+                prot, pairwise_ttest_group.label(), sig_type, sig_thr
             )
         else:
             scalar_dict = dict(
-                zip(prot.index, prot[f"{pairwise_ttest_group[0]}_scalar"])
+                zip(
+                    cast("pd.Index[str]", prot.index),
+                    cast(
+                        "pd.Series[float]",
+                        prot[f"{pairwise_ttest_group.label()}_scalar"],
+                    ),
+                )
             )
-        pept[f"{pairwise_ttest_group[0]}_scalar"] = [
-            scalar_dict.get(uniprot_id, 0) for uniprot_id in pept[uniprot_col]
+        pept[f"{pairwise_ttest_group.label()}_scalar"] = [
+            scalar_dict.get(uniprot_id, 0)
+            for uniprot_id in cast(pd.Series[str], pept[uniprot_col])
         ]
-        pept[pairwise_ttest_group[4]] = pept[pairwise_ttest_group[4]].subtract(
-            pept[f"{pairwise_ttest_group[0]}_scalar"], axis=0
+        pept[pairwise_ttest_group.treat_samples] = pept[
+            pairwise_ttest_group.treat_samples
+        ].subtract(
+            cast("pd.Series[float]", pept[f"{pairwise_ttest_group.label()}_scalar"]),
+            axis=0,
         )
     return pept
 
 
 # correct the PTM or LiP data using all protein abundance recommended approach
 def prot_abund_correction_matched(
-    pept, prot, columns_to_correct, uniprot_col, non_tt_cols=None
+    pept: pd.DataFrame,
+    prot: pd.DataFrame,
+    columns_to_correct: Iterable[str],
+    uniprot_col: str,
+    non_tt_cols: Iterable[str] | None = None,
 ):
     """_summary_
 
@@ -112,38 +143,42 @@ def prot_abund_correction_matched(
     Returns:
         _type_: _description_
     """
-    pept_new = []
+    pept_new: list[pd.DataFrame] = []
     if non_tt_cols is None:
         non_tt_cols = columns_to_correct
     for uniprot_id in pept[uniprot_col].unique():
-        pept_sub = pept[pept[uniprot_col] == uniprot_id].copy()
+        pept_sub = cast(pd.DataFrame, pept[pept[uniprot_col] == uniprot_id].copy())
         if uniprot_id in prot[uniprot_col].unique():
-            prot_abund_row = prot.loc[uniprot_id, columns_to_correct]
+            prot_abund_row = cast(
+                "pd.Series[float]", prot.loc[uniprot_id, columns_to_correct]
+            )
             prot_abund = prot_abund_row.fillna(0)
-            prot_abund_median = prot_abund_row[non_tt_cols].median()
+            prot_abund_median = prot_abund_row[non_tt_cols].median()  # type: ignore
             if prot_abund_median:
-                prot_abund_scale = (
-                    prot_abund_row.div(prot_abund_row).fillna(0) * prot_abund_median
+                prot_abund_scale = cast(
+                    "pd.Series[float]",
+                    prot_abund_row.div(prot_abund_row).fillna(0) * prot_abund_median,
                 )
             else:
-                prot_abund_scale = prot_abund_row.div(prot_abund_row).fillna(0) * 0
+                prot_abund_scale = cast(
+                    "pd.Series[float]", prot_abund_row.div(prot_abund_row).fillna(0) * 0
+                )
             pept_sub[columns_to_correct] = (
                 pept_sub[columns_to_correct]
                 .sub(prot_abund, axis=1)
                 .add(prot_abund_scale, axis=1)
             )
         pept_new.append(pept_sub)
-    pept_new = pd.concat(pept_new)
 
-    return pept_new
+    return pd.concat(pept_new)
 
 
 def global_prot_normalization_and_stats(
     global_prot: pd.DataFrame,
     int_cols: list[str],
     anova_cols: list[str],
-    pairwise_ttest_groups,
-    user_pairwise_ttest_groups,
+    pairwise_ttest_groups: Iterable[stats.TTestGroup],
+    user_pairwise_ttest_groups: Iterable[stats.TTestGroup],
     metadata: pd.DataFrame,
     par: Params,
 ):

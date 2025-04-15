@@ -1,7 +1,20 @@
-# type: ignore
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    import pandas as pd
 
 
-def generate_index(df, prot_col, level_col=None, id_separator="@", id_col="id"):
+def generate_index(
+    df: pd.DataFrame,
+    prot_col: str,
+    level_col: str | None = None,
+    id_separator: str = "@",
+    id_col: str = "id",
+) -> pd.DataFrame:
     """_summary_
 
     Args:
@@ -14,11 +27,20 @@ def generate_index(df, prot_col, level_col=None, id_separator="@", id_col="id"):
         df[id_col] = df[prot_col]
     else:
         df[id_col] = df[prot_col] + id_separator + df[level_col]
-    df.index = df[id_col].to_list()
+
+    # proper way to do this is
+    # df.set_index(id_col, inplace=True)
+    # but there is a bunch of reindexing going on,
+    # so this would require fixing this elsewhere too.
+    # In the short term, it is easiest to just ignore
+    # this since it works.
+    df.index = df[id_col].to_list()  # type: ignore
     return df
 
 
-def check_missingness(df, groups, group_cols):
+def check_missingness(
+    df: pd.DataFrame, groups: Sequence[str], group_cols: Sequence[Sequence[str]]
+) -> pd.DataFrame:
     """_summary_
 
     Args:
@@ -31,7 +53,12 @@ def check_missingness(df, groups, group_cols):
     return df
 
 
-def filter_missingness(df, groups, group_cols, missing_thr=0.0):
+def filter_missingness(
+    df: pd.DataFrame,
+    groups: Sequence[str],
+    group_cols: Sequence[Sequence[str]],
+    missing_thr: float = 0.0,
+) -> pd.DataFrame:
     """_summary_
 
     Args:
