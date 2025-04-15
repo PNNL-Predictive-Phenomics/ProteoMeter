@@ -1,4 +1,5 @@
-# type: ignore
+from __future__ import annotations
+
 import pandas as pd
 
 import proteometer.abundance as abundance
@@ -11,7 +12,7 @@ from proteometer.params import Params
 from proteometer.utils import check_missingness, generate_index
 
 
-def ptm_analysis(par: Params):
+def ptm_analysis(par: Params) -> pd.DataFrame:
     metadata = pd.read_csv(par.metadata_file, sep="\t")
     global_prot = pd.read_csv(par.global_prot_file, sep="\t")
     global_pept = pd.read_csv(par.global_pept_file, sep="\t")
@@ -82,7 +83,7 @@ def ptm_analysis(par: Params):
             par.id_col,
             par.id_separator,
             par.site_col,
-            rollup_func="Sum",
+            rollup_func="sum",
         )
         for pept in ptm_pept
     ]
@@ -106,11 +107,11 @@ def ptm_analysis(par: Params):
 
 
 def _rollup_stats(
-    ptm_rolled,
-    anova_cols,
-    pairwise_ttest_groups,
-    user_pairwise_ttest_groups,
-    metadata,
+    ptm_rolled: list[pd.DataFrame],
+    anova_cols: list[str],
+    pairwise_ttest_groups: list[stats.TTestGroup],
+    user_pairwise_ttest_groups: list[stats.TTestGroup],
+    metadata: pd.DataFrame,
     par: Params,
 ):
     if anova_cols:
