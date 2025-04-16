@@ -1,24 +1,27 @@
-# type:ignore
+from __future__ import annotations
+
+from typing import cast
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from matplotlib.colors import Colormap
+from matplotlib.typing import ColorType
 
 from proteometer.lip import select_tryptic_pattern
 
 
-# #####!!!!!!!!! NEED to work on it!!!!!!!!!!!!!!#####
-# This function is to get the peptides in LiP pept dataframe
 def get_df_for_pept_alignment_plot(
-    pept_df,
-    prot_seq,
-    pairwise_ttest_name,
-    tryptic_pattern="all",
-    peptide_col=None,
-    clean_pept_col="clean_pept",
-    max_vis_fc=3,
-    id_separator="@",
-):
+    pept_df: pd.DataFrame,
+    prot_seq: str,
+    pairwise_ttest_name: str,
+    tryptic_pattern: str = "all",
+    peptide_col: str = "Sequence",
+    clean_pept_col: str = "clean_pept",
+    max_vis_fc: float = 3.0,
+    id_separator: str = "@",
+) -> pd.DataFrame | None:
     """_summary_
 
     Args:
@@ -44,17 +47,17 @@ def get_df_for_pept_alignment_plot(
     else:
         # protein.reset_index(drop=True, inplace=True)
         protein["pept_id"] = [
-            str(protein["pept_start"].to_list()[i]).zfill(4)
+            str(cast(int, protein["pept_start"].to_list()[i])).zfill(4)
             + "-"
-            + str(protein["pept_end"].to_list()[i]).zfill(4)
+            + str(cast(int, protein["pept_end"].to_list()[i])).zfill(4)
             + id_separator
             + pept
-            for i, pept in enumerate(protein[peptide_col].to_list())
+            for i, pept in enumerate(cast("list[str]", protein[peptide_col].to_list()))
         ]
         # protein.index = protein["pept_id"]
         ceiled_fc = [
             max_vis_fc if i > max_vis_fc else -max_vis_fc if i < -max_vis_fc else i
-            for i in protein[pairwise_ttest_name].to_list()
+            for i in cast("list[float]", protein[pairwise_ttest_name].to_list())
         ]
         foldchanges = np.zeros((protein.shape[0], seq_len))
         for i in range(len(foldchanges)):
@@ -78,15 +81,15 @@ def get_df_for_pept_alignment_plot(
 
 # Plot the peptide alignment with the fold changes
 def plot_pept_alignment(
-    pept_df,
-    prot_seq,
-    pairwise_ttest_name,
-    save2file=None,
-    tryptic_pattern="all",
-    peptide_col=None,
-    clean_pept_col="clean_pept",
-    max_vis_fc=3,
-    color_map="coolwarm",
+    pept_df: pd.DataFrame,
+    prot_seq: str,
+    pairwise_ttest_name: str,
+    save2file: str | None = None,
+    tryptic_pattern: str = "all",
+    peptide_col: str = "Sequence",
+    clean_pept_col: str = "clean_pept",
+    max_vis_fc: float = 3.0,
+    color_map: str | list[ColorType] | Colormap | None = "coolwarm",
 ):
     """_summary_
 

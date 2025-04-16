@@ -1,4 +1,8 @@
-# type: ignore
+from __future__ import annotations
+
+from collections.abc import Iterable
+from typing import cast
+
 import pandas as pd
 
 import proteometer.abundance as abundance
@@ -11,7 +15,7 @@ from proteometer.params import Params
 from proteometer.utils import check_missingness, generate_index
 
 
-def lip_analysis(par: Params):
+def lip_analysis(par: Params) -> pd.DataFrame:
     prot_seqs = fasta.get_sequences_from_fasta(par.fasta_file)
     metadata = pd.read_csv(par.metadata_file, sep="\t")
     global_prot = pd.read_csv(par.global_prot_file, sep="\t")
@@ -23,6 +27,12 @@ def lip_analysis(par: Params):
     group_cols, groups = parse_metadata.group_columns(metadata, par)
     pairwise_ttest_groups = parse_metadata.t_test_groups(metadata, par)
     user_pairwise_ttest_groups = parse_metadata.user_t_test_groups(metadata, par)
+
+    if not par.search_tool:
+        raise ValueError(
+            "Please specify the search tool used to generate the LiP input files in the configuration file."
+            "Currently supported tools: MaxQuant, MSFragger, FragPipe."
+        )
 
     double_pept = lip.filter_contaminants_reverse_pept(
         double_pept, par.search_tool, par.protein_col, par.uniprot_col
@@ -103,29 +113,32 @@ def lip_analysis(par: Params):
 
 
 def _double_site(
-    double_pept,
-    prot_seqs,
-    int_cols,
-    anova_cols,
-    pairwise_ttest_groups,
-    user_pairwise_ttest_groups,
-    metadata,
+    double_pept: pd.DataFrame,
+    prot_seqs: list[fasta.SeqRecord],
+    int_cols: Iterable[str],
+    anova_cols: list[str],
+    pairwise_ttest_groups: Iterable[stats.TTestGroup],
+    user_pairwise_ttest_groups: Iterable[stats.TTestGroup],
+    metadata: pd.DataFrame,
     par: Params,
-):
-    double_site = []
+) -> pd.DataFrame:
+    double_site: list[pd.DataFrame] = []
     for uniprot_id in double_pept[par.uniprot_col].unique():
-        pept_df = double_pept[double_pept[par.uniprot_col] == uniprot_id].copy()
-        uniprot_seq = [prot_seq for prot_seq in prot_seqs if uniprot_id in prot_seq.id]
-        if len(uniprot_seq) < 1:
+        pept_df = cast(
+            "pd.DataFrame",
+            double_pept[double_pept[par.uniprot_col] == uniprot_id].copy(),
+        )
+        uniprot_seqs = [prot_seq for prot_seq in prot_seqs if uniprot_id in prot_seq.id]
+        if not uniprot_seqs:
             Warning(
                 f"Protein {uniprot_id} not found in the fasta file. Skipping the protein."
             )
             continue
-        elif len(uniprot_seq) > 1:
+        elif len(uniprot_seqs) > 1:
             Warning(
                 f"Multiple proteins with the same ID {uniprot_id} found in the fasta file. Using the first one."
             )
-        bio_seq = uniprot_seq[0]
+        bio_seq = uniprot_seqs[0]
         prot_seq = bio_seq.seq
         prot_desc = bio_seq.description
         pept_df_r = lip.rollup_to_lytic_site(
@@ -139,7 +152,7 @@ def _double_site(
             peptide_col=par.peptide_col,
             rollup_func="median",
         )
-        if pept_df_r is None or pept_df_r.shape[0] < 1:
+        if pept_df_r.shape[0] < 1:
             Warning(
                 f"Protein {uniprot_id} has no peptides that could be mapped to the sequence. Skipping the protein."
             )
@@ -147,14 +160,15 @@ def _double_site(
         if anova_cols:
             pept_df_a = stats.anova(pept_df_r, anova_cols, metadata)
             pept_df_a = stats.anova(pept_df_a, anova_cols, metadata, par.anova_factors)
+        else:
+            pept_df_a = pept_df_r
         pept_df_p = stats.pairwise_ttest(pept_df_a, pairwise_ttest_groups)
         pept_df_p = stats.pairwise_ttest(pept_df_p, user_pairwise_ttest_groups)
         double_site.append(pept_df_p)
-    double_site = pd.concat(double_site).copy()
-    return double_site
+    return pd.concat(double_site)
 
 
-def _annotate_global_prot(global_prot, par: Params):
+def _annotate_global_prot(global_prot: pd.DataFrame, par: Params) -> pd.DataFrame:
     global_prot[par.type_col] = "Global"
     global_prot[par.experiment_col] = "LiP"
     global_prot[par.residue_col] = "GLB"
@@ -164,13 +178,13 @@ def _annotate_global_prot(global_prot, par: Params):
         + global_prot[par.residue_col].astype(str)
     )
     global_prot[par.protein_col] = global_prot[par.protein_col].map(
-        lambda x: x.split("|")[-1]
+        lambda x: x.split("|")[-1]  # type: ignore
     )
 
     return global_prot
 
 
-def _annotate_double_site(double_site, par: Params):
+def _annotate_double_site(double_site: pd.DataFrame, par: Params) -> pd.DataFrame:
     double_site[par.type_col] = [
         "Tryp"
         if (
@@ -178,7 +192,7 @@ def _annotate_double_site(double_site, par: Params):
             or i.split(par.id_separator)[1][0] == "R"
         )
         else "ProK"
-        for i in double_site.index
+        for i in cast(Iterable[str], double_site.index)
     ]
     double_site[par.experiment_col] = "LiP"
     double_site[par.residue_col] = double_site[par.site_col]
@@ -186,6 +200,6 @@ def _annotate_double_site(double_site, par: Params):
         double_site[par.uniprot_col] + par.id_separator + double_site[par.site_col]
     )
     double_site[par.protein_col] = double_site[par.protein_col].map(
-        lambda x: x.split("|")[-1]
+        lambda x: x.split("|")[-1]  # type: ignore
     )
     return double_site

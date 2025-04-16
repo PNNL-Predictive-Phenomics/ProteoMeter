@@ -1,5 +1,6 @@
-# type: ignore
-from collections.abc import Iterable
+from __future__ import annotations
+
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 
 import numpy as np
@@ -12,14 +13,16 @@ import scipy as sp
 class TTestGroup:
     treat_group: str
     control_group: str
-    treat_samples: list[float]
-    control_samples: list[float]
+    treat_samples: Sequence[float]
+    control_samples: Sequence[float]
 
     def label(self):
         return f"{self.treat_group}/{self.control_group}"
 
 
-def log2_transformation(df2transform, int_cols):
+def log2_transformation(
+    df2transform: pd.DataFrame, int_cols: Sequence[str]
+) -> pd.DataFrame:
     """_summary_
 
     Args:
@@ -29,7 +32,13 @@ def log2_transformation(df2transform, int_cols):
     return df2transform
 
 
-def anova(df, anova_cols, metadata_ori, anova_factors=["Group"], sample_col="Sample"):
+def anova(
+    df: pd.DataFrame,
+    anova_cols: list[str],
+    metadata_ori: pd.DataFrame,
+    anova_factors: Sequence[str] = ["Group"],
+    sample_col: str = "Sample",
+) -> pd.DataFrame:
     """_summary_
 
     Args:
@@ -55,15 +64,15 @@ def anova(df, anova_cols, metadata_ori, anova_factors=["Group"], sample_col="Sam
     ]
 
     df_w = df[anova_cols].copy()
-    f_stats_factors = []
-    for row in df_w.iterrows():
-        df_id = row[0]
-        df_f = row[1]
-        df_f = pd.DataFrame(df_f).loc[anova_cols].astype(float)
+    f_stats_factors: Sequence[pd.DataFrame] = []
+    for df_id, row in df_w.iterrows():  # type: ignore
+        df_f = pd.DataFrame(row).loc[anova_cols].astype(float)
         df_f = pd.merge(df_f, metadata, left_index=True, right_on=sample_col)
 
         try:
-            aov_f = pg.anova(data=df_f, dv=df_id, between=anova_factors, detailed=True)
+            aov_f = pg.anova(data=df_f, dv=df_id, between=anova_factors, detailed=True)  # type: ignore
+            if not isinstance(aov_f, pd.DataFrame):
+                raise Exception
             if "p-unc" in aov_f.columns:
                 p_vals = {
                     f"ANOVA_[{anova_factor_name}]_pval": aov_f[
@@ -105,7 +114,9 @@ def anova(df, anova_cols, metadata_ori, anova_factors=["Group"], sample_col="Sam
 # Here is the function to do the t-test This is same for both protide and
 # protein as well as rolled up protein data. Hopefully this is also the same for
 # PTM data
-def pairwise_ttest(df, pairwise_ttest_groups: Iterable[TTestGroup]):
+def pairwise_ttest(
+    df: pd.DataFrame, pairwise_ttest_groups: Iterable[TTestGroup]
+) -> pd.DataFrame:
     """_summary_
 
     Args:
@@ -135,23 +146,31 @@ def pairwise_ttest(df, pairwise_ttest_groups: Iterable[TTestGroup]):
 
 # calculating the FC and p-values for protein abundances. See `abundance.py`
 def calculate_pairwise_scalars(
-    prot, pairwise_ttest_name=None, sig_type="pval", sig_thr=0.05
-):
+    prot: pd.DataFrame,
+    pairwise_ttest_name: str | None = None,
+    sig_type: str = "pval",
+    sig_thr: float = 0.05,
+) -> pd.DataFrame:
     """_summary_
 
     Args:
         prot (_type_): _description_
     """
+    if prot[f"{pairwise_ttest_name}_{sig_type}"].dtype != float:
+        raise TypeError(f"{pairwise_ttest_name}_{sig_type} must be float")
     prot[f"{pairwise_ttest_name}_scalar"] = [
         prot[pairwise_ttest_name][i] if p < sig_thr else 0
-        for i, p in enumerate(prot[f"{pairwise_ttest_name}_{sig_type}"])
+        for i, p in enumerate(prot[f"{pairwise_ttest_name}_{sig_type}"])  # type: ignore
     ]
     return prot
 
 
 def calculate_all_pairwise_scalars(
-    prot, pairwise_ttest_groups: Iterable[TTestGroup], sig_type="pval", sig_thr=0.05
-):
+    prot: pd.DataFrame,
+    pairwise_ttest_groups: Iterable[TTestGroup],
+    sig_type: str = "pval",
+    sig_thr: float = 0.05,
+) -> pd.DataFrame:
     """_summary_
 
     Args:
