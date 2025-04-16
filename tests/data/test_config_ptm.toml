@@ -15,7 +15,9 @@ ptm_pept_files = ["acetyl_pept.tsv", "phospho_pept.tsv", "redox_pept.tsv"]
 [experiment]
 experiment_name = "Test"
 experiment_type = "TMT"  # TMT or Label-free
-search_tool = "MSGF+"
+
+[experiment.lip]
+search_tool = ""
 
 [statistics]
 pairwise_factor = "Time"

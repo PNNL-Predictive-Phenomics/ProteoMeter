@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 from typing import Literal
 
@@ -55,7 +57,19 @@ class Params:
 
         # Experiment information
         self.experiment_name = str(cfg["experiment"]["experiment_name"])
-        self.search_tool = str(cfg["experiment"]["search_tool"])
+
+        search_tool = str(cfg["experiment"]["lip"]["search_tool"]).lower()
+        if search_tool not in {
+            "maxquant",
+            "msfragger",
+            "fragpipe",
+            "",
+        }:
+            raise ValueError(
+                f"LiP search tool {search_tool} must be 'maxquant', 'msfragger', or 'fragpipe'."
+                "Others are not currently supported. Use '' if not importing LiP data."
+            )
+        self.search_tool: Literal["maxquant", "msfragger", "fragpipe", ""] = search_tool  # type: ignore
 
         if cfg["experiment"]["experiment_type"] not in {"TMT", "Label-free"}:
             raise ValueError("Experiment type must be 'TMT' or 'Label-free'")

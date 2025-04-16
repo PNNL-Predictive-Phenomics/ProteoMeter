@@ -16,6 +16,8 @@ ptm_pept_files = []
 [experiment]
 experiment_name = "Test"
 experiment_type = "Label-free" # TMT or Label-free
+
+[experiment.lip]
 search_tool = "FragPipe"
 
 [statistics]
