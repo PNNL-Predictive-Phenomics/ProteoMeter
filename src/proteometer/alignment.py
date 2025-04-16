@@ -113,7 +113,7 @@ def plot_pept_alignment(
         color_map (str | list[ColorType] | Colormap | None, optional): Colormap for the heatmap. Defaults to "coolwarm".
 
     Returns:
-        plt.Figure: The plot object.
+        Figure: The plot object.
     """
     seq_len = len(prot_seq)
     fc_df = get_df_for_pept_alignment_plot(
