@@ -26,15 +26,17 @@ def plot_barcode(
     ax: Axes | None = None,
     size: tuple[int, int] = (10, 2),
 ) -> Axes:
-    """Plot the values in a color palette as a horizontal array.
-    Parameters
-    ----------
-    pal : sequence of matplotlib colors
-        colors, i.e. as returned by seaborn.color_palette()
-    size :
-        figure size of plot
-    ax :
-        an existing axes to use
+    """Plot a color-coded barcode.
+
+    Args:
+        pal (Collection[ColorType]): A collection of colors for the barcode.
+        ticklabel (list[str] | None, optional): Labels for the ticks on the x-axis. Defaults to None.
+        barcode_name (str | None, optional): Name label for the barcode on the y-axis. Defaults to None.
+        ax (Axes | None, optional): Matplotlib Axes object to draw the barcode on. If None, a new Axes is created. Defaults to None.
+        size (tuple[int, int], optional): Size of the figure (width, height). Defaults to (10, 2).
+
+    Returns:
+        Axes: The matplotlib Axes object with the plotted barcode.
     """
     n = len(pal)
     if ax is None:
@@ -48,12 +50,6 @@ def plot_barcode(
     ax.set_yticks([0])
     if barcode_name:
         ax.set_yticklabels([barcode_name])
-    # The proper way to set no ticks
-    # ax.yaxis.set_major_locator(ticker.NullLocator())
-    # ax.set_xticks(np.arange(n) - .5)
-    # ax.set_xticks(np.arange(n))
-    # Ensure nice border between colors
-    # ax.set_xticklabels(["" for _ in range(n)])
     if ticklabel:
         tick_interval = np.ceil(n / len(ticklabel)).astype("int")
         ax.set_xticks(np.arange(0, n, tick_interval))  # type: ignore
@@ -64,7 +60,17 @@ def plot_barcode(
 def get_barcode(
     fc_bar: pd.DataFrame, color_levels: int = 20, fc_bar_max: float | None = None
 ) -> list[ColorType]:
-    # fc_bar = copy.deepcopy(res_fc_diff[["FC_DIFF", "FC_TYPE", "Res"]])
+    """Get a color-coded barcode for a given DataFrame of fold changes.
+
+    Args:
+        fc_bar (pd.DataFrame): DataFrame with columns "FC_DIFF", "FC_TYPE", and "Res".
+        color_levels (int, optional): Number of colors in the palette. Defaults to 20.
+        fc_bar_max (float | None, optional): Maximum fold change value. Defaults to None.
+
+    Returns:
+        list[ColorType]: A list of colors for the barcode.
+    """
+
     both_pal_vals = sns.color_palette("Greens", color_levels)
     up_pal_vals = sns.color_palette("Reds", color_levels)
     down_pal_vals = sns.color_palette("Blues", color_levels)
@@ -107,21 +113,29 @@ def plot_pept_barcode(
     pept_df: pd.DataFrame,
     pairwise_ttest_name: str,
     sequence: str,
-    save2file: str | None = None,
+    output_file_name: str | None = None,
     uniprot_id: str = "Protein ID (provided by user)",
     max_vis_fc: float = 3.0,
     color_levels: int = 20,
     sig_type: str = "pval",
     sig_thr: float = 0.05,
 ) -> Figure:
-    """_summary_
+    """
+    Plot the barcode of a protein with fold changes at single site level.
 
     Args:
-        pept_df (_type_): _description_
-        sequence (_type_): _description_
-        save2file (_type_, optional): _description_. Defaults to None.
-        max_vis_fc (int, optional): _description_. Defaults to 3.
-        color_levels (int, optional): _description_. Defaults to 20.
+        pept_df (pd.DataFrame): DataFrame with peptide-level data.
+        pairwise_ttest_name (str): Name of the column with pairwise t-test p-values.
+        sequence (str): The sequence of the protein.
+        output_file_name (str | None, optional): If not None, save the figure to the given file. Defaults to None.
+        uniprot_id (str, optional): The UniProt ID of the protein. Defaults to "Protein ID (provided by user)".
+        max_vis_fc (float, optional): The maximum fold change value to visualize. Defaults to 3.0.
+        color_levels (int, optional): The number of colors in the palette. Defaults to 20.
+        sig_type (str, optional): The type of significance test. Defaults to "pval".
+        sig_thr (float, optional): The significance threshold. Defaults to 0.05.
+
+    Returns:
+        Figure: The matplotlib Figure object with the plotted barcode.
     """
     seq_len = len(sequence)
     tryptic = pept_df[pept_df["pept_type"] == "Tryptic"].copy()
@@ -286,8 +300,8 @@ def plot_pept_barcode(
         ax=ax,
     )
     fig.tight_layout()
-    if save2file is not None:
-        fig.savefig(f"{save2file}_{uniprot_id}_any_tryptic_barcodes.pdf")
+    if output_file_name is not None:
+        fig.savefig(f"{output_file_name}_{uniprot_id}_any_tryptic_barcodes.pdf")
 
     return fig
 
@@ -297,7 +311,7 @@ def plot_site_barcode(
     site_df: pd.DataFrame,
     sequence: str,
     pairwise_ttest_name: str,
-    save2file: str | None = None,
+    output_file_name: str | None = None,
     uniprot_id: str = "Protein ID (provided by user)",
     max_vis_fc: float = 3.0,
     color_levels: int = 20,
@@ -305,6 +319,27 @@ def plot_site_barcode(
     sig_type: str = "pval",
     sig_thr: float = 0.05,
 ) -> Figure:
+    """
+    Plot the barcode of a protein with fold changes at lytic site level.
+
+    Args:
+        site_df (pd.DataFrame): DataFrame with site-level data.
+        sequence (str): The sequence of the protein.
+        pairwise_ttest_name (str): Name of the column with pairwise t-test p-values.
+        output_file_name (str | None, optional): If not None, save the figure to the given file. Defaults to None.
+        uniprot_id (str, optional): The UniProt ID of the protein. Defaults to "Protein ID (provided by user)".
+        max_vis_fc (float, optional): The maximum fold change value to visualize. Defaults to 3.0.
+        color_levels (int, optional): The number of colors in the palette. Defaults to 20.
+        site_type_col (str, optional): The column name for site type. Defaults to "Lytic site type".
+        sig_type (str, optional): The type of significance test. Defaults to "pval".
+        sig_thr (float, optional): The significance threshold. Defaults to 0.05.
+
+    Returns:
+        Figure: The matplotlib Figure object with the plotted barcode.
+
+    Raises:
+        ValueError: If there is no trypsin or prok data.
+    """
     seq_len = len(sequence)
     trypsin = select_lytic_sites(site_df, "trypsin", site_type_col)
     prok = select_lytic_sites(site_df, "prok", site_type_col)
@@ -313,7 +348,6 @@ def plot_site_barcode(
             "The digestion site dataframe is empty with either trypsin or prok sites. Please check the input dataframe."
         )
 
-    # both_pal_vals = sns.color_palette("Greens", color_levels)
     up_pal_vals = sns.color_palette("Reds", color_levels)
     down_pal_vals = sns.color_palette("Blues", color_levels)
     insig_pal_vals = sns.color_palette("Greys", color_levels)
@@ -464,7 +498,7 @@ def plot_site_barcode(
         ax=ax,
     )
     fig.tight_layout()
-    if save2file is not None:
-        fig.savefig(f"{save2file}_{uniprot_id}_digestion_site_barcodes.pdf")
+    if output_file_name is not None:
+        fig.savefig(f"{output_file_name}_{uniprot_id}_digestion_site_barcodes.pdf")
 
     return fig

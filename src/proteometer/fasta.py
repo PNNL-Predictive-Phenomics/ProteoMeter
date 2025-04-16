@@ -9,6 +9,14 @@ if TYPE_CHECKING:
 
 
 def get_sequences_from_fasta(fasta_file: str) -> list[SeqRecord]:
+    """Parses a FASTA file and returns a list of sequence records.
+
+    Args:
+        fasta_file (str): Path to the FASTA file containing the sequences.
+
+    Returns:
+        list[SeqRecord]: A list of SeqRecord objects representing the parsed sequences.
+    """
     prot_seq_obj = SeqIO.parse(fasta_file, "fasta")  # type: ignore
     prot_seqs: list[SeqRecord] = [seq_item for seq_item in prot_seq_obj]  # type: ignore
     return prot_seqs

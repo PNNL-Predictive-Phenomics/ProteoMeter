@@ -16,6 +16,15 @@ from proteometer.utils import check_missingness, generate_index
 
 
 def lip_analysis(par: Params) -> pd.DataFrame:
+    """
+    Performs statistical analysis on the provided limited proteolysis data.
+
+    Args:
+        par (Params): Parameters for the limited proteolysis analysis, including file paths and settings.
+
+    Returns:
+        pd.DataFrame: The resulting limited proteolysis data frame after analysis.
+    """
     prot_seqs = fasta.get_sequences_from_fasta(par.fasta_file)
     metadata = pd.read_csv(par.metadata_file, sep="\t")
     global_prot = pd.read_csv(par.global_prot_file, sep="\t")
