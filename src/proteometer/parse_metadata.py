@@ -13,6 +13,22 @@ from proteometer.stats import TTestGroup
 def group_columns(
     metadata: pd.DataFrame, par: Params
 ) -> tuple[list[list[str]], list[str]]:
+    """Generate the control and treatment group columns from the metadata.
+
+    Args:
+        metadata (pd.DataFrame): The metadata DataFrame with column names specified in `par`.
+        par (Params): The parameters object with the following attributes:
+            - metadata_group_col: Column name for group.
+            - metadata_sample_col: Column name for sample.
+            - metadata_condition_col: Column name for condition.
+            - metadata_control_condition: Control condition name.
+
+    Returns:
+        tuple[list[list[str]], list[str]]: A tuple with the control and treatment
+            group information. The first element is a list of lists, where each
+            inner list contains the sample columns for each group. The second element
+            is a list of group names. Control groups are first, followed by treatment groups.
+    """
     cond_column: pd.Series[str] = metadata[par.metadata_condition_col]
     control_ind: pd.Series[bool] = cond_column == par.metadata_control_condition
     control_groups: list[str] = list(
@@ -38,11 +54,36 @@ def group_columns(
 
 
 def int_columns(metadata: pd.DataFrame, par: Params) -> list[str]:
+    """Return a list of all the intensity columns in the metadata.
+
+    Args:
+        metadata (pd.DataFrame): The metadata DataFrame with column names specified in `par`.
+        par (Params): The parameters object with the following attributes:
+            - metadata_sample_col: Column name for sample.
+
+    Returns:
+        list[str]: A list of all the intensity columns in the metadata.
+    """
+
     ms: pd.Series[str] = metadata[par.metadata_sample_col]
     return ms.to_list()
 
 
 def anova_columns(metadata: pd.DataFrame, par: Params) -> list[str]:
+    """Return a list of columns for ANOVA analysis excluding pooled channel samples.
+
+    Args:
+        metadata (pd.DataFrame): The metadata DataFrame with column names specified in `par`.
+        par (Params): The parameters object with attributes:
+            - metadata_condition_col: Column name for condition.
+            - pooled_chanel_condition: Condition name for pooled channel.
+            - metadata_group_col: Column name for group.
+            - metadata_sample_col: Column name for sample.
+
+    Returns:
+        list[str]: A list of sample columns excluding those in pooled channel groups.
+    """
+
     condition_column: pd.Series[str] = metadata[par.metadata_condition_col]
     control_ind: pd.Series[bool] = condition_column == par.pooled_chanel_condition
     tt_groups = list(metadata[control_ind][par.metadata_group_col].unique())  # type: ignore
@@ -63,6 +104,22 @@ def anova_columns(metadata: pd.DataFrame, par: Params) -> list[str]:
 
 
 def t_test_groups(metadata: pd.DataFrame, par: Params) -> list[TTestGroup]:
+    """Generate the pair-wise t-test groups from the metadata.
+
+    Args:
+        metadata (pd.DataFrame): The metadata DataFrame with column names specified in `par`.
+        par (Params): The parameters object with attributes:
+            - metadata_condition_col: Column name for condition.
+            - metadata_control_condition: Control condition name.
+            - metadata_treatment_condition: Treatment condition name.
+            - pairwise_factor: Column name for the pair-wise comparison factor.
+            - metadata_group_col: Column name for group.
+            - metadata_sample_col: Column name for sample.
+
+    Returns:
+        list[TTestGroup]: A list of tuple containing the group name, control group name,
+            treatment group name, control sample columns, and treatment sample columns.
+    """
     pairwise_pars: Iterable[str] = metadata[par.pairwise_factor].unique()  # type: ignore
     pairwise_ttest_groups: list[TTestGroup] = []
 
@@ -103,6 +160,18 @@ def t_test_groups(metadata: pd.DataFrame, par: Params) -> list[TTestGroup]:
 
 
 def user_t_test_groups(metadata: pd.DataFrame, par: Params) -> list[TTestGroup]:
+    """Generate the user-defined pairwise t-test groups from the metadata.
+
+    Args:
+        metadata (pd.DataFrame): The metadata DataFrame with column names specified in `par`.
+        par (Params): The parameters object with the following attributes:
+            - metadata_group_col: Column name for group.
+            - metadata_sample_col: Column name for sample.
+            - user_ttest_pairs: List of tuples containing the user-defined control and treatment group pairs.
+
+    Returns:
+        list[TTestGroup]: A list of TTestGroup objects with the user-defined pairwise t-test groups.
+    """
     user_pairwise_ttest_groups: list[TTestGroup] = []
     for user_ctrl_group, user_treat_group in par.user_ttest_pairs:
         control_samples = metadata[metadata[par.metadata_group_col] == user_ctrl_group][  # type: ignore

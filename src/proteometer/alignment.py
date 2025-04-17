@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from matplotlib.colors import Colormap
+from matplotlib.figure import Figure
 from matplotlib.typing import ColorType
 
 from proteometer.lip import select_tryptic_pattern
@@ -21,15 +22,22 @@ def get_df_for_pept_alignment_plot(
     clean_pept_col: str = "clean_pept",
     max_vis_fc: float = 3.0,
     id_separator: str = "@",
-) -> pd.DataFrame | None:
-    """_summary_
+) -> pd.DataFrame:
+    """
+    Generates a DataFrame for visualizing peptide alignment with fold changes.
 
     Args:
-        pept_df (_type_): _description_
-        prot_seq (_type_): _description_
-        pept_type (str, optional): _description_. Defaults to "all".
-        peptide_col (str, optional): _description_. Defaults to "Sequence".
-        max_vis_fc (int, optional): _description_. Defaults to 3.
+        pept_df (pd.DataFrame): Input DataFrame containing peptide information.
+        prot_seq (str): Protein sequence to align peptides against.
+        pairwise_ttest_name (str): Column name in `pept_df` containing fold change values.
+        tryptic_pattern (str, optional): Tryptic pattern to filter peptides. Defaults to "all".
+        peptide_col (str, optional): Column name for peptide sequences in `pept_df`. Defaults to "Sequence".
+        clean_pept_col (str, optional): Column name for cleaned peptide sequences in `pept_df`. Defaults to "clean_pept".
+        max_vis_fc (float, optional): Maximum fold change value for visualization. Defaults to 3.0.
+        id_separator (str, optional): Separator for peptide ID formatting. Defaults to "@".
+
+    Returns:
+        pd.DataFrame: A DataFrame with fold changes aligned to the protein sequence.
     """
     seq_len = len(prot_seq)
     protein = select_tryptic_pattern(
@@ -40,10 +48,9 @@ def get_df_for_pept_alignment_plot(
         clean_pept_col=clean_pept_col,
     )
     if protein.shape[0] <= 0:
-        print(
+        raise ValueError(
             f"The {tryptic_pattern} peptide dataframe is empty. Please check the input dataframe."
         )
-        return None
     else:
         # protein.reset_index(drop=True, inplace=True)
         protein["pept_id"] = [
@@ -90,17 +97,23 @@ def plot_pept_alignment(
     clean_pept_col: str = "clean_pept",
     max_vis_fc: float = 3.0,
     color_map: str | list[ColorType] | Colormap | None = "coolwarm",
-):
-    """_summary_
+) -> Figure:
+    """
+    Plots a heatmap of peptide alignment with fold changes.
 
     Args:
-        pept_df (_type_): _description_
-        prot_seq (_type_): _description_
-        save2file (_type_, optional): _description_. Defaults to None.
-        pept_type (str, optional): _description_. Defaults to "all".
-        peptide_col (str, optional): _description_. Defaults to "Sequence".
-        color_map (str, optional): _description_. Defaults to "coolwarm".
-        max_vis_fc (int, optional): _description_. Defaults to 3.
+        pept_df (pd.DataFrame): Input DataFrame containing peptide information.
+        prot_seq (str): Protein sequence to align peptides against.
+        pairwise_ttest_name (str): Column name in `pept_df` containing fold change values.
+        save2file (str | None, optional): File path to save the plot. If None, the plot is displayed. Defaults to None.
+        tryptic_pattern (str, optional): Tryptic pattern to filter peptides. Defaults to "all".
+        peptide_col (str, optional): Column name for peptide sequences in `pept_df`. Defaults to "Sequence".
+        clean_pept_col (str, optional): Column name for cleaned peptide sequences in `pept_df`. Defaults to "clean_pept".
+        max_vis_fc (float, optional): Maximum fold change value for visualization. Defaults to 3.0.
+        color_map (str | list[ColorType] | Colormap | None, optional): Colormap for the heatmap. Defaults to "coolwarm".
+
+    Returns:
+        Figure: The plot object.
     """
     seq_len = len(prot_seq)
     fc_df = get_df_for_pept_alignment_plot(
@@ -112,23 +125,16 @@ def plot_pept_alignment(
         clean_pept_col=clean_pept_col,
         max_vis_fc=max_vis_fc,
     )
-    if fc_df is not None:
-        plt.figure(
-            figsize=(
-                min(max(np.floor(seq_len / 3), 5), 10),
-                min(max(np.floor(pept_df.shape[0] / 5), 3), 6),
-            )
+
+    fig = plt.figure(
+        figsize=(
+            min(max(np.floor(seq_len / 3), 5), 10),
+            min(max(np.floor(pept_df.shape[0] / 5), 3), 6),
         )
-        sns.heatmap(fc_df, center=0, cmap=color_map)
-        plt.tight_layout()
-        if save2file is not None:
-            plt.savefig(f"{save2file}_{tryptic_pattern}_pept_alignments_with_FC.pdf")
-            plt.close()
-            return None
-        else:
-            return plt
-    else:
-        print(
-            f"The {tryptic_pattern} peptide dataframe is empty. Please check the input dataframe."
-        )
-        return None
+    )
+    sns.heatmap(fc_df, center=0, cmap=color_map)
+    fig.tight_layout()
+    if save2file is not None:
+        fig.savefig(f"{save2file}_{tryptic_pattern}_pept_alignments_with_FC.pdf")
+
+    return fig

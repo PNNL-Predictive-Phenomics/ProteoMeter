@@ -15,6 +15,19 @@ def peptide_normalization_and_correction(
     metadata: pd.DataFrame,
     par: Params,
 ) -> pd.DataFrame:
+    """
+    Normalizes and applies batch correction to peptide data.
+
+    Args:
+        global_pept (pd.DataFrame): Global peptide data.
+        mod_pept (pd.DataFrame): Modified peptide data.
+        int_cols (list[str]): List of intensity column names.
+        metadata (pd.DataFrame): Metadata for batch correction.
+        par (Params): Parameters object containing experiment settings.
+
+    Returns:
+        pd.DataFrame: Normalized and batch-corrected peptide data.
+    """
     if par.experiment_type == "TMT":
         mod_pept = tmt_normalization(mod_pept, global_pept, int_cols)
     else:
@@ -35,10 +48,16 @@ def peptide_normalization_and_correction(
 def tmt_normalization(
     df2transform: pd.DataFrame, global_pept: pd.DataFrame, int_cols: list[str]
 ) -> pd.DataFrame:
-    """_summary_
+    """
+    Performs TMT normalization on peptide data.
 
     Args:
-        df2transform (_type_): _description_
+        df2transform (pd.DataFrame): DataFrame to transform.
+        global_pept (pd.DataFrame): Global peptide data for reference.
+        int_cols (list[str]): List of intensity column names.
+
+    Returns:
+        pd.DataFrame: TMT-normalized DataFrame.
     """
     global_filtered = global_pept[global_pept[int_cols].isna().sum(axis=1) == 0].copy()
     global_medians: pd.Series[float] = global_filtered[int_cols].median(
@@ -65,14 +84,21 @@ def median_normalization(
     skipna: bool = True,
     zero_center: bool = False,
 ) -> pd.DataFrame:
-    """_summary_
+    """
+    Performs median normalization on peptide data.
 
     Args:
-        df2transform (_type_): _description_
-        int_cols (_type_): _description_
+        df2transform (pd.DataFrame): DataFrame to transform.
+        int_cols (list[str]): List of intensity column names.
+        metadata_ori (pd.DataFrame | None, optional): Metadata for batch correction. Defaults to None.
+        batch_correct_samples (Iterable[str] | pd.Series[str] | None, optional): Samples to correct. Defaults to None.
+        batch_col (str | None, optional): Batch column name. Defaults to None.
+        sample_col (str, optional): Sample column name. Defaults to "Sample".
+        skipna (bool, optional): Whether to skip NaN values. Defaults to True.
+        zero_center (bool, optional): Whether to zero-center the data. Defaults to False.
 
     Returns:
-        _type_: _description_
+        pd.DataFrame: Median-normalized DataFrame.
     """
     df_transformed = df2transform.copy()
     if batch_col is None or metadata_ori is None:
@@ -140,7 +166,20 @@ def batch_correction(
     batch_correct_samples: Iterable[str] | pd.Series[str] | None = None,
     batch_col: str = "Batch",
     sample_col: str = "Sample",
-):
+) -> pd.DataFrame:
+    """
+    Applies batch correction to peptide data.
+
+    Args:
+        df4batcor (pd.DataFrame): DataFrame to correct.
+        metadata_ori (pd.DataFrame): Metadata for batch correction.
+        batch_correct_samples (Iterable[str] | pd.Series[str] | None, optional): Samples to correct. Defaults to None.
+        batch_col (str, optional): Batch column name. Defaults to "Batch".
+        sample_col (str, optional): Sample column name. Defaults to "Sample".
+
+    Returns:
+        pd.DataFrame: Batch-corrected DataFrame.
+    """
     df = df4batcor.copy()
     metadata = metadata_ori.copy()
     if batch_correct_samples is None:

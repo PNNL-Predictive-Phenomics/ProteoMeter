@@ -13,6 +13,19 @@ from proteometer.utils import check_missingness, generate_index
 
 
 def ptm_analysis(par: Params) -> pd.DataFrame:
+    """Runs the PTM proteomics processing and statistical analysis pipeline.
+
+    This function reads in data from proteomics files specified in the `par`
+    object, and performs normalization and batch correction, site-level rollup,
+    and statistical analysis. The resulting DataFrame contains the processed PTM
+    data, including the statistical results.
+
+    Args:
+        par: A Params object that contains all the parameters for the analysis.
+
+    Returns:
+        A pandas DataFrame that contains the result of the PTM analysis.
+    """
     metadata = pd.read_csv(par.metadata_file, sep="\t")
     global_prot = pd.read_csv(par.global_prot_file, sep="\t")
     global_pept = pd.read_csv(par.global_pept_file, sep="\t")
@@ -114,6 +127,26 @@ def _rollup_stats(
     metadata: pd.DataFrame,
     par: Params,
 ):
+    """Perform statistical analysis on rolled up PTM data.
+
+    This function applies ANOVA and pairwise t-tests on the provided
+    list of DataFrames containing rolled up PTM data, if the relevant
+    columns are specified.
+
+    Args:
+        ptm_rolled (list[pd.DataFrame]): List of DataFrames with rolled up PTM data.
+        anova_cols (list[str]): List of column names for performing ANOVA.
+        pairwise_ttest_groups (list[stats.TTestGroup]): List of TTestGroup objects
+            specifying control-treatment pairs for pairwise t-tests.
+        user_pairwise_ttest_groups (list[stats.TTestGroup]): List of user-defined
+            TTestGroup objects for additional pairwise t-tests.
+        metadata (pd.DataFrame): DataFrame containing metadata for ANOVA analysis.
+        par (Params): Parameter object containing configuration for statistical analysis.
+
+    Returns:
+        list[pd.DataFrame]: List of DataFrames with statistical analysis applied.
+    """
+
     if anova_cols:
         ptm_rolled = [
             stats.anova(

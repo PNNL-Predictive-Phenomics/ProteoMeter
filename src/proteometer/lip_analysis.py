@@ -16,6 +16,15 @@ from proteometer.utils import check_missingness, generate_index
 
 
 def lip_analysis(par: Params) -> pd.DataFrame:
+    """
+    Performs statistical analysis on the provided limited proteolysis data.
+
+    Args:
+        par (Params): Parameters for the limited proteolysis analysis, including file paths and settings.
+
+    Returns:
+        pd.DataFrame: The resulting limited proteolysis data frame after analysis.
+    """
     prot_seqs = fasta.get_sequences_from_fasta(par.fasta_file)
     metadata = pd.read_csv(par.metadata_file, sep="\t")
     global_prot = pd.read_csv(par.global_prot_file, sep="\t")
@@ -122,6 +131,22 @@ def _double_site(
     metadata: pd.DataFrame,
     par: Params,
 ) -> pd.DataFrame:
+    """
+    Converts the double-peptide data frame to a site-level data frame.
+
+    Args:
+        double_pept (pd.DataFrame): The double-peptide data frame.
+        prot_seqs (list[fasta.SeqRecord]): The list of protein sequences.
+        int_cols (Iterable[str]): The names of columns to with intensity values.
+        anova_cols (list[str]): The columns for ANOVA.
+        pairwise_ttest_groups (Iterable[stats.TTestGroup]): The pairwise T-test groups.
+        user_pairwise_ttest_groups (Iterable[stats.TTestGroup]): Additional user-specified pairwise T-test groups.
+        metadata (pd.DataFrame): The metadata data frame.
+        par (Params): The parameters for limitied proteolysis analysis.
+
+    Returns:
+        pd.DataFrame: A data frame with the site-level data.
+    """
     double_site: list[pd.DataFrame] = []
     for uniprot_id in double_pept[par.uniprot_col].unique():
         pept_df = cast(
@@ -169,6 +194,17 @@ def _double_site(
 
 
 def _annotate_global_prot(global_prot: pd.DataFrame, par: Params) -> pd.DataFrame:
+    """
+    Annotates the global protein data frame with additional columns for analysis.
+
+    Args:
+        global_prot (pd.DataFrame): The global proteomics data frame to be annotated.
+        par (Params): Parameters containing column names and separators for annotation.
+
+    Returns:
+        pd.DataFrame: The annotated global protein data frame with additional columns such as type, experiment, residue, site, and protein.
+    """
+
     global_prot[par.type_col] = "Global"
     global_prot[par.experiment_col] = "LiP"
     global_prot[par.residue_col] = "GLB"

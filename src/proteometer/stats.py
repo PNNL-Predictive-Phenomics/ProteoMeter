@@ -23,10 +23,15 @@ class TTestGroup:
 def log2_transformation(
     df2transform: pd.DataFrame, int_cols: Sequence[str]
 ) -> pd.DataFrame:
-    """_summary_
+    """
+    Applies log2 transformation to specified intensity columns in a DataFrame.
 
     Args:
-        df2transform (_type_): _description_
+        df2transform (pd.DataFrame): DataFrame containing the data to transform.
+        int_cols (Sequence[str]): List of intensity column names to apply the transformation.
+
+    Returns:
+        pd.DataFrame: DataFrame with log2-transformed intensity columns.
     """
     df2transform[int_cols] = np.log2(df2transform[int_cols].replace(0, np.nan))
     return df2transform
@@ -39,16 +44,18 @@ def anova(
     anova_factors: Sequence[str] = ["Group"],
     sample_col: str = "Sample",
 ) -> pd.DataFrame:
-    """_summary_
+    """
+    Performs ANOVA on specified columns of a DataFrame.
 
     Args:
-        df (_type_): _description_
-        anova_cols (_type_): _description_
-        metadata_ori (_type_): _description_
-        anova_factors (list, optional): _description_. Defaults to ["Group"].
+        df (pd.DataFrame): DataFrame containing the data for analysis.
+        anova_cols (list[str]): List of column names to analyze.
+        metadata_ori (pd.DataFrame): Metadata containing sample information.
+        anova_factors (Sequence[str], optional): Factors for ANOVA analysis. Defaults to ["Group"].
+        sample_col (str, optional): Column name for sample identifiers. Defaults to "Sample".
 
     Returns:
-        _type_: _description_
+        pd.DataFrame: DataFrame with ANOVA p-values and adjusted p-values.
     """
     if len(anova_factors) < 1:
         raise ValueError(
@@ -117,10 +124,15 @@ def anova(
 def pairwise_ttest(
     df: pd.DataFrame, pairwise_ttest_groups: Iterable[TTestGroup]
 ) -> pd.DataFrame:
-    """_summary_
+    """
+    Performs pairwise t-tests for specified treatment and control groups.
 
     Args:
-        df (_type_): _description_
+        df (pd.DataFrame): DataFrame containing the data for analysis.
+        pairwise_ttest_groups (Iterable[TTestGroup]): Iterable of TTestGroup objects defining the groups.
+
+    Returns:
+        pd.DataFrame: DataFrame with t-test results, including p-values and adjusted p-values.
     """
     for pairwise_ttest_group in pairwise_ttest_groups:
         label = pairwise_ttest_group.label()
@@ -151,10 +163,17 @@ def calculate_pairwise_scalars(
     sig_type: str = "pval",
     sig_thr: float = 0.05,
 ) -> pd.DataFrame:
-    """_summary_
+    """
+    Calculates pairwise scalars based on significance thresholds.
 
     Args:
-        prot (_type_): _description_
+        prot (pd.DataFrame): DataFrame containing pairwise t-test results.
+        pairwise_ttest_name (str | None, optional): Name of the pairwise t-test column. Defaults to None.
+        sig_type (str, optional): Type of significance metric (e.g., "pval"). Defaults to "pval".
+        sig_thr (float, optional): Significance threshold. Defaults to 0.05.
+
+    Returns:
+        pd.DataFrame: DataFrame with calculated scalars.
     """
     if prot[f"{pairwise_ttest_name}_{sig_type}"].dtype != float:
         raise TypeError(f"{pairwise_ttest_name}_{sig_type} must be float")
@@ -171,16 +190,17 @@ def calculate_all_pairwise_scalars(
     sig_type: str = "pval",
     sig_thr: float = 0.05,
 ) -> pd.DataFrame:
-    """_summary_
+    """
+    Calculates pairwise scalars for all specified t-test groups.
 
     Args:
-        prot (_type_): _description_
-        pairwise_ttest_groups (_type_): _description_
-        sig_type (str, optional): _description_. Defaults to "pval".
-        sig_thr (float, optional): _description_. Defaults to 0.05.
+        prot (pd.DataFrame): DataFrame containing pairwise t-test results.
+        pairwise_ttest_groups (Iterable[TTestGroup]): Iterable of TTestGroup objects defining the groups.
+        sig_type (str, optional): Type of significance metric (e.g., "pval"). Defaults to "pval".
+        sig_thr (float, optional): Significance threshold. Defaults to 0.05.
 
     Returns:
-        _type_: _description_
+        pd.DataFrame: DataFrame with calculated scalars for all groups.
     """
     for pairwise_ttest_group in pairwise_ttest_groups:
         prot = calculate_pairwise_scalars(

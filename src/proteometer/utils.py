@@ -15,13 +15,18 @@ def generate_index(
     id_separator: str = "@",
     id_col: str = "id",
 ) -> pd.DataFrame:
-    """_summary_
+    """
+    Generate a unique index for a DataFrame based on protein column identifier and optional level column identifier.
 
     Args:
-        df (_type_): _description_
+        df (pd.DataFrame): Input DataFrame.
+        prot_col (str): Column name for protein identifiers.
+        level_col (str | None, optional): Column name for level identifiers. Defaults to None.
+        id_separator (str, optional): Separator for combining protein and level identifiers. Defaults to "@".
+        id_col (str, optional): Name of the new column for the generated index. Defaults to "id".
 
     Returns:
-        _type_: _description_
+        pd.DataFrame: DataFrame with the generated index.
     """
     if level_col is None:
         df[id_col] = df[prot_col]
@@ -41,10 +46,16 @@ def generate_index(
 def check_missingness(
     df: pd.DataFrame, groups: Sequence[str], group_cols: Sequence[Sequence[str]]
 ) -> pd.DataFrame:
-    """_summary_
+    """
+    Calculate missingness for specified groups in a DataFrame.
 
     Args:
-        df (_type_): _description_
+        df (pd.DataFrame): Input DataFrame.
+        groups (Sequence[str]): Names of the groups.
+        group_cols (Sequence[Sequence[str]]): Columns corresponding to each group.
+
+    Returns:
+        pd.DataFrame: DataFrame with missingness information added.
     """
     df["Total missingness"] = 0
     for name, cols in zip(groups, group_cols):
@@ -59,16 +70,17 @@ def filter_missingness(
     group_cols: Sequence[Sequence[str]],
     missing_thr: float = 0.0,
 ) -> pd.DataFrame:
-    """_summary_
+    """
+    Filter rows in a DataFrame based on missingness thresholds for specified groups.
 
     Args:
-        df (_type_): _description_
-        groups (_type_): _description_
-        group_cols (_type_): _description_
-        missing_thr (float, optional): _description_. Defaults to 0.0.
+        df (pd.DataFrame): Input DataFrame.
+        groups (Sequence[str]): Names of the groups.
+        group_cols (Sequence[Sequence[str]]): Columns corresponding to each group.
+        missing_thr (float, optional): Threshold for missingness. Defaults to 0.0.
 
     Returns:
-        _type_: _description_
+        pd.DataFrame: Filtered DataFrame.
     """
     df = check_missingness(df, groups, group_cols)
 

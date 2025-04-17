@@ -24,10 +24,17 @@ def filter_contaminants_reverse_pept(
     protein_id_col_pept: str,
     uniprot_col: str,
 ) -> pd.DataFrame:
-    """_summary_
+    """
+    Filters out contaminants and reverse hits from a peptide DataFrame.
 
     Args:
-        df (_type_): _description_
+        df (pd.DataFrame): Input DataFrame containing peptide data.
+        search_tool (Literal["maxquant", "msfragger", "fragpipe"]): The search tool used for data generation.
+        protein_id_col_pept (str): Column name containing protein IDs in the peptide DataFrame.
+        uniprot_col (str): Column name to store UniProt IDs.
+
+    Returns:
+        pd.DataFrame: Filtered DataFrame with contaminants and reverse hits removed.
     """
     if search_tool.lower() == "maxquant":
         df = df[
@@ -57,10 +64,17 @@ def filter_contaminants_reverse_prot(
     protein_id_col_prot: str,
     uniprot_col: str,
 ) -> pd.DataFrame:
-    """_summary_
+    """
+    Filters out contaminants and reverse hits from a protein DataFrame.
 
     Args:
-        df (_type_): _description_
+        df (pd.DataFrame): Input DataFrame containing protein data.
+        search_tool (Literal["maxquant", "msfragger", "fragpipe"]): The search tool used for data generation.
+        protein_id_col_prot (str): Column name containing protein IDs in the protein DataFrame.
+        uniprot_col (str): Column name to store UniProt IDs.
+
+    Returns:
+        pd.DataFrame: Filtered DataFrame with contaminants and reverse hits removed.
     """
     if search_tool.lower() == "maxquant":
         df = df[
@@ -94,10 +108,17 @@ def filtering_protein_based_on_peptide_number(
     search_tool: Literal["maxquant", "msfragger", "fragpipe"],
     min_pept_count: int = 2,
 ) -> pd.DataFrame:
-    """_summary_
+    """
+    Filters proteins based on the minimum number of peptides.
 
     Args:
-        df2filter (_type_): _description_
+        df2filter (pd.DataFrame): Input DataFrame containing proteomics data.
+        peptide_counts_col (str): Column name containing peptide counts.
+        search_tool (Literal["maxquant", "msfragger", "fragpipe"]): The search tool used for data generation.
+        min_pept_count (int, optional): Minimum number of peptides required. Defaults to 2.
+
+    Returns:
+        pd.DataFrame: Filtered DataFrame with proteins having at least `min_pept_count` peptides.
     """
     if search_tool.lower() == "maxquant":
         df2filter["Pept count"] = [
@@ -120,14 +141,16 @@ def filtering_protein_based_on_peptide_number(
 def get_clean_peptides(
     pept_df: pd.DataFrame, peptide_col: str, clean_pept_col: str = "clean_pept"
 ) -> pd.DataFrame:
-    """_summary_
+    """
+    Cleans peptide sequences by removing modifications and returns a DataFrame with cleaned peptides.
 
     Args:
-        pept_df (_type_): _description_
-        peptide_col (_type_): _description_
+        pept_df (pd.DataFrame): Input DataFrame containing peptide data.
+        peptide_col (str): Column name containing peptide sequences.
+        clean_pept_col (str, optional): Column name to store cleaned peptide sequences. Defaults to "clean_pept".
 
     Returns:
-        _type_: _description_
+        pd.DataFrame: DataFrame with an additional column for cleaned peptide sequences.
     """
     clean_pepts = [
         strip_peptide(pept, nip_off=False)
@@ -144,6 +167,18 @@ def get_tryptic_types(
     peptide_col: str,
     clean_pept_col: str = "clean_pept",
 ) -> pd.DataFrame:
+    """
+    Analyzes the tryptic pattern of peptides and classifies them as tryptic, semi-tryptic, or non-tryptic.
+
+    Args:
+        pept_df (pd.DataFrame): Input DataFrame containing peptide data.
+        prot_seq (str): Protein sequence to analyze against.
+        peptide_col (str): Column name containing peptide sequences.
+        clean_pept_col (str, optional): Column name for cleaned peptide sequences. Defaults to "clean_pept".
+
+    Returns:
+        pd.DataFrame: DataFrame with additional columns for peptide start, end, and type.
+    """
     seq_len = len(prot_seq)
     # pept_df.reset_index(drop=True, inplace=True)
     if pept_df.shape[0] == 0:
@@ -189,18 +224,20 @@ def select_tryptic_pattern(
     peptide_col: str = "Sequence",
     clean_pept_col: str = "clean_pept",
 ) -> pd.DataFrame:
-    """_summary_
+    """
+    Selects peptides based on their digestion pattern.
 
     Args:
-        pept_df (_type_): _description_
-        prot_seq (_type_): _description_
-        pept_type (str, optional): _description_. Defaults to "all".
-        peptide_col (str, optional): _description_. Defaults to "Sequence".
+        pept_df (pd.DataFrame): Input DataFrame containing peptide data.
+        prot_seq (str): Protein sequence to analyze against.
+        tryptic_pattern (str, optional): Digestion pattern to filter peptides. Defaults to "all".
+            must be one of: all, any-tryptic, tryptic, semi-tryptic, non-tryptic.
+        peptide_col (str, optional): Column name containing peptide sequences. Defaults to "Sequence".
+        clean_pept_col (str, optional): Column name for cleaned peptide sequences. Defaults to "clean_pept".
 
-    Raises:
-        ValueError: _description_
+    Returns:
+        pd.DataFrame: Filtered DataFrame with peptides matching the specified digestion pattern.
     """
-
     if "pept_type" not in pept_df.columns:
         pept_df = get_tryptic_types(pept_df, prot_seq, peptide_col, clean_pept_col)
 
@@ -239,12 +276,25 @@ def analyze_tryptic_pattern(
     sig_type: str = "pval",
     sig_thr: float = 0.05,
 ) -> pd.DataFrame:
-    """_summary_
+    """
+    Analyzes tryptic patterns and calculates statistics for peptides.
 
     Args:
-        protein (_type_): _description_
-        sequence (_type_): _description_
-        description (str, optional): _description_. Defaults to "".
+        protein (pd.DataFrame): Input DataFrame containing proteomics data.
+        sequence (str): Protein sequence to analyze against.
+        pairwise_ttest_groups (Iterable[TTestGroup]): Groups for pairwise t-tests.
+        groups (Collection[str]): Collection of group names.
+        peptide_col (str): Column name containing peptide sequences.
+        description (str, optional): Protein description to add to data frame. Defaults to "".
+        clean_pept_col (str, optional): Column name for cleaned peptide sequences. Defaults to "clean_pept".
+        anova_type (str, optional): Type of ANOVA analysis. Defaults to "[Group]".
+        keep_non_tryptic (bool, optional): Whether to keep non-tryptic peptides. Defaults to True.
+        id_separator (str, optional): Separator for peptide IDs. Defaults to "@".
+        sig_type (str, optional): Significance type (e.g., "pval"). Defaults to "pval".
+        sig_thr (float, optional): Significance threshold. Defaults to 0.05.
+
+    Returns:
+        pd.DataFrame: DataFrame with analyzed tryptic patterns and statistics.
     """
     # protein.reset_index(drop=True, inplace=True)
     seq_len = len(sequence)
@@ -405,12 +455,31 @@ def rollup_to_lytic_site(
     alternative_protease: str = "ProK",
     rollup_func: Literal["median", "mean", "sum"] = "median",
 ) -> pd.DataFrame:
-    """_summary_
+    """
+    Rolls up peptide-level limited proteolysis data to lytic sites.
 
     Args:
-        protein (_type_): _description_
-        sequence (_type_): _description_
-        description (str, optional): _description_. Defaults to "".
+        df (pd.DataFrame): Input DataFrame containing peptide data.
+        int_cols (Iterable[str]): Columns with intensity values to aggregate.
+        uniprot_col (str): Column name for UniProt IDs.
+        sequence (str): Protein sequence to analyze against.
+        residue_col (str, optional): Column name for lytic residues. Defaults to "Residue".
+        description (str, optional): Protein description to add to data frame. Defaults to "".
+        tryptic_pattern (str, optional): Digestion pattern to filter peptides. Defaults to "all".
+        peptide_col (str, optional): Column name containing peptide sequences. Defaults to "Sequence".
+        clean_pept_col (str, optional): Column name for cleaned peptide sequences. Defaults to "clean_pept".
+        id_separator (str, optional): Separator for IDs. Defaults to "@".
+        id_col (str, optional): Column name for IDs. Defaults to "id".
+        pept_type_col (str, optional): Column name for peptide types. Defaults to "pept_type".
+        site_col (str, optional): Column name for lytic sites. Defaults to "Site".
+        pos_col (str, optional): Column name for positions. Defaults to "Pos".
+        multiply_rollup_counts (bool, optional): Whether to multiply rollup counts. Defaults to True.
+        ignore_NA (bool, optional): Whether to ignore NA values. Defaults to True.
+        alternative_protease (str, optional): Name of the alternative protease. Defaults to "ProK".
+        rollup_func (Literal["median", "mean", "sum"], optional): Aggregation function. Defaults to "median".
+
+    Returns:
+        pd.DataFrame: DataFrame with rolled-up lytic site data and aggregated statistics.
     """
     protein = df.copy()
     # protein.reset_index(drop=True, inplace=True)
@@ -558,12 +627,16 @@ def select_lytic_sites(
     site_type: str = "prok",
     site_type_col: str = "Lytic site type",
 ) -> pd.DataFrame:
-    """_summary_
+    """
+    Selects lytic sites based on the specified site type.
 
     Args:
-        site_df (_type_): _description_
-        site_type (str, optional): _description_. Defaults to "prok".
-        site_type_col (str, optional): _description_. Defaults to "Lytic site type".
+        site_df (pd.DataFrame): Input DataFrame containing lytic site data.
+        site_type (str, optional): Type of lytic site to select. Defaults to "prok".
+        site_type_col (str, optional): Column name for lytic site types. Defaults to "Lytic site type".
+
+    Returns:
+        pd.DataFrame: Filtered DataFrame with selected lytic sites.
     """
     site_df_out = site_df[site_df[site_type_col] == site_type].copy()
     return site_df_out

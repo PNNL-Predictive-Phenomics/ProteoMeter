@@ -17,6 +17,25 @@ def get_ptm_pos_in_pept(
     ptm_label: str = "*",
     special_chars: str = r".]+-=@_!#$%^&*()<>?/\|}{~:[",
 ) -> list[int]:
+    """Get the positions of PTM labels in a peptide.
+
+    This function processes a peptide string to find the positions of
+    post-translational modification (PTM) labels. It accounts for special
+    characters and returns a list of positions adjusted to the stripped
+    peptide sequence.
+
+    Args:
+        peptide (str): The peptide string potentially containing PTM labels.
+        ptm_label (str, optional): The label representing PTM. Defaults to '*'.
+        special_chars (str, optional): A string of special characters that
+            might need escaping in regex operations. Defaults to common
+            special characters.
+
+    Returns:
+        list[int]: A sorted list of integer positions where the PTM labels
+            occur in the peptide, adjusted for any modifications made during
+            processing.
+    """
     peptide = nip_off_pept(peptide)
     if ptm_label in special_chars:
         ptm_label = "\\" + ptm_label
@@ -26,44 +45,57 @@ def get_ptm_pos_in_pept(
 
 
 def get_yst(strip_pept: str, ptm_aa: str = "YSTyst") -> list[tuple[int, str]]:
+    """Get YST positions in a peptide.
+
+    This function takes a stripped peptide sequence and finds the positions of
+    Y, S, and T residues.
+
+    Args:
+        strip_pept (str): The stripped peptide sequence.
+        ptm_aa (str, optional): The residues letters for Y, S, and T residues. Defaults to 'YSTyst'.
+
+    Returns:
+        list[tuple[int, str]]: A list of tuples where the first element is the
+            position of the label in the stripped peptide and the second
+            element is the YST residue letter.
+    """
     return [
         (i, letter.upper()) for i, letter in enumerate(strip_pept) if letter in ptm_aa
     ]
 
 
-# Function not used
-# def get_ptm_info(peptide:str, residue:str | None=None, prot_seq:str | None=None, ptm_label:str="*"):
-#     if prot_seq is not None:
-#         clean_pept = strip_peptide(peptide)
-#         pept_pos = prot_seq.find(clean_pept)
-#         all_yst = get_yst(clean_pept)
-#         all_ptm = [[pept_pos + yst[0] + 1, yst[1], yst[0]] for yst in all_yst]
-#         return all_ptm
-#     if residue is not None:
-#         subpept = nip_off_pept(peptide)
-#         split_substr = subpept.split(ptm_label)
-#         res_pos = sorted([int(res) for res in re.findall(r"\d+", residue)])
-#         first_pos = res_pos[0]
-#         res_pos.insert(0, first_pos - len(split_substr[0]))
-#         pept_pos = 0
-#         all_ptm = []
-#         for i, res in enumerate(res_pos):
-#             # print(i)
-#             if i > 0:
-#                 pept_pos += len(split_substr[i - 1])
-#             yst_pos = get_yst(split_substr[i])
-#             if len(yst_pos) > 0:
-#                 for j in yst_pos:
-#                     ptm = [j[0] + res + 1, j[1], pept_pos + j[0]]
-#                     all_ptm.append(ptm)
-#         return all_ptm
-
-
 def get_phosphositeplus_pos(mod_rsd: str) -> list[int]:
+    """Extracts numeric positions from a string of modified residues.
+
+    Args:
+        mod_rsd (str): A string of modified residues.
+
+    Returns:
+        list[int]: A list of numeric positions extracted from the input string.
+    """
     return [int(re.sub(r"[^0-9]+", "", mod)) for mod in mod_rsd]
 
 
-def combine_multi_ptms(multi_proteomics: dict[str, pd.DataFrame], par: Params):
+def combine_multi_ptms(
+    multi_proteomics: dict[str, pd.DataFrame], par: Params
+) -> pd.DataFrame:
+    """Combines multiple proteomics dataframes into a single dataframe.
+
+    This function processes and combines different types of proteomics
+    data into a unified dataframe. It distinguishes between global
+    proteomics data and post-translational modifications (PTM) data,
+    assigning specific labels and counting site numbers accordingly.
+
+    Args:
+        multi_proteomics (dict[str, pd.DataFrame]): Dictionary of proteomics dataframes
+            with keys indicating the type of proteomics ('global' or PTM types).
+        par (Params): Configuration parameters containing column names and PTM details.
+
+    Returns:
+        pd.DataFrame: A combined dataframe containing all the input proteomics data,
+            labeled and processed as per the specified parameters.
+    """
+
     proteomics_list: list[pd.DataFrame] = []
     for key, value in multi_proteomics.items():
         if key == "global":

@@ -14,92 +14,6 @@ if TYPE_CHECKING:
     AggDictAny = dict[str, Callable[[pd.Series[Any]], Any]]
 
 
-# Rolling up the quantification by using log2 medians and plus the log2 of peptide number
-def rollup(
-    df_ori: pd.DataFrame,
-    int_cols: list[str],
-    rollup_col: str,
-    id_col: str = "id",
-    id_separator: str = "@",
-    multiply_rollup_counts: bool = True,
-    ignore_NA: bool = True,
-    rollup_func: Literal["median", "mean", "sum"] = "median",
-):
-    """_summary_
-
-    Args:
-        df (_type_): _description_
-
-    Returns:
-        _type_: _description_
-    """
-    df = df_ori.reset_index(drop=True)
-    info_cols = [col for col in df.columns if col not in int_cols]
-
-    df[id_col] = df[id_col] + id_separator + df[rollup_col]
-
-    df[int_cols] = 2 ** df[int_cols]
-    df[int_cols] = df[int_cols].fillna(0)
-
-    agg_methods_1: AggDictAny = {i: lambda x: x.iloc[0] for i in info_cols}
-    if multiply_rollup_counts:
-        if ignore_NA:
-            if rollup_func.lower() == "median":
-                agg_methods_2: AggDictFloat = {
-                    i: lambda x: np.log2(len(x)) + x.median() for i in int_cols
-                }
-            elif rollup_func.lower() == "mean":
-                agg_methods_2: AggDictFloat = {
-                    i: lambda x: np.log2(len(x)) + x.mean() for i in int_cols
-                }
-            elif rollup_func.lower() == "sum":
-                agg_methods_2: AggDictFloat = {
-                    i: lambda x: np.log2(np.nansum(2 ** (x.replace(0, np.nan))))
-                    for i in int_cols
-                }
-            else:
-                raise ValueError(
-                    "The rollup function is not recognized. Please choose from the following: median, mean, sum"
-                )
-        else:
-            if rollup_func.lower() == "median":
-                agg_methods_2: AggDictFloat = {
-                    i: lambda x: np.log2(x.notna().sum()) + x.median() for i in int_cols
-                }
-            elif rollup_func.lower() == "mean":
-                agg_methods_2: AggDictFloat = {
-                    i: lambda x: np.log2(x.notna().sum()) + x.mean() for i in int_cols
-                }
-            elif rollup_func.lower() == "sum":
-                agg_methods_2: AggDictFloat = {
-                    i: lambda x: np.log2(np.nansum(2 ** (x.replace(0, np.nan))))
-                    for i in int_cols
-                }
-            else:
-                raise ValueError(
-                    "The rollup function is not recognized. Please choose from the following: median, mean, sum"
-                )
-    else:
-        if rollup_func.lower() == "median":
-            agg_methods_2: AggDictFloat = {i: lambda x: x.median() for i in int_cols}
-        elif rollup_func.lower() == "mean":
-            agg_methods_2: AggDictFloat = {i: lambda x: x.mean() for i in int_cols}
-        elif rollup_func.lower() == "sum":
-            agg_methods_2: AggDictFloat = {
-                i: lambda x: np.log2(np.nansum(2 ** (x.replace(0, np.nan))))
-                for i in int_cols
-            }
-        else:
-            raise ValueError(
-                "The rollup function is not recognized. Please choose from the following: median, mean, sum"
-            )
-    df = df.groupby(id_col, as_index=False).agg({**agg_methods_1, **agg_methods_2})
-    df[int_cols] = np.log2(df[int_cols])
-    df[int_cols] = df[int_cols].replace([np.inf, -np.inf], np.nan)
-    df.index = df[id_col].to_list()  # type: ignore
-    return df
-
-
 def rollup_to_site(
     df_ori: pd.DataFrame,
     int_cols: list[str],
@@ -113,15 +27,27 @@ def rollup_to_site(
     multiply_rollup_counts: bool = True,
     ignore_NA: bool = True,
     rollup_func: Literal["median", "mean", "sum"] = "sum",
-):
-    """_summary_
+) -> pd.DataFrame:
+    """Roll up peptide-level data to site-level data.
 
     Args:
-        df (_type_): _description_
+        df_ori (pd.DataFrame): Original DataFrame containing peptide data.
+        int_cols (list[str]): List of column names with intensity values to roll up.
+        uniprot_col (str): Column name for UniProt identifiers.
+        peptide_col (str): Column name for peptides.
+        residue_col (str): Column name for residues.
+        residue_sep (str, optional): Separator for residues in the residue column. Defaults to ";".
+        id_col (str, optional): Column name for generated IDs. Defaults to "id".
+        id_separator (str, optional): Separator for ID components. Defaults to "@".
+        site_col (str, optional): Column name for site information. Defaults to "Site".
+        multiply_rollup_counts (bool, optional): Whether to multiply rollup counts by the number of observations. Defaults to True.
+        ignore_NA (bool, optional): Whether to ignore NA values during rollup. Defaults to True.
+        rollup_func (Literal["median", "mean", "sum"], optional): Aggregation function to use. Defaults to "sum".
 
     Returns:
-        _type_: _description_
+        pd.DataFrame: DataFrame with rolled-up site-level data.
     """
+
     df = df_ori.reset_index(drop=True)
     info_cols = [col for col in df.columns if col not in int_cols]
 
