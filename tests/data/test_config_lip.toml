@@ -23,16 +23,7 @@ search_tool = "FragPipe"
 [statistics]
 pairwise_factor = "Time"
 anova_factors = ["Treatment", "Time"]
-user_ttest_pairs = [
-    [
-        "Infected_8h",
-        "Infected_16h",
-    ],
-    [
-        "Infected_8h",
-        "Infected_16h",
-    ],
-]
+user_ttest_pairs = [["Infected_8h", "Infected_24h"]]
 
 [corrections]
 abundance_correction = true
