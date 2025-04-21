@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 
@@ -71,10 +71,7 @@ def rollup_to_site(
                     i: lambda x: np.log2(len(x)) + x.mean() for i in int_cols
                 }
             elif rollup_func.lower() == "sum":
-                agg_methods_2: AggDictFloat = {
-                    i: lambda x: np.log2(np.nansum(2 ** (x.replace(0, np.nan))))
-                    for i in int_cols
-                }
+                agg_methods_2: AggDictFloat = {i: _expsum for i in int_cols}
             else:
                 raise ValueError(
                     "The rollup function is not recognized. Please choose from the following: median, mean, sum"
@@ -89,10 +86,7 @@ def rollup_to_site(
                     i: lambda x: np.log2(x.notna().sum()) + x.mean() for i in int_cols
                 }
             elif rollup_func.lower() == "sum":
-                agg_methods_2: AggDictFloat = {
-                    i: lambda x: np.log2(np.nansum(2 ** (x.replace(0, np.nan))))
-                    for i in int_cols
-                }
+                agg_methods_2: AggDictFloat = {i: _expsum for i in int_cols}
             else:
                 raise ValueError(
                     "The rollup function is not recognized. Please choose from the following: median, mean, sum"
@@ -103,10 +97,7 @@ def rollup_to_site(
         elif rollup_func.lower() == "mean":
             agg_methods_2: AggDictFloat = {i: lambda x: x.mean() for i in int_cols}
         elif rollup_func.lower() == "sum":
-            agg_methods_2: AggDictFloat = {
-                i: lambda x: np.log2(np.nansum(2 ** (x.replace(0, np.nan))))
-                for i in int_cols
-            }
+            agg_methods_2: AggDictFloat = {i: _expsum for i in int_cols}
         else:
             raise ValueError(
                 "The rollup function is not recognized. Please choose from the following: median, mean, sum"
@@ -118,3 +109,10 @@ def rollup_to_site(
     df[int_cols] = df[int_cols].replace([np.inf, -np.inf], np.nan)
     df.index = df[id_col].to_list()  # type: ignore
     return df
+
+
+def _expsum(x: pd.Series[float]) -> float:
+    val = cast(float, np.nansum(2 ** (x.replace(0, np.nan))))
+    if val == 0:
+        return np.nan
+    return np.log2(val)
