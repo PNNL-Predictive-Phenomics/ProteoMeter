@@ -203,16 +203,18 @@ def prot_abund_correction_matched(
             prot_abund_row = cast(
                 "pd.Series[float]", prot.loc[uniprot_id, columns_to_correct]
             )
-            prot_abund = prot_abund_row.fillna(0)
+            prot_abund = prot_abund_row.astype(float).fillna(0)
             prot_abund_median = prot_abund_row[non_tt_cols].median()  # type: ignore
             if prot_abund_median:
                 prot_abund_scale = cast(
                     "pd.Series[float]",
-                    prot_abund_row.div(prot_abund_row).fillna(0) * prot_abund_median,
+                    prot_abund_row.div(prot_abund_row).astype(float).fillna(0)
+                    * prot_abund_median,
                 )
             else:
                 prot_abund_scale = cast(
-                    "pd.Series[float]", prot_abund_row.div(prot_abund_row).fillna(0) * 0
+                    "pd.Series[float]",
+                    prot_abund_row.div(prot_abund_row).astype(float).fillna(0) * 0,
                 )
             pept_sub[columns_to_correct] = (
                 pept_sub[columns_to_correct]
@@ -256,7 +258,6 @@ def global_prot_normalization_and_stats(
     Returns:
         pd.DataFrame: The normalized and statistically analyzed global protein data.
     """
-
     if not par.batch_correction:
         global_prot = normalization.median_normalization(global_prot, int_cols)
     else:
