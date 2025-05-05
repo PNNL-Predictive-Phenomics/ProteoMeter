@@ -53,7 +53,7 @@ docs = [
 ]
 
 [tool.pixi.environments]
-default = { features = ["dev", "test", "lint"] }
+default = { features = ["dev", "test", "lint", "docs"] }
 test = { features = ["test"] }
 docs = { features = ["docs"] }
 

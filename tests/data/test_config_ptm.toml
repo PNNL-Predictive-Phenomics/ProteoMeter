@@ -22,16 +22,7 @@ search_tool = ""
 [statistics]
 pairwise_factor = "Time"
 anova_factors = ["Treatment", "Time"]
-user_ttest_pairs = [
-    [
-        "Infected_8h",
-        "Infected_16h",
-    ],
-    [
-        "Infected_8h",
-        "Infected_16h",
-    ],
-]
+user_ttest_pairs = [["Infected_8h", "Infected_16h"]]
 
 [corrections]
 abundance_correction = true
