@@ -1,0 +1,79 @@
+proteometer.ptm
+===============
+
+.. py:module:: proteometer.ptm
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   proteometer.ptm.get_ptm_pos_in_pept
+   proteometer.ptm.get_yst
+   proteometer.ptm.get_ptm_info
+   proteometer.ptm.get_phosphositeplus_pos
+   proteometer.ptm.ptm_TMT_normalization
+   proteometer.ptm.ptm_batch_correction
+   proteometer.ptm.ptm_rollup_to_site
+   proteometer.ptm.ptm_median_rollup_to_site
+   proteometer.ptm.ptm_mean_rollup_to_site
+   proteometer.ptm.combine_multi_PTMs
+
+
+Module Contents
+---------------
+
+.. py:function:: get_ptm_pos_in_pept(peptide, ptm_label='*', special_chars='.]+-=@_!#$%^&*()<>?/\\|}{~:[')
+
+.. py:function:: get_yst(strip_pept, ptm_aa='YSTyst')
+
+.. py:function:: get_ptm_info(peptide, residue=None, prot_seq=None, ptm_label='*')
+
+.. py:function:: get_phosphositeplus_pos(mod_rsd)
+
+.. py:function:: ptm_TMT_normalization(df2transform, global_pept, int_cols)
+
+   _summary_
+
+   :param df2transform: _description_
+   :type df2transform: _type_
+
+
+.. py:function:: ptm_batch_correction(df4batcor, metadata_ori, batch_correct_samples=None, batch_col='Batch', sample_col='Sample', **kwargs)
+
+.. py:function:: ptm_rollup_to_site(df_ori, int_cols, uniprot_col, peptide_col, residue_col, residue_sep=';', id_col='id', id_separator='@', site_col='Site', multiply_rollup_counts=True, ignore_NA=True, rollup_func='median')
+
+   _summary_
+
+   :param df: _description_
+   :type df: _type_
+
+   :returns: _description_
+   :rtype: _type_
+
+
+.. py:function:: ptm_median_rollup_to_site(df_ori, int_cols, uniprot_col, peptide_col, residue_col, residue_sep=';', id_col='id', id_separator='@', site_col='Site', multiply_rollup_counts=True, ignore_NA=True)
+
+   _summary_
+
+   :param df: _description_
+   :type df: _type_
+
+   :returns: _description_
+   :rtype: _type_
+
+
+.. py:function:: ptm_mean_rollup_to_site(df_ori, int_cols, uniprot_col, peptide_col, residue_col, residue_sep=';', id_col='id', id_separator='@', site_col='Site', multiply_rollup_counts=True, ignore_NA=True)
+
+   _summary_
+
+   :param df: _description_
+   :type df: _type_
+
+   :returns: _description_
+   :rtype: _type_
+
+
+.. py:function:: combine_multi_PTMs(multi_proteomics, residue_col, uniprot_col, site_col, site_number_col, id_separator='@', id_col='id', type_col='Type', experiment_col='Experiment')
+

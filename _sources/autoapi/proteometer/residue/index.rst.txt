@@ -1,0 +1,49 @@
+proteometer.residue
+===================
+
+.. py:module:: proteometer.residue
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   proteometer.residue.get_res_names
+   proteometer.residue.get_res_pos
+   proteometer.residue.get_protein_res
+   proteometer.residue.count_site_number
+   proteometer.residue.count_site_number_with_global_proteomics
+
+
+Module Contents
+---------------
+
+.. py:function:: get_res_names(residues)
+
+.. py:function:: get_res_pos(residues)
+
+.. py:function:: get_protein_res(proteome, uniprot_id, prot_seqs)
+
+.. py:function:: count_site_number(df, uniprot_col, site_number_col='site_number')
+
+   _summary_
+
+   :param df: _description_
+   :type df: _type_
+
+   :returns: _description_
+   :rtype: _type_
+
+
+.. py:function:: count_site_number_with_global_proteomics(df, uniprot_col, id_col, site_number_col='site_number')
+
+   _summary_
+
+   :param df: _description_
+   :type df: _type_
+
+   :returns: _description_
+   :rtype: _type_
+
+

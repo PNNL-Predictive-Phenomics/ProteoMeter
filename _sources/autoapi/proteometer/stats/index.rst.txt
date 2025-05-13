@@ -1,0 +1,96 @@
+proteometer.stats
+=================
+
+.. py:module:: proteometer.stats
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   proteometer.stats.adjusted_p_value
+   proteometer.stats.log2_transformation
+   proteometer.stats.median_normalization
+   proteometer.stats.anova
+   proteometer.stats.pairwise_ttest
+   proteometer.stats.calculate_pairwise_scalars
+   proteometer.stats.calculate_all_pairwise_scalars
+
+
+Module Contents
+---------------
+
+.. py:function:: adjusted_p_value(pd_series, ignore_na=True, filling_val=1)
+
+.. py:function:: log2_transformation(df2transform, int_cols)
+
+   _summary_
+
+   :param df2transform: _description_
+   :type df2transform: _type_
+
+
+.. py:function:: median_normalization(df2transform, int_cols, metadata_ori=None, batch_correct_samples=None, batch_col=None, sample_col='Sample', skipna=True, zero_center=False)
+
+   _summary_
+
+   :param df2transform: _description_
+   :type df2transform: _type_
+   :param int_cols: _description_
+   :type int_cols: _type_
+
+   :returns: _description_
+   :rtype: _type_
+
+
+.. py:function:: anova(df, anova_cols, metadata_ori, anova_factors=['Group'], sample_col='Sample')
+
+   _summary_
+
+   :param df: _description_
+   :type df: _type_
+   :param anova_cols: _description_
+   :type anova_cols: _type_
+   :param metadata_ori: _description_
+   :type metadata_ori: _type_
+   :param anova_factors: _description_. Defaults to ["Group"].
+   :type anova_factors: list, optional
+
+   :returns: _description_
+   :rtype: _type_
+
+
+.. py:function:: pairwise_ttest(df, pairwise_ttest_groups)
+
+   _summary_
+
+   :param df: _description_
+   :type df: _type_
+
+
+.. py:function:: calculate_pairwise_scalars(prot, pairwise_ttest_name=None, sig_type='pval', sig_thr=0.05)
+
+   _summary_
+
+   :param prot: _description_
+   :type prot: _type_
+
+
+.. py:function:: calculate_all_pairwise_scalars(prot, pairwise_ttest_groups, sig_type='pval', sig_thr=0.05)
+
+   _summary_
+
+   :param prot: _description_
+   :type prot: _type_
+   :param pairwise_ttest_groups: _description_
+   :type pairwise_ttest_groups: _type_
+   :param sig_type: _description_. Defaults to "pval".
+   :type sig_type: str, optional
+   :param sig_thr: _description_. Defaults to 0.05.
+   :type sig_thr: float, optional
+
+   :returns: _description_
+   :rtype: _type_
+
+

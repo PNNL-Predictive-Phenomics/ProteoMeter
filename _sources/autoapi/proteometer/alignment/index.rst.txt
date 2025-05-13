@@ -1,0 +1,54 @@
+proteometer.alignment
+=====================
+
+.. py:module:: proteometer.alignment
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   proteometer.alignment.get_df_for_pept_alignment_plot
+   proteometer.alignment.plot_pept_alignment
+
+
+Module Contents
+---------------
+
+.. py:function:: get_df_for_pept_alignment_plot(pept_df, prot_seq, pairwise_ttest_name, tryptic_pattern='all', peptide_col=None, clean_pept_col='clean_pept', max_vis_fc=3, id_separator='@')
+
+   _summary_
+
+   :param pept_df: _description_
+   :type pept_df: _type_
+   :param prot_seq: _description_
+   :type prot_seq: _type_
+   :param pept_type: _description_. Defaults to "all".
+   :type pept_type: str, optional
+   :param peptide_col: _description_. Defaults to "Sequence".
+   :type peptide_col: str, optional
+   :param max_vis_fc: _description_. Defaults to 3.
+   :type max_vis_fc: int, optional
+
+
+.. py:function:: plot_pept_alignment(pept_df, prot_seq, pairwise_ttest_name, save2file=None, tryptic_pattern='all', peptide_col=None, clean_pept_col='clean_pept', max_vis_fc=3, color_map='coolwarm')
+
+   _summary_
+
+   :param pept_df: _description_
+   :type pept_df: _type_
+   :param prot_seq: _description_
+   :type prot_seq: _type_
+   :param save2file: _description_. Defaults to None.
+   :type save2file: _type_, optional
+   :param pept_type: _description_. Defaults to "all".
+   :type pept_type: str, optional
+   :param peptide_col: _description_. Defaults to "Sequence".
+   :type peptide_col: str, optional
+   :param color_map: _description_. Defaults to "coolwarm".
+   :type color_map: str, optional
+   :param max_vis_fc: _description_. Defaults to 3.
+   :type max_vis_fc: int, optional
+
+

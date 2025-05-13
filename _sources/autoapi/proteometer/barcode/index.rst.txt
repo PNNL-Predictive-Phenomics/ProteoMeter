@@ -1,0 +1,49 @@
+proteometer.barcode
+===================
+
+.. py:module:: proteometer.barcode
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   proteometer.barcode.plot_barcode
+   proteometer.barcode.get_barcode
+   proteometer.barcode.plot_pept_barcode
+   proteometer.barcode.plot_site_barcode
+
+
+Module Contents
+---------------
+
+.. py:function:: plot_barcode(pal, ticklabel=None, barcode_name=None, ax=None, size=(10, 2))
+
+   Plot the values in a color palette as a horizontal array.
+   :param pal: colors, i.e. as returned by seaborn.color_palette()
+   :type pal: sequence of matplotlib colors
+   :param size: figure size of plot
+   :param ax: an existing axes to use
+
+
+.. py:function:: get_barcode(fc_bar, color_levels=20, fc_bar_max=None)
+
+.. py:function:: plot_pept_barcode(pept_df, pairwise_ttest_name, sequence, save2file=None, uniprot_id='Protein ID (provided by user)', max_vis_fc=3, color_levels=20, sig_type='pval', sig_thr=0.05)
+
+   _summary_
+
+   :param pept_df: _description_
+   :type pept_df: _type_
+   :param sequence: _description_
+   :type sequence: _type_
+   :param save2file: _description_. Defaults to None.
+   :type save2file: _type_, optional
+   :param max_vis_fc: _description_. Defaults to 3.
+   :type max_vis_fc: int, optional
+   :param color_levels: _description_. Defaults to 20.
+   :type color_levels: int, optional
+
+
+.. py:function:: plot_site_barcode(site_df, sequence, pairwise_ttest_name, save2file=None, uniprot_id='Protein ID (provided by user)', max_vis_fc=3, color_levels=20, site_type_col='Lytic site type', sig_type='pval', sig_thr=0.05)
+

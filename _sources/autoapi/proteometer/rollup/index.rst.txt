@@ -1,0 +1,76 @@
+proteometer.rollup
+==================
+
+.. py:module:: proteometer.rollup
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   proteometer.rollup.rollup
+   proteometer.rollup.rollup_to_site
+   proteometer.rollup.rollup_by_sum
+   proteometer.rollup.rollup_by_median
+   proteometer.rollup.rollup_by_mean
+
+
+Module Contents
+---------------
+
+.. py:function:: rollup(df_ori, int_cols, rollup_col, id_col='id', id_separator='@', multiply_rollup_counts=True, ignore_NA=True, rollup_func='median')
+
+   _summary_
+
+   :param df: _description_
+   :type df: _type_
+
+   :returns: _description_
+   :rtype: _type_
+
+
+.. py:function:: rollup_to_site(df_ori, int_cols, uniprot_col, peptide_col, residue_col, residue_sep=';', id_col='id', id_separator='@', site_col='Site', multiply_rollup_counts=True, ignore_NA=True, rollup_func='sum')
+
+   _summary_
+
+   :param df: _description_
+   :type df: _type_
+
+   :returns: _description_
+   :rtype: _type_
+
+
+.. py:function:: rollup_by_sum(df_ori, int_cols, rollup_col, id_col='id', id_separator='@')
+
+   _summary_
+
+   :param df: _description_
+   :type df: _type_
+
+   :returns: _description_
+   :rtype: _type_
+
+
+.. py:function:: rollup_by_median(df_ori, int_cols, rollup_col, id_col='id', id_separator='@', multiply_rollup_counts=True, ignore_NA=True)
+
+   _summary_
+
+   :param df: _description_
+   :type df: _type_
+
+   :returns: _description_
+   :rtype: _type_
+
+
+.. py:function:: rollup_by_mean(df_ori, int_cols, rollup_col, id_col='id', id_separator='@', multiply_rollup_counts=True, ignore_NA=True)
+
+   _summary_
+
+   :param df: _description_
+   :type df: _type_
+
+   :returns: _description_
+   :rtype: _type_
+
+

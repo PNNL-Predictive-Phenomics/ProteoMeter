@@ -1,0 +1,25 @@
+proteometer.peptide
+===================
+
+.. py:module:: proteometer.peptide
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   proteometer.peptide.nip_off_pept
+   proteometer.peptide.strip_peptide
+   proteometer.peptide.relable_pept
+
+
+Module Contents
+---------------
+
+.. py:function:: nip_off_pept(peptide)
+
+.. py:function:: strip_peptide(peptide, nip_off=True)
+
+.. py:function:: relable_pept(peptide, label_pos, ptm_label='*')
+

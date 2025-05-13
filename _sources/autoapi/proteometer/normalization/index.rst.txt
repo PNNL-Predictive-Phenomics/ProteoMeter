@@ -1,0 +1,28 @@
+proteometer.normalization
+=========================
+
+.. py:module:: proteometer.normalization
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   proteometer.normalization.tmt_normalization
+   proteometer.normalization.batch_correction
+
+
+Module Contents
+---------------
+
+.. py:function:: tmt_normalization(df2transform, global_pept, int_cols)
+
+   _summary_
+
+   :param df2transform: _description_
+   :type df2transform: _type_
+
+
+.. py:function:: batch_correction(df4batcor, metadata_ori, batch_correct_samples=None, batch_col='Batch', sample_col='Sample')
+

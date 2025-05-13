@@ -1,0 +1,143 @@
+proteometer.lip
+===============
+
+.. py:module:: proteometer.lip
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   proteometer.lip.filter_contaminants_reverse_pept
+   proteometer.lip.filter_contaminants_reverse_prot
+   proteometer.lip.filtering_protein_based_on_peptide_number
+   proteometer.lip.get_clean_peptides
+   proteometer.lip.get_tryptic_types
+   proteometer.lip.select_tryptic_pattern
+   proteometer.lip.analyze_tryptic_pattern
+   proteometer.lip.LiP_rollup_to_site
+   proteometer.lip.LiP_rollup_to_lytic_site
+   proteometer.lip.select_lytic_sites
+   proteometer.lip.LiP_median_rollup_to_site
+   proteometer.lip.LiP_mean_rollup_to_site
+   proteometer.lip.LiP_median_rollup_to_lytic_site
+   proteometer.lip.LiP_mean_rollup_to_lytic_site
+
+
+Module Contents
+---------------
+
+.. py:function:: filter_contaminants_reverse_pept(df, search_tool, ProteinID_col_pept, uniprot_col)
+
+   _summary_
+
+   :param df: _description_
+   :type df: _type_
+
+
+.. py:function:: filter_contaminants_reverse_prot(df, search_tool, ProteinID_col_prot, uniprot_col)
+
+   _summary_
+
+   :param df: _description_
+   :type df: _type_
+
+
+.. py:function:: filtering_protein_based_on_peptide_number(df2filter, PeptCounts_col, search_tool, min_pept_count=2)
+
+   _summary_
+
+   :param df2filter: _description_
+   :type df2filter: _type_
+
+
+.. py:function:: get_clean_peptides(pept_df, peptide_col, clean_pept_col='clean_pept')
+
+   _summary_
+
+   :param pept_df: _description_
+   :type pept_df: _type_
+   :param peptide_col: _description_
+   :type peptide_col: _type_
+
+   :returns: _description_
+   :rtype: _type_
+
+
+.. py:function:: get_tryptic_types(pept_df, prot_seq, peptide_col, clean_pept_col='clean_pept')
+
+.. py:function:: select_tryptic_pattern(pept_df, prot_seq, tryptic_pattern='all', peptide_col=None, clean_pept_col='clean_pept')
+
+   _summary_
+
+   :param pept_df: _description_
+   :type pept_df: _type_
+   :param prot_seq: _description_
+   :type prot_seq: _type_
+   :param pept_type: _description_. Defaults to "all".
+   :type pept_type: str, optional
+   :param peptide_col: _description_. Defaults to "Sequence".
+   :type peptide_col: str, optional
+
+   :raises ValueError: _description_
+
+
+.. py:function:: analyze_tryptic_pattern(protein, sequence, pairwise_ttest_groups, groups, description='', peptide_col=None, clean_pept_col='clean_pept', anova_type='[Group]', keep_non_tryptic=True, id_separator='@', sig_type='pval', sig_thr=0.05)
+
+   _summary_
+
+   :param protein: _description_
+   :type protein: _type_
+   :param sequence: _description_
+   :type sequence: _type_
+   :param description: _description_. Defaults to "".
+   :type description: str, optional
+
+
+.. py:function:: LiP_rollup_to_site(pept, int_cols, sequence, uniprot_col, residue_col='Residue', uniprot_id='Protein ID (provided by user)', peptide_col='Sequence', clean_pept_col='clean_pept', id_col='id', id_separator='@', pept_type_col='pept_type', site_col='Site', pos_col='Pos', multiply_rollup_counts=True, ignore_NA=True, rollup_func='median')
+
+   _summary_
+
+   :param pept: _description_
+   :type pept: _type_
+   :param sequence: _description_
+   :type sequence: _type_
+   :param uniprot_id: _description_. Defaults to "".
+   :type uniprot_id: str, optional
+
+   :raises ValueError: _description_
+
+
+.. py:function:: LiP_rollup_to_lytic_site(df, int_cols, uniprot_col, sequence, residue_col='Residue', description='', tryptic_pattern='all', peptide_col='Sequence', clean_pept_col='clean_pept', id_separator='@', id_col='id', pept_type_col='pept_type', site_col='Site', pos_col='Pos', multiply_rollup_counts=True, ignore_NA=True, alternative_protease='ProK', rollup_func='median')
+
+   _summary_
+
+   :param protein: _description_
+   :type protein: _type_
+   :param sequence: _description_
+   :type sequence: _type_
+   :param description: _description_. Defaults to "".
+   :type description: str, optional
+
+
+.. py:function:: select_lytic_sites(site_df, site_type='prok', site_type_col='Lytic site type')
+
+   _summary_
+
+   :param site_df: _description_
+   :type site_df: _type_
+   :param site_type: _description_. Defaults to "prok".
+   :type site_type: str, optional
+   :param site_type_col: _description_. Defaults to "Lytic site type".
+   :type site_type_col: str, optional
+
+
+.. py:function:: LiP_median_rollup_to_site(pept, int_cols, sequence, uniprot_col, residue_col='Residue', uniprot_id='Protein ID (provided by user)', peptide_col='Sequence', clean_pept_col='clean_pept', id_col='id', id_separator='@', pept_type_col='pept_type', site_col='Site', pos_col='Pos', multiply_rollup_counts=True, ignore_NA=True)
+
+.. py:function:: LiP_mean_rollup_to_site(pept, int_cols, sequence, uniprot_col, residue_col='Residue', uniprot_id='Protein ID (provided by user)', peptide_col='Sequence', clean_pept_col='clean_pept', id_col='id', id_separator='@', pept_type_col='pept_type', site_col='Site', pos_col='Pos', multiply_rollup_counts=True, ignore_NA=True)
+
+.. py:function:: LiP_median_rollup_to_lytic_site(df, int_cols, uniprot_col, sequence, residue_col='Residue', description='', tryptic_pattern='all', peptide_col='Sequence', clean_pept_col='clean_pept', id_separator='@', id_col='id', pept_type_col='pept_type', site_col='Site', pos_col='Pos', multiply_rollup_counts=True, ignore_NA=True, alternative_protease='ProK')
+
+.. py:function:: LiP_mean_rollup_to_lytic_site(df, int_cols, uniprot_col, sequence, residue_col='Residue', description='', tryptic_pattern='all', peptide_col='Sequence', clean_pept_col='clean_pept', id_separator='@', id_col='id', pept_type_col='pept_type', site_col='Site', pos_col='Pos', multiply_rollup_counts=True, ignore_NA=True, alternative_protease='ProK')
+

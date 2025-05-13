@@ -1,0 +1,165 @@
+proteometer
+===========
+
+.. py:module:: proteometer
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/proteometer/abundance/index
+   /autoapi/proteometer/alignment/index
+   /autoapi/proteometer/barcode/index
+   /autoapi/proteometer/fasta/index
+   /autoapi/proteometer/lip/index
+   /autoapi/proteometer/normalization/index
+   /autoapi/proteometer/peptide/index
+   /autoapi/proteometer/ptm/index
+   /autoapi/proteometer/residue/index
+   /autoapi/proteometer/rollup/index
+   /autoapi/proteometer/stats/index
+   /autoapi/proteometer/utils/index
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   proteometer.Proteome
+
+
+Package Contents
+----------------
+
+.. py:class:: Proteome(filenames: dict[str, str], params: dict[str, Any], columnnames: dict[str, list[str]])
+
+   .. py:attribute:: fasta_name
+
+
+   .. py:attribute:: trypsin_pept_file
+
+
+   .. py:attribute:: trypsin_prot_file
+
+
+   .. py:attribute:: double_pept_file
+
+
+   .. py:attribute:: experiment_type
+
+
+   .. py:attribute:: sample
+
+
+   .. py:attribute:: data_type
+
+
+   .. py:attribute:: double_ctrl_cols
+
+
+   .. py:attribute:: double_treat_cols
+
+
+   .. py:attribute:: double_int_cols
+
+
+   .. py:attribute:: trypsin_ctrl_cols
+
+
+   .. py:attribute:: trypsin_treat_cols
+
+
+   .. py:attribute:: trypsin_int_cols
+
+
+   .. py:attribute:: prot_info_cols
+
+
+   .. py:attribute:: info_cols
+
+
+   .. py:attribute:: prot_trypsin_cols
+
+
+   .. py:attribute:: trypsin_cols
+
+
+   .. py:attribute:: double_cols
+
+
+   .. py:attribute:: prot_seq_obj
+
+
+   .. py:attribute:: prot_seqs
+
+
+   .. py:attribute:: ProteinID_col_prot
+      :value: None
+
+
+
+   .. py:attribute:: ProteinID_col_pept
+      :value: None
+
+
+
+   .. py:attribute:: PeptCounts_col
+      :value: None
+
+
+
+   .. py:method:: filter_pept(df: pandas.DataFrame) -> pandas.DataFrame
+
+
+   .. py:method:: filter_prot(df: pandas.DataFrame) -> pandas.DataFrame
+
+      filter reversed or potential contaminants
+
+
+
+   .. py:method:: prot_missingness(df: pandas.DataFrame, ctrl_cols: list[str], treat_cols: list[str], thresh: float) -> pandas.DataFrame
+
+
+   .. py:method:: pept_missingness(df: pandas.DataFrame, ctrl_cols: list[str], treat_cols: list[str], thresh: float) -> pandas.DataFrame
+
+
+   .. py:method:: log2_transform(df: pandas.DataFrame, cols: list[str]) -> pandas.DataFrame
+
+
+   .. py:method:: median_normalization(df: pandas.DataFrame, cols: list[str]) -> pandas.DataFrame
+
+
+   .. py:method:: generate_id(df: pandas.DataFrame, df_type: str) -> pandas.DataFrame
+
+
+   .. py:method:: filter_data() -> None
+
+
+   .. py:method:: log2_transform_data() -> None
+
+
+   .. py:method:: normalize_data() -> None
+
+
+   .. py:method:: id_data() -> None
+
+
+   .. py:method:: studentTtest(df: pandas.DataFrame, ctrl_cols: list[str], treat_cols: list[str], fillval: float) -> pandas.DataFrame
+
+
+   .. py:method:: select_uniprot_ids(sig_df: pandas.DataFrame, reg_df: pandas.DataFrame, sig_num_thr: int = 0) -> tuple[list[str], list[str], list[str]]
+
+
+   .. py:method:: get_sig_double_pept(thr: float, thr_type: str) -> pandas.DataFrame
+
+
+   .. py:method:: analyze_trypsin_prot() -> None
+
+
+   .. py:method:: analyze_double_pept() -> None
+
+

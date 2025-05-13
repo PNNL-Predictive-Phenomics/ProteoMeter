@@ -1,0 +1,75 @@
+proteometer.utils
+=================
+
+.. py:module:: proteometer.utils
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   proteometer.utils.generate_index
+   proteometer.utils.check_missingness
+   proteometer.utils.filter_missingness
+   proteometer.utils.IsDefined
+   proteometer.utils.flatten
+   proteometer.utils.remove_blank_cols
+
+
+Module Contents
+---------------
+
+.. py:function:: generate_index(df, prot_col, level_col=None, id_separator='@', id_col='id')
+
+   _summary_
+
+   :param df: _description_
+   :type df: _type_
+
+   :returns: _description_
+   :rtype: _type_
+
+
+.. py:function:: check_missingness(df, groups, group_cols)
+
+   _summary_
+
+   :param df: _description_
+   :type df: _type_
+
+
+.. py:function:: filter_missingness(df, groups, group_cols, missing_thr=0.0)
+
+   _summary_
+
+   :param df: _description_
+   :type df: _type_
+   :param groups: _description_
+   :type groups: _type_
+   :param group_cols: _description_
+   :type group_cols: _type_
+   :param missing_thr: _description_. Defaults to 0.0.
+   :type missing_thr: float, optional
+
+   :returns: _description_
+   :rtype: _type_
+
+
+.. py:function:: IsDefined(x)
+
+.. py:function:: flatten(S)
+
+.. py:function:: remove_blank_cols(df, blank_cols=None)
+
+   _summary_
+
+   :param df: _description_
+   :type df: _type_
+   :param blank_cols: _description_
+   :type blank_cols: _type_
+
+   :returns: _description_
+   :rtype: _type_
+
+

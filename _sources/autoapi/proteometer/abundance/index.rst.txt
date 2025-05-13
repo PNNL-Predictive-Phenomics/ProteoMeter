@@ -1,0 +1,77 @@
+proteometer.abundance
+=====================
+
+.. py:module:: proteometer.abundance
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   proteometer.abundance.get_prot_abund_scalars
+   proteometer.abundance.prot_abund_correction_sig_only
+   proteometer.abundance.prot_abund_correction
+   proteometer.abundance.prot_abund_correction_TMT
+
+
+Module Contents
+---------------
+
+.. py:function:: get_prot_abund_scalars(prot, pairwise_ttest_name=None, sig_type='pval', sig_thr=0.05)
+
+   _summary_
+
+   :param prot: _description_
+   :type prot: _type_
+   :param pairwise_ttest_name: _description_. Defaults to None.
+   :type pairwise_ttest_name: _type_, optional
+   :param sig_type: _description_. Defaults to "pval".
+   :type sig_type: str, optional
+   :param sig_thr: _description_. Defaults to 0.05.
+   :type sig_thr: float, optional
+
+   :returns: _description_
+   :rtype: _type_
+
+
+.. py:function:: prot_abund_correction_sig_only(df, prot, pairwise_ttest_groups, uniprot_col, sig_type='pval', sig_thr=0.05)
+
+   _summary_
+
+   :param df: _description_
+   :type df: _type_
+   :param prot: _description_
+   :type prot: _type_
+   :param pairwise_ttest_groups: _description_
+   :type pairwise_ttest_groups: _type_
+   :param uniprot_col: _description_
+   :type uniprot_col: _type_
+   :param sig_type: _description_. Defaults to "pval".
+   :type sig_type: str, optional
+   :param sig_thr: _description_. Defaults to 0.05.
+   :type sig_thr: float, optional
+
+   :returns: _description_
+   :rtype: _type_
+
+
+.. py:function:: prot_abund_correction(pept, prot, cols2correct, uniprot_col, non_tt_cols=None)
+
+   _summary_
+
+   :param pept: _description_
+   :type pept: _type_
+   :param prot: _description_
+   :type prot: _type_
+   :param cols2correct: _description_
+   :type cols2correct: _type_
+   :param uniprot_col: _description_
+   :type uniprot_col: _type_
+
+   :returns: _description_
+   :rtype: _type_
+
+
+.. py:function:: prot_abund_correction_TMT(pept, prot, cols2correct, uniprot_col, non_tt_cols=None)
+

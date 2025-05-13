@@ -1,0 +1,19 @@
+proteometer.fasta
+=================
+
+.. py:module:: proteometer.fasta
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   proteometer.fasta.get_sequences_from_fasta
+
+
+Module Contents
+---------------
+
+.. py:function:: get_sequences_from_fasta(fasta_file)
+
