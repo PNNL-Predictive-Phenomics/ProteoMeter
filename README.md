@@ -21,7 +21,7 @@
 ProteoMeter: A Comprehensive Python Library for Proteomic Data Analysis
 
 
-* Free software: GPL-3.0-only
+* Free software: BSD 2-Clause License
 * Documentation: <https://PhenoMeters.github.io/proteometer/>
 
 
