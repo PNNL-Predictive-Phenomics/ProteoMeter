@@ -31,6 +31,7 @@ def group_columns(
     """
     cond_column: pd.Series[str] = metadata[par.metadata_condition_col]
     control_ind: pd.Series[bool] = cond_column == par.metadata_control_condition
+    treat_ind = cond_column == par.metadata_treatment_condition
     control_groups: list[str] = list(
         metadata[control_ind][par.metadata_group_col].unique()  # type: ignore
     )
@@ -42,7 +43,7 @@ def group_columns(
         for group in control_groups
     ]
     treat_groups: list[str] = list(
-        metadata[control_ind][par.metadata_group_col].unique()  # type: ignore
+        metadata[treat_ind][par.metadata_group_col].unique()  # type: ignore
     )
     treat_group_cols: list[list[str]] = [
         metadata[metadata[par.metadata_group_col] == group][

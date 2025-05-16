@@ -140,10 +140,9 @@ def pairwise_ttest(
     """
     for pairwise_ttest_group in pairwise_ttest_groups:
         label = pairwise_ttest_group.label()
-        df[label] = (
-            df[pairwise_ttest_group.treat_samples].mean(axis=1)
-            - df[pairwise_ttest_group.control_samples].mean(axis=1)
-        ).fillna(0)
+        df[label] = df[pairwise_ttest_group.treat_samples].mean(axis=1) - df[
+            pairwise_ttest_group.control_samples
+        ].mean(axis=1)
         df[f"{label}_pval"] = sp.stats.ttest_ind(
             df[pairwise_ttest_group.treat_samples],
             df[pairwise_ttest_group.control_samples],
