@@ -93,7 +93,11 @@ def anova(
                     for anova_factor_name in anova_factor_names
                 }
 
-        except TypeError as e:
+        except (
+            TypeError,
+            AssertionError,
+            ValueError,
+        ) as e:  # pg.anova can throw assertion error or value error if not enough data
             Warning(f"ANOVA failed for {df_id}: {e}")
             p_vals = {
                 f"ANOVA_[{anova_factor_name}]_pval": np.nan
