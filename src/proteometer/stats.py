@@ -41,8 +41,8 @@ def anova(
     df: pd.DataFrame,
     anova_cols: list[str],
     metadata_ori: pd.DataFrame,
-    anova_factors: Sequence[str] = ["Group"],
-    sample_col: str = "Sample",
+    anova_factors: Sequence[str],
+    sample_col: str,
 ) -> pd.DataFrame:
     """
     Performs ANOVA on specified columns of a DataFrame.
@@ -51,15 +51,15 @@ def anova(
         df (pd.DataFrame): DataFrame containing the data for analysis.
         anova_cols (list[str]): List of column names to analyze.
         metadata_ori (pd.DataFrame): Metadata containing sample information.
-        anova_factors (Sequence[str], optional): Factors for ANOVA analysis. Defaults to ["Group"].
-        sample_col (str, optional): Column name for sample identifiers. Defaults to "Sample".
+        anova_factors (Sequence[str], optional): Factors for ANOVA analysis.
+        sample_col (str, optional): Column name for sample identifiers.
 
     Returns:
         pd.DataFrame: DataFrame with ANOVA p-values and adjusted p-values.
     """
     if len(anova_factors) < 1:
         raise ValueError(
-            "The anova_factors is empty. Please provide the factors for ANOVA analysis. The default factor is 'Group'."
+            "The anova_factors is empty. Please provide the factors for ANOVA analysis."
         )
 
     metadata = metadata_ori[metadata_ori[sample_col].isin(anova_cols)].copy()
@@ -79,7 +79,7 @@ def anova(
         try:
             aov_f = pg.anova(data=df_f, dv=df_id, between=anova_factors, detailed=True)  # type: ignore
             if not isinstance(aov_f, pd.DataFrame):
-                raise Exception
+                raise TypeError
             if "p-unc" in aov_f.columns:
                 p_vals = {
                     f"ANOVA_[{anova_factor_name}]_pval": aov_f[
@@ -93,7 +93,7 @@ def anova(
                     for anova_factor_name in anova_factor_names
                 }
 
-        except Exception as e:
+        except TypeError as e:
             Warning(f"ANOVA failed for {df_id}: {e}")
             p_vals = {
                 f"ANOVA_[{anova_factor_name}]_pval": np.nan

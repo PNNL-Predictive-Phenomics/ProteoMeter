@@ -208,13 +208,12 @@ def prot_abund_correction_matched(
             if prot_abund_median:
                 prot_abund_scale = cast(
                     "pd.Series[float]",
-                    prot_abund_row.div(prot_abund_row).astype(float).fillna(0)
-                    * prot_abund_median,
+                    prot_abund_row.isna().astype(float) * prot_abund_median,
                 )
             else:
                 prot_abund_scale = cast(
                     "pd.Series[float]",
-                    prot_abund_row.div(prot_abund_row).astype(float).fillna(0) * 0,
+                    prot_abund_row * 0.0,
                 )
             pept_sub[columns_to_correct] = (
                 pept_sub[columns_to_correct]
@@ -280,8 +279,20 @@ def global_prot_normalization_and_stats(
             sample_col=par.metadata_sample_col,
         )
     if anova_cols:
-        global_prot = stats.anova(global_prot, anova_cols, metadata)
-        global_prot = stats.anova(global_prot, anova_cols, metadata, par.anova_factors)
+        global_prot = stats.anova(
+            global_prot,
+            anova_cols,
+            metadata,
+            [par.metadata_group_col],
+            par.metadata_sample_col,
+        )
+        global_prot = stats.anova(
+            global_prot,
+            anova_cols,
+            metadata,
+            par.anova_factors,
+            par.metadata_sample_col,
+        )
     global_prot = stats.pairwise_ttest(global_prot, pairwise_ttest_groups)
     global_prot = stats.pairwise_ttest(global_prot, user_pairwise_ttest_groups)
 

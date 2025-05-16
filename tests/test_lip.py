@@ -9,8 +9,9 @@ def test_lip_simple():
         "error"
     )  # example constructed to be numerically fine; let's test that
     par = Params("tests/data/test_config_lip.toml")
-    df = lip_analysis(par)
+    dfs = lip_analysis(par)
     warnings.resetwarnings()
-    assert df is not None
-    print(df)
-    print(df.columns)
+    for df in dfs:
+        assert df is not None
+        print(df)
+        print(df.columns)

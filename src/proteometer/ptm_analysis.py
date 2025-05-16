@@ -9,10 +9,10 @@ import proteometer.ptm as ptm
 import proteometer.rollup as rollup
 import proteometer.stats as stats
 from proteometer.params import Params
-from proteometer.utils import check_missingness, generate_index
+from proteometer.utils import filter_missingness, generate_index
 
 
-def ptm_analysis(par: Params) -> pd.DataFrame:
+def ptm_analysis(par: Params) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Runs the PTM proteomics processing and statistical analysis pipeline.
 
     This function reads in data from proteomics files specified in the `par`
@@ -24,7 +24,8 @@ def ptm_analysis(par: Params) -> pd.DataFrame:
         par: A Params object that contains all the parameters for the analysis.
 
     Returns:
-        A pandas DataFrame that contains the result of the PTM analysis.
+        tuple[pd.DataFrame,pd.DataFrame]: Two pandas DataFrames that contains the result of the PTM analysis.
+            The first is the processed PTM data, and the second is the global proteomics data.
     """
     metadata = pd.read_csv(par.metadata_file, sep="\t")
     global_prot = pd.read_csv(par.global_prot_file, sep="\t")
@@ -48,6 +49,13 @@ def ptm_analysis(par: Params) -> pd.DataFrame:
         ptm_pept = [stats.log2_transformation(pept, int_cols) for pept in ptm_pept]
         global_pept = stats.log2_transformation(global_pept, int_cols)
         global_prot = stats.log2_transformation(global_prot, int_cols)
+
+    ptm_pept = [
+        filter_missingness(pept, groups, group_cols, par.missing_thr)
+        for pept in ptm_pept
+    ]
+    global_pept = filter_missingness(global_pept, groups, group_cols, par.missing_thr)
+    global_prot = filter_missingness(global_prot, groups, group_cols, par.missing_thr)
 
     # must correct protein abundance, before we can use it to correct peptide
     # data; depending on normalization scheme, we may need to test significance
@@ -110,13 +118,13 @@ def ptm_analysis(par: Params) -> pd.DataFrame:
         par=par,
     )
 
-    ptm_dict = {"global": global_prot}
+    global_prot = ptm.combine_multi_ptms({"global": global_prot}, par)
+    ptm_dict: dict[str, pd.DataFrame] = {}
     ptm_dict.update({name: rolled for name, rolled in zip(par.ptm_names, ptm_rolled)})
     all_ptms = ptm.combine_multi_ptms(ptm_dict, par)
+    # all_ptms = check_missingness(all_ptms, groups, group_cols)
 
-    all_ptms = check_missingness(all_ptms, groups, group_cols)
-
-    return all_ptms
+    return all_ptms, global_prot
 
 
 def _rollup_stats(

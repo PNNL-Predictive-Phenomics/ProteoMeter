@@ -522,10 +522,11 @@ def rollup_to_lytic_site(
     )
 
     if protein2explode.shape[0] == 0:
-        raise ValueError(
+        Warning(
             f"The resulted dataframe of digestion site in {uniprot_id} is empty. "
             "Please check the input dataframe."
         )
+        return protein2explode
 
     protein_lys = protein2explode.explode(residue_col)
     info_cols = [col for col in protein_lys.columns if col not in int_cols]
