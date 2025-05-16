@@ -165,7 +165,7 @@ def plot_pept_barcode(
         ].copy()
         tryptic_fc_diff.index = tryptic_fc_diff["Site"].to_list()  # type: ignore
         for i in range(tryptic_fc_diff.shape[0]):
-            tfd1 = cast("int", tryptic_fc_diff.iloc[i, 1])
+            tfd1 = int(cast("int", tryptic_fc_diff.iloc[i, 1]))
             tfd2 = cast("float", tryptic_fc_diff.iloc[i, 2])
             tfd3 = cast("float", tryptic_fc_diff.iloc[i, 3])
 
@@ -230,7 +230,7 @@ def plot_pept_barcode(
         ].copy()
         semi_fc_diff.index = semi_fc_diff["Site"].to_list()  # type: ignore
         for i in range(semi_fc_diff.shape[0]):
-            sfd1 = cast("int", semi_fc_diff.iloc[i, 1])
+            sfd1 = int(cast("int", semi_fc_diff.iloc[i, 1]))
             sfd2 = cast("float", semi_fc_diff.iloc[i, 2])
             sfd3 = cast("float", semi_fc_diff.iloc[i, 3])
             if sfd2 > 0:
@@ -309,8 +309,8 @@ def plot_pept_barcode(
 # This function is to plot the barcode of a protein with fold changes at lytic site level
 def plot_site_barcode(
     site_df: pd.DataFrame,
-    sequence: str,
     pairwise_ttest_name: str,
+    sequence: str,
     output_file_name: str | None = None,
     uniprot_id: str = "Protein ID (provided by user)",
     max_vis_fc: float = 3.0,
@@ -367,7 +367,7 @@ def plot_site_barcode(
         ].copy()
         trypsin_fc_diff.index = trypsin_fc_diff["Site"].to_list()  # type: ignore
         for i in range(trypsin_fc_diff.shape[0]):
-            tfd1 = cast("int", trypsin_fc_diff.iloc[i, 1])
+            tfd1 = int(cast("int", trypsin_fc_diff.iloc[i, 1]))
             tfd2 = cast("float", trypsin_fc_diff.iloc[i, 2])
             tfd3 = cast("float", trypsin_fc_diff.iloc[i, 3])
             if tfd2 > 0:
@@ -428,7 +428,7 @@ def plot_site_barcode(
         ].copy()
         prok_fc_diff.index = prok_fc_diff["Site"].to_list()  # type: ignore
         for i in range(prok_fc_diff.shape[0]):
-            pfd1 = cast("int", prok_fc_diff.iloc[i, 1])
+            pfd1 = int(cast("int", prok_fc_diff.iloc[i, 1]))
             pfd2 = cast("float", prok_fc_diff.iloc[i, 2])
             pfd3 = cast("float", prok_fc_diff.iloc[i, 3])
             if pfd2 > 0:
