@@ -208,7 +208,7 @@ def prot_abund_correction_matched(
             if prot_abund_median:
                 prot_abund_scale = cast(
                     "pd.Series[float]",
-                    prot_abund_row.isna().astype(float) * prot_abund_median,
+                    (~prot_abund_row.isna()).astype(float) * prot_abund_median,
                 )
                 pept_sub[columns_to_correct] = (
                     pept_sub[columns_to_correct]
