@@ -51,11 +51,11 @@ def ptm_analysis(par: Params) -> tuple[pd.DataFrame, pd.DataFrame]:
         global_prot = stats.log2_transformation(global_prot, int_cols)
 
     ptm_pept = [
-        filter_missingness(pept, groups, group_cols, par.missing_thr)
+        filter_missingness(pept, groups, group_cols, par.min_replicates_qc)
         for pept in ptm_pept
     ]
-    global_pept = filter_missingness(global_pept, groups, group_cols, par.missing_thr)
-    global_prot = filter_missingness(global_prot, groups, group_cols, par.missing_thr)
+    global_pept = filter_missingness(global_pept, groups, group_cols, par.min_replicates_qc)
+    global_prot = filter_missingness(global_prot, groups, group_cols, par.min_replicates_qc)
 
     # must correct protein abundance, before we can use it to correct peptide
     # data; depending on normalization scheme, we may need to test significance
