@@ -68,7 +68,7 @@ def filter_missingness(
     df: pd.DataFrame,
     groups: Sequence[str],
     group_cols: Sequence[Sequence[str]],
-    missing_thr: float = 0.0,
+    min_replicates_qc: int = 2,
 ) -> pd.DataFrame:
     """
     Filter rows in a DataFrame based on missingness thresholds for specified groups.
@@ -87,7 +87,7 @@ def filter_missingness(
     df["missing_check"] = 0
     for name, cols in zip(groups, group_cols):
         df["missing_check"] = df["missing_check"] + (
-            df[f"{name} missingness"] > missing_thr * len(cols)
+            (len(cols) - df[f"{name} missingness"]) < min_replicates_qc 
         ).astype(int)
     df_w = df[~(df["missing_check"] > 0)].copy()
     return df_w

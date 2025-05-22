@@ -34,7 +34,7 @@ batch_correct_samples = []
 pooled_chanel_condition = "Total"
 sig_thr = 0.05
 sig_type = "pval"                          # pval or adj-p
-missing_thr = 0
+min_replicates_qc = 2
 min_pept_count = 2
 log2_scale = false
 

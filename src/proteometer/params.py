@@ -128,7 +128,7 @@ class Params:
             raise ValueError("sig_type must be 'pval' or 'adj-p'")
         self.sig_type: Literal["pval", "adj-p"] = cfg["corrections"]["sig_type"]
 
-        self.missing_thr = int(cfg["corrections"]["missing_thr"])
+        self.missing_thr = int(cfg["corrections"]["min_replicates_qc"])
         self.min_pept_count = int(cfg["corrections"]["min_pept_count"])
 
         self.metadata_batch_col = str(cfg["metadata"]["metadata_batch_col"])
