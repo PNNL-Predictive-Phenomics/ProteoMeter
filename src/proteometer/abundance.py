@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from typing import cast
 
+import numpy as np
 import pandas as pd
 
 import proteometer.normalization as normalization
@@ -204,8 +205,8 @@ def prot_abund_correction_matched(
                 "pd.Series[float]", prot.loc[uniprot_id, columns_to_correct]
             )
             prot_abund = prot_abund_row.astype(float).fillna(0)
-            prot_abund_median = prot_abund_row[non_tt_cols].median()  # type: ignore
-            if prot_abund_median:
+            prot_abund_median = cast(float, prot_abund_row[non_tt_cols].median())  # type: ignore
+            if not np.isnan(prot_abund_median):
                 prot_abund_scale = cast(
                     "pd.Series[float]",
                     (~prot_abund_row.isna()).astype(float) * prot_abund_median,
