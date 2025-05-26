@@ -15,6 +15,8 @@ jobs:
       with:
         pixi-version: v0.47.0
         cache: false
+        locked: false
+        frozen: false
     - run: pixi run -e docs doc
     - name: deploy docs
       uses: JamesIves/github-pages-deploy-action@v4

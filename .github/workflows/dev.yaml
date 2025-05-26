@@ -14,6 +14,8 @@ jobs:
       with:
         pixi-version: v0.47.0
         cache: false
+        locked: false
+        frozen: false
     - run: pixi run lint
     - run: pixi run typecheck
     - run: pixi run test
