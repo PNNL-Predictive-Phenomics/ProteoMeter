@@ -16,12 +16,7 @@ dependencies = [
     "matplotlib>=3.10.1,<4",
     "pingouin>=0.5.5,<0.6",
     "seaborn>=0.13.2,<0.14",
-    # "microsoft-python-type-stubs @ git+https://github.com/microsoft/python-type-stubs.git",
 ]
-
-[build-system]
-build-backend = "hatchling.build"
-requires = ["hatchling"]
 
 [tool.pixi.project]
 channels = ["conda-forge"]
@@ -42,7 +37,11 @@ all_checks = { cmd = "ruff check src tests && pyright src tests && python -m doc
 python = ">=3.12.5,<3.13"
 
 [dependency-groups]
-dev = ["pandas-stubs", "scipy-stubs"]
+dev = [
+    "pandas-stubs",
+    "scipy-stubs",
+    "microsoft-python-type-stubs @ git+https://github.com/microsoft/python-type-stubs.git",
+]
 test = ["pytest"]
 lint = ["ruff", "pyright>=1.1.401"]
 docs = [
