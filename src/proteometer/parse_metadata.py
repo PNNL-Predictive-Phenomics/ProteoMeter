@@ -29,7 +29,7 @@ def group_columns(
             inner list contains the sample columns for each group. The second element
             is a list of group names. Control groups are first, followed by treatment groups.
     """
-    cond_column: pd.Series[str] = metadata[par.metadata_condition_col]
+    cond_column: pd.Series[str] = metadata[par.metadata_condition_col].astype(str)
     control_ind: pd.Series[bool] = cond_column == par.metadata_control_condition
     treat_ind = cond_column == par.metadata_treatment_condition
     control_groups: list[str] = list(
@@ -66,7 +66,7 @@ def int_columns(metadata: pd.DataFrame, par: Params) -> list[str]:
         list[str]: A list of all the intensity columns in the metadata.
     """
 
-    ms: pd.Series[str] = metadata[par.metadata_sample_col]
+    ms: pd.Series[str] = metadata[par.metadata_sample_col].astype(str)
     return ms.to_list()
 
 
@@ -85,7 +85,7 @@ def anova_columns(metadata: pd.DataFrame, par: Params) -> list[str]:
         list[str]: A list of sample columns excluding those in pooled channel groups.
     """
 
-    condition_column: pd.Series[str] = metadata[par.metadata_condition_col]
+    condition_column: pd.Series[str] = metadata[par.metadata_condition_col].astype(str)
     control_ind: pd.Series[bool] = condition_column == par.pooled_chanel_condition
     tt_groups = list(metadata[control_ind][par.metadata_group_col].unique())  # type: ignore
 
@@ -124,11 +124,11 @@ def t_test_groups(metadata: pd.DataFrame, par: Params) -> list[TTestGroup]:
     pairwise_pars: Iterable[str] = metadata[par.pairwise_factor].unique()  # type: ignore
     pairwise_ttest_groups: list[TTestGroup] = []
 
-    cond_column: pd.Series[str] = metadata[par.metadata_condition_col]
+    cond_column: pd.Series[str] = metadata[par.metadata_condition_col].astype(str)
     control_ind = cond_column == par.metadata_control_condition
     treat_ind = cond_column == par.metadata_treatment_condition
 
-    pairwise_column: pd.Series[str] = metadata[par.pairwise_factor]
+    pairwise_column: pd.Series[str] = metadata[par.pairwise_factor].astype(str)
 
     for pairwise_par in pairwise_pars:
         pairwise_ind: pd.Series[bool] = pairwise_column == pairwise_par

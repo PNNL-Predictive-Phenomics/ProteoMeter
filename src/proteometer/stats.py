@@ -73,8 +73,7 @@ def anova(
     df_w = df[anova_cols].copy()
     f_stats_factors: Sequence[pd.DataFrame] = []
     for df_id, row in df_w.iterrows():  # type: ignore
-        df_f = pd.DataFrame(row).loc[anova_cols].astype(float)
-        df_f = pd.merge(df_f, metadata, left_index=True, right_on=sample_col)
+        df_f = pd.merge(row, metadata, left_index=True, right_on=sample_col)
 
         try:
             aov_f = pg.anova(data=df_f, dv=df_id, between=anova_factors, detailed=True)  # type: ignore
@@ -109,7 +108,9 @@ def anova(
     for anova_factor_name in anova_factor_names:
         f_stats_factors_df[f"ANOVA_[{anova_factor_name}]_adj-p"] = (
             sp.stats.false_discovery_control(
-                f_stats_factors_df[f"ANOVA_[{anova_factor_name}]_pval"].fillna(1)
+                f_stats_factors_df[f"ANOVA_[{anova_factor_name}]_pval"]
+                .fillna(1.0)
+                .astype(float)
             )
         )
         f_stats_factors_df.loc[
@@ -150,7 +151,7 @@ def pairwise_ttest(
             nan_policy="omit",
         ).pvalue
         df[f"{label}_adj-p"] = sp.stats.false_discovery_control(
-            df[f"{label}_pval"].fillna(1)
+            df[f"{label}_pval"].fillna(1.0).astype(float)
         )
         df.loc[
             df[f"{label}_pval"].isna(),

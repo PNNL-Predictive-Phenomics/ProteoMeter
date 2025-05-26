@@ -72,9 +72,15 @@ def lip_analysis(par: Params) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]
         global_pept = stats.log2_transformation(global_pept, int_cols)
         global_prot = stats.log2_transformation(global_prot, int_cols)
 
-    double_pept = filter_missingness(double_pept, groups, group_cols, par.min_replicates_qc)
-    global_pept = filter_missingness(global_pept, groups, group_cols, par.min_replicates_qc)
-    global_prot = filter_missingness(global_prot, groups, group_cols, par.min_replicates_qc)
+    double_pept = filter_missingness(
+        double_pept, groups, group_cols, par.min_replicates_qc
+    )
+    global_pept = filter_missingness(
+        global_pept, groups, group_cols, par.min_replicates_qc
+    )
+    global_prot = filter_missingness(
+        global_prot, groups, group_cols, par.min_replicates_qc
+    )
 
     # must correct protein abundance, before we can use it to correct peptide
     # data; depending on normalization scheme, we may need to test significance
@@ -185,7 +191,10 @@ def _double_pept_statistics(
                 f"Multiple proteins with the same ID {uniprot_id} found in the fasta file. Using the first one."
             )
         bio_seq = uniprot_seqs[0]
-        prot_seq = bio_seq.seq
+        if bio_seq.seq is None:
+            raise ValueError(f"Protein sequence for {uniprot_id} is empty.")
+        prot_seq = str(bio_seq.seq)
+
         prot_desc = bio_seq.description
         factor_names = [
             f"[{f1} * {f2}]" if f1 != f2 else f"[{f1}]"
@@ -269,7 +278,9 @@ def _double_site(
                 f"Multiple proteins with the same ID {uniprot_id} found in the fasta file. Using the first one."
             )
         bio_seq = uniprot_seqs[0]
-        prot_seq = bio_seq.seq
+        if bio_seq.seq is None:
+            raise ValueError(f"Protein sequence for {uniprot_id} is empty.")
+        prot_seq = str(bio_seq.seq)
         prot_desc = bio_seq.description
         pept_df_r = lip.rollup_to_lytic_site(
             pept_df,

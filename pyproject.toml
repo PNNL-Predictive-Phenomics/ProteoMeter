@@ -16,6 +16,7 @@ dependencies = [
     "matplotlib>=3.10.1,<4",
     "pingouin>=0.5.5,<0.6",
     "seaborn>=0.13.2,<0.14",
+    # "microsoft-python-type-stubs @ git+https://github.com/microsoft/python-type-stubs.git",
 ]
 
 [build-system]
@@ -41,9 +42,9 @@ all_checks = { cmd = "ruff check src tests && pyright src tests && python -m doc
 python = ">=3.12.5,<3.13"
 
 [dependency-groups]
-dev = ["pandas-stubs"]
+dev = ["pandas-stubs", "scipy-stubs"]
 test = ["pytest"]
-lint = ["ruff", "pyright>=1.1.401,<2"]
+lint = ["ruff", "pyright>=1.1.401"]
 docs = [
     "sphinx",
     "sphinx-toolbox",
@@ -62,11 +63,12 @@ addopts = ["--import-mode=importlib"]
 pythonpath = "src"
 
 [tool.pyright]
-exclude = ["docs", "PhenoMeters_proteometer.egg-info"]
+exclude = ["docs", "PhenoMeters_proteometer.egg-info", ".pixi/**"]
 include = ["src/proteometer"]
 typeCheckingMode = "strict"
 reportMissingTypeStubs = false
 reportUnnecessaryCast = "error"
-reportUnnecessaryTypeIgnoreComment = "error"
+reportUnnecessaryTypeIgnoreComment = "warning"
 reportUnknownMemberType = "none"
 pythonVersion = "3.12"
+useLibraryCodeForTypes = false
