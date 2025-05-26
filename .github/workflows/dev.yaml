@@ -13,8 +13,8 @@ jobs:
     - uses: prefix-dev/setup-pixi@v0.8.8
       with:
         pixi-version: v0.47.0
-        cache: false
-        locked: false
+        cache: true
+        locked: true
         frozen: false
     - run: pixi run lint
     - run: pixi run typecheck
