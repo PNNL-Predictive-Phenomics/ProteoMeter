@@ -5,7 +5,7 @@ authors = [
 ]
 description = "Add a short description here"
 name = "proteometer"
-requires-python = ">= 3.12, <3.13"
+requires-python = ">= 3.12"
 version = "0.1.0"
 dependencies = [
     "numpy>=2.2.1,<3",
