@@ -279,13 +279,6 @@ def global_prot_normalization_and_stats(
             global_prot,
             anova_cols,
             metadata,
-            [par.metadata_group_col],
-            par.metadata_sample_col,
-        )
-        global_prot = stats.anova(
-            global_prot,
-            anova_cols,
-            metadata,
             par.anova_factors,
             par.metadata_sample_col,
         )

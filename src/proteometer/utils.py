@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -69,6 +69,7 @@ def filter_missingness(
     groups: Sequence[str],
     group_cols: Sequence[Sequence[str]],
     min_replicates_qc: int = 2,
+    method: Literal["all", "any"] = "all",   # "all" or "any"
 ) -> pd.DataFrame:
     """
     Filter rows in a DataFrame based on missingness thresholds for specified groups.
@@ -77,7 +78,8 @@ def filter_missingness(
         df (pd.DataFrame): Input DataFrame.
         groups (Sequence[str]): Names of the groups.
         group_cols (Sequence[Sequence[str]]): Columns corresponding to each group.
-        missing_thr (float, optional): Threshold for missingness. Defaults to 0.0.
+        min_replicates_qc (float, optional): Threshold for minimal number of replicates that are not NA. Defaults to 2.
+        method (str, optional): Method for filtering. "all" or "any". Defaults to "all". If "all", all groups must meet the threshold. If "any", at least one group must meet the threshold.
 
     Returns:
         pd.DataFrame: Filtered DataFrame.
@@ -89,5 +91,11 @@ def filter_missingness(
         df["missing_check"] = df["missing_check"] + (
             (len(cols) - df[f"{name} missingness"]) < min_replicates_qc 
         ).astype(int)
-    df_w = df[~(df["missing_check"] > 0)].copy()
+    if method == "any":
+        df_w = df[df["missing_check"] == 0].copy()
+    elif method == "all":
+        df_w = df[df["missing_check"] < len(groups)].copy()
+    else:
+        raise ValueError(f"Unknown method: {method}. Use 'all' or 'any'.")
     return df_w
+

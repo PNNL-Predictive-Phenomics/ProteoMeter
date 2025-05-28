@@ -58,10 +58,8 @@ def anova(
         pd.DataFrame: DataFrame with ANOVA p-values and adjusted p-values.
     """
     if len(anova_factors) < 1:
-        raise ValueError(
-            "The anova_factors is empty. Please provide the factors for ANOVA analysis."
-        )
-
+        return df
+        
     metadata = metadata_ori[metadata_ori[sample_col].isin(anova_cols)].copy()
 
     anova_factor_names = [
