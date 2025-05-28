@@ -1,10 +1,18 @@
-# type: ignore
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, cast
+
 import matplotlib.pyplot as plt
+import numpy.typing as npt
 import pandas as pd
 import seaborn as sns
-from matplotlib.axes import Axes
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
+
+if TYPE_CHECKING:
+    from matplotlib.axes import Axes
+    from matplotlib.markers import MarkerStyle
+    from numpy import float64
 
 
 def biplot(
@@ -30,7 +38,7 @@ def biplot(
     mat = df[int_cols].T
     scaler = StandardScaler()
     scaler.fit(mat)
-    mat_scaled = scaler.transform(mat)  # type: ignore
+    mat_scaled = cast(npt.NDArray[float64], scaler.transform(mat))
     pca = PCA()
     x = pca.fit_transform(mat_scaled)  # type: ignore
     v1, v2, *_ = pca.explained_variance_ratio_
@@ -60,11 +68,11 @@ def biplot(
                 [ptx],
                 [pty],
                 c=color,
-                marker=rf"${i}$",
+                marker=cast(MarkerStyle, rf"${i}$"),
                 s=100,
                 label=f"{df[int_cols].columns[i]}",
             )
-            ax.scatter([ptx], [pty], c="k", marker=".", s=10)
+            ax.scatter([ptx], [pty], c="k", marker=cast(MarkerStyle, "."), s=10)
     ax.set_xlim(-1, 1)
     ax.set_ylim(-1, 1)
     ax.set_xlabel(f"PC1 ({v1:.2%})")

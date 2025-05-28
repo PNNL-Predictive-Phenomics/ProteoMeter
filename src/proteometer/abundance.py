@@ -155,7 +155,7 @@ def prot_abund_correction_sig_only(
             )
         pept[f"{pairwise_ttest_group.label()}_scalar"] = [
             scalar_dict.get(uniprot_id, 0)
-            for uniprot_id in cast(pd.Series[str], pept[uniprot_col])
+            for uniprot_id in cast("pd.Series[str]", pept[uniprot_col])
         ]
         pept[pairwise_ttest_group.treat_samples] = pept[
             pairwise_ttest_group.treat_samples
