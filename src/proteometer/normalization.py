@@ -199,7 +199,7 @@ def batch_correction(
                 & (metadata[sample_col].isin(batch_correct_samples))
             ][sample_col]
         ].copy()
-        df_batch_means: pd.DataFrame = df_batch.mean(axis=1).fillna(0)  # type: ignore
+        df_batch_means: pd.DataFrame = df_batch.mean(axis=1)  # type: ignore
         batch_means_dict.update({batch: df_batch_means})
     batch_means = cast("pd.Series[float]", pd.DataFrame(batch_means_dict).mean(axis=1))
     batch_means_diffs = batch_means.sub(batch_means, axis=0)

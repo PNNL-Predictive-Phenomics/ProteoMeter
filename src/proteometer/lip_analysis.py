@@ -163,13 +163,6 @@ def _double_pept_statistics(
             double_pept,
             anova_cols,
             metadata,
-            [par.metadata_group_col],
-            par.metadata_sample_col,
-        )
-        double_pept = stats.anova(
-            double_pept,
-            anova_cols,
-            metadata,
             par.anova_factors,
             par.metadata_sample_col,
         )
@@ -301,13 +294,6 @@ def _double_site(
         if anova_cols:
             pept_df_a = stats.anova(
                 pept_df_r,
-                anova_cols,
-                metadata,
-                [par.metadata_group_col],
-                par.metadata_sample_col,
-            )
-            pept_df_a = stats.anova(
-                pept_df_a,
                 anova_cols,
                 metadata,
                 par.anova_factors,
