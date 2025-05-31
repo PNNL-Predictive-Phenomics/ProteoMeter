@@ -60,13 +60,14 @@ def tmt_normalization(
         pd.DataFrame: TMT-normalized DataFrame.
     """
     global_filtered = global_pept[global_pept[int_cols].isna().sum(axis=1) == 0].copy()
-    global_medians: pd.Series[float] = global_filtered[int_cols].median(
-        axis=0, skipna=True
+    global_medians = cast(
+        "pd.Series[float]", global_filtered[int_cols].median(axis=0, skipna=True)
     )
     df_transformed = df2transform.copy()
     df_filtered = df2transform[df2transform[int_cols].isna().sum(axis=1) == 0].copy()
-    df_medians: pd.Series[float] = (
-        df_filtered[int_cols].median(axis=0, skipna=True).fillna(0)
+    df_medians = cast(
+        "pd.Series[float]",
+        (df_filtered[int_cols].median(axis=0, skipna=True).fillna(0)),
     )
     df_transformed[int_cols] = (
         df_transformed[int_cols].sub(global_medians, axis=1) + df_medians.mean()
@@ -110,13 +111,15 @@ def median_normalization(
             df_filtered = df_transformed.copy()
 
         if zero_center:
-            median_correction_T: pd.Series[float] = (
-                df_filtered[int_cols].median(axis=0, skipna=True).fillna(0)
+            median_correction_T = cast(
+                "pd.Series[float]",
+                df_filtered[int_cols].median(axis=0, skipna=True).fillna(0),
             )
         else:
-            median_correction_T: pd.Series[float] = (
+            median_correction_T = cast(
+                "pd.Series[float]",
                 df_filtered[int_cols].median(axis=0, skipna=True).fillna(0)
-                - df_filtered[int_cols].median(axis=0, skipna=True).fillna(0).mean()
+                - df_filtered[int_cols].median(axis=0, skipna=True).fillna(0).mean(),
             )
         df_transformed[int_cols] = df_transformed[int_cols].sub(
             median_correction_T, axis=1
@@ -126,7 +129,7 @@ def median_normalization(
 
     metadata = metadata_ori.copy()
     if batch_correct_samples is None:
-        batch_correct_samples = cast(pd.Series[str], metadata[sample_col])
+        batch_correct_samples = cast("pd.Series[str]", metadata[sample_col])
     for batch in metadata[metadata[sample_col].isin(batch_correct_samples)][
         batch_col
     ].unique():
@@ -141,16 +144,18 @@ def median_normalization(
             df_filtered = df_transformed.copy()
 
         if zero_center:
-            median_correction_T = (
-                df_filtered[int_cols_per_batch].median(axis=0, skipna=True).fillna(0)
+            median_correction_T = cast(
+                "pd.Series[float]",
+                df_filtered[int_cols_per_batch].median(axis=0, skipna=True).fillna(0),
             )
         else:
-            median_correction_T = (
+            median_correction_T = cast(
+                "pd.Series[float]",
                 df_filtered[int_cols_per_batch].median(axis=0, skipna=True).fillna(0)
                 - df_filtered[int_cols_per_batch]
                 .median(axis=0, skipna=True)
                 .fillna(0)
-                .mean()
+                .mean(),
             )
         df_transformed[int_cols_per_batch] = df_transformed[int_cols_per_batch].sub(
             median_correction_T, axis=1
@@ -183,7 +188,7 @@ def batch_correction(
     df = df4batcor.copy()
     metadata = metadata_ori.copy()
     if batch_correct_samples is None:
-        batch_correct_samples = cast(pd.Series[str], metadata[sample_col])
+        batch_correct_samples = cast("pd.Series[str]", metadata[sample_col])
     batch_means_dict = {}
     for batch in metadata[metadata[sample_col].isin(batch_correct_samples)][
         batch_col
@@ -196,7 +201,7 @@ def batch_correction(
         ].copy()
         df_batch_means: pd.DataFrame = df_batch.mean(axis=1).fillna(0)  # type: ignore
         batch_means_dict.update({batch: df_batch_means})
-    batch_means: pd.Series[float] = pd.DataFrame(batch_means_dict).mean(axis=1)
+    batch_means = cast("pd.Series[float]", pd.DataFrame(batch_means_dict).mean(axis=1))
     batch_means_diffs = batch_means.sub(batch_means, axis=0)
     metadata.index = metadata[sample_col].to_list()  # type: ignore
 

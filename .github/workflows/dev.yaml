@@ -10,10 +10,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - uses: prefix-dev/setup-pixi@v0.8.1
+    - uses: prefix-dev/setup-pixi@v0.8.8
       with:
-        pixi-version: v0.39.4
+        pixi-version: v0.47.0
         cache: true
+        locked: false
+        frozen: false
     - run: pixi run lint
     - run: pixi run typecheck
     - run: pixi run test

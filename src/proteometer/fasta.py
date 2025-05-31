@@ -17,6 +17,7 @@ def get_sequences_from_fasta(fasta_file: str) -> list[SeqRecord]:
     Returns:
         list[SeqRecord]: A list of SeqRecord objects representing the parsed sequences.
     """
-    prot_seq_obj = SeqIO.parse(fasta_file, "fasta")  # type: ignore
-    prot_seqs: list[SeqRecord] = [seq_item for seq_item in prot_seq_obj]  # type: ignore
+    with open(fasta_file, "r") as f:
+        prot_seq_obj = SeqIO.parse(f, "fasta")  # type: ignore
+        prot_seqs: list[SeqRecord] = [seq_item for seq_item in prot_seq_obj]  # type: ignore
     return prot_seqs

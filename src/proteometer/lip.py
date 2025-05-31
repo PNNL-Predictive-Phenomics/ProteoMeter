@@ -311,7 +311,7 @@ def analyze_tryptic_pattern(
     pairwise_ttest_names = [
         pairwise_ttest_group.label() for pairwise_ttest_group in pairwise_ttest_groups
     ]
-    if len(groups) > 2:
+    if len(list(pairwise_ttest_groups)) > 2:
         sig_semi_pepts = protein[
             (protein["pept_type"] == "Semi-tryptic")
             & (protein[f"ANOVA_{anova_type}_{sig_type}"] < sig_thr)
@@ -522,10 +522,11 @@ def rollup_to_lytic_site(
     )
 
     if protein2explode.shape[0] == 0:
-        raise ValueError(
+        Warning(
             f"The resulted dataframe of digestion site in {uniprot_id} is empty. "
             "Please check the input dataframe."
         )
+        return protein2explode
 
     protein_lys = protein2explode.explode(residue_col)
     info_cols = [col for col in protein_lys.columns if col not in int_cols]

@@ -41,8 +41,8 @@ def anova(
     df: pd.DataFrame,
     anova_cols: list[str],
     metadata_ori: pd.DataFrame,
-    anova_factors: Sequence[str] = ["Group"],
-    sample_col: str = "Sample",
+    anova_factors: Sequence[str],
+    sample_col: str,
 ) -> pd.DataFrame:
     """
     Performs ANOVA on specified columns of a DataFrame.
@@ -51,16 +51,14 @@ def anova(
         df (pd.DataFrame): DataFrame containing the data for analysis.
         anova_cols (list[str]): List of column names to analyze.
         metadata_ori (pd.DataFrame): Metadata containing sample information.
-        anova_factors (Sequence[str], optional): Factors for ANOVA analysis. Defaults to ["Group"].
-        sample_col (str, optional): Column name for sample identifiers. Defaults to "Sample".
+        anova_factors (Sequence[str], optional): Factors for ANOVA analysis.
+        sample_col (str, optional): Column name for sample identifiers.
 
     Returns:
         pd.DataFrame: DataFrame with ANOVA p-values and adjusted p-values.
     """
     if len(anova_factors) < 1:
-        raise ValueError(
-            "The anova_factors is empty. Please provide the factors for ANOVA analysis. The default factor is 'Group'."
-        )
+        return df
 
     metadata = metadata_ori[metadata_ori[sample_col].isin(anova_cols)].copy()
 
@@ -73,13 +71,12 @@ def anova(
     df_w = df[anova_cols].copy()
     f_stats_factors: Sequence[pd.DataFrame] = []
     for df_id, row in df_w.iterrows():  # type: ignore
-        df_f = pd.DataFrame(row).loc[anova_cols].astype(float)
-        df_f = pd.merge(df_f, metadata, left_index=True, right_on=sample_col)
+        df_f = pd.merge(row, metadata, left_index=True, right_on=sample_col)
 
         try:
             aov_f = pg.anova(data=df_f, dv=df_id, between=anova_factors, detailed=True)  # type: ignore
             if not isinstance(aov_f, pd.DataFrame):
-                raise Exception
+                raise TypeError
             if "p-unc" in aov_f.columns:
                 p_vals = {
                     f"ANOVA_[{anova_factor_name}]_pval": aov_f[
@@ -93,7 +90,11 @@ def anova(
                     for anova_factor_name in anova_factor_names
                 }
 
-        except Exception as e:
+        except (
+            TypeError,
+            AssertionError,
+            ValueError,
+        ) as e:  # pg.anova can throw assertion error or value error if not enough data
             Warning(f"ANOVA failed for {df_id}: {e}")
             p_vals = {
                 f"ANOVA_[{anova_factor_name}]_pval": np.nan
@@ -105,7 +106,9 @@ def anova(
     for anova_factor_name in anova_factor_names:
         f_stats_factors_df[f"ANOVA_[{anova_factor_name}]_adj-p"] = (
             sp.stats.false_discovery_control(
-                f_stats_factors_df[f"ANOVA_[{anova_factor_name}]_pval"].fillna(1)
+                f_stats_factors_df[f"ANOVA_[{anova_factor_name}]_pval"]
+                .fillna(1.0)
+                .astype(float)
             )
         )
         f_stats_factors_df.loc[
@@ -136,10 +139,9 @@ def pairwise_ttest(
     """
     for pairwise_ttest_group in pairwise_ttest_groups:
         label = pairwise_ttest_group.label()
-        df[label] = (
-            df[pairwise_ttest_group.treat_samples].mean(axis=1)
-            - df[pairwise_ttest_group.control_samples].mean(axis=1)
-        ).fillna(0)
+        df[label] = df[pairwise_ttest_group.treat_samples].mean(axis=1) - df[
+            pairwise_ttest_group.control_samples
+        ].mean(axis=1)
         df[f"{label}_pval"] = sp.stats.ttest_ind(
             df[pairwise_ttest_group.treat_samples],
             df[pairwise_ttest_group.control_samples],
@@ -147,7 +149,7 @@ def pairwise_ttest(
             nan_policy="omit",
         ).pvalue
         df[f"{label}_adj-p"] = sp.stats.false_discovery_control(
-            df[f"{label}_pval"].fillna(1)
+            df[f"{label}_pval"].fillna(1.0).astype(float)
         )
         df.loc[
             df[f"{label}_pval"].isna(),

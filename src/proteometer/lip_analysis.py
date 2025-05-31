@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from itertools import combinations_with_replacement
 from typing import cast
 
 import pandas as pd
@@ -12,18 +13,23 @@ import proteometer.normalization as normalization
 import proteometer.parse_metadata as parse_metadata
 import proteometer.stats as stats
 from proteometer.params import Params
-from proteometer.utils import check_missingness, generate_index
+from proteometer.utils import filter_missingness, generate_index
 
 
-def lip_analysis(par: Params) -> pd.DataFrame:
+def lip_analysis(par: Params) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
     Performs statistical analysis on the provided limited proteolysis data.
 
     Args:
-        par (Params): Parameters for the limited proteolysis analysis, including file paths and settings.
+        par (Params): Parameters for the limited proteolysis analysis, including
+            file paths and settings.
 
     Returns:
-        pd.DataFrame: The resulting limited proteolysis data frame after analysis.
+        tuple[pd.DataFrame,pd.DataFrame,pd.DataFrame]: The resulting limited
+            proteolysis data frames after analysis.
+            These are the double-digested peptide data frame, the rollup of the
+            peptide data to the single site, and the processed global protein
+            data frame (in that order).
     """
     prot_seqs = fasta.get_sequences_from_fasta(par.fasta_file)
     metadata = pd.read_csv(par.metadata_file, sep="\t")
@@ -66,6 +72,16 @@ def lip_analysis(par: Params) -> pd.DataFrame:
         global_pept = stats.log2_transformation(global_pept, int_cols)
         global_prot = stats.log2_transformation(global_prot, int_cols)
 
+    double_pept = filter_missingness(
+        double_pept, groups, group_cols, par.min_replicates_qc
+    )
+    global_pept = filter_missingness(
+        global_pept, groups, group_cols, par.min_replicates_qc
+    )
+    global_prot = filter_missingness(
+        global_prot, groups, group_cols, par.min_replicates_qc
+    )
+
     # must correct protein abundance, before we can use it to correct peptide
     # data; depending on normalization scheme, we may need to test significance
     # of deviations also, so statistics must be calculated for `global_prot`
@@ -95,6 +111,16 @@ def lip_analysis(par: Params) -> pd.DataFrame:
             par,
             columns_to_correct=int_cols,
         )
+    double_pept = _double_pept_statistics(
+        double_pept,
+        prot_seqs,
+        groups,
+        anova_cols,
+        pairwise_ttest_groups,
+        user_pairwise_ttest_groups,
+        metadata,
+        par,
+    )
 
     double_site = _double_site(
         double_pept,
@@ -110,15 +136,103 @@ def lip_analysis(par: Params) -> pd.DataFrame:
     global_prot = _annotate_global_prot(global_prot, par)
     double_site = _annotate_double_site(double_site, par)
 
-    all_lips = (
-        pd.concat([global_prot, double_site], axis=0, join="outer", ignore_index=True)
-        .sort_values(by=["id", "Type", "Experiment", "Site"])
-        .reset_index(drop=True)
-    )
+    # all_lips = (
+    #     pd.concat([global_prot, double_site], axis=0, join="outer", ignore_index=True)
+    #     .sort_values(by=["id", "Type", "Experiment", "Site"])
+    #     .reset_index(drop=True)
+    # )
 
-    all_lips = check_missingness(all_lips, groups, group_cols)
+    # all_lips = check_missingness(all_lips, groups, group_cols)
 
-    return all_lips
+    return double_pept, double_site, global_prot
+
+
+def _double_pept_statistics(
+    double_pept: pd.DataFrame,
+    prot_seqs: list[fasta.SeqRecord],
+    groups: list[str],
+    anova_cols: list[str],
+    pairwise_ttest_groups: Iterable[stats.TTestGroup],
+    user_pairwise_ttest_groups: Iterable[stats.TTestGroup],
+    metadata: pd.DataFrame,
+    par: Params,
+) -> pd.DataFrame:
+    pept_list: list[pd.DataFrame] = []
+    if anova_cols:
+        double_pept = stats.anova(
+            double_pept,
+            anova_cols,
+            metadata,
+            [par.metadata_group_col],
+            par.metadata_sample_col,
+        )
+        double_pept = stats.anova(
+            double_pept,
+            anova_cols,
+            metadata,
+            par.anova_factors,
+            par.metadata_sample_col,
+        )
+    double_pept = stats.pairwise_ttest(double_pept, pairwise_ttest_groups)
+    double_pept = stats.pairwise_ttest(double_pept, user_pairwise_ttest_groups)
+    for uniprot_id in double_pept[par.uniprot_col].unique():
+        pept_df = cast(
+            "pd.DataFrame",
+            double_pept[double_pept[par.uniprot_col] == uniprot_id].copy(),
+        )
+        uniprot_seqs = [prot_seq for prot_seq in prot_seqs if uniprot_id in prot_seq.id]
+        if not uniprot_seqs:
+            Warning(
+                f"Protein {uniprot_id} not found in the fasta file. Skipping the protein."
+            )
+            continue
+        elif len(uniprot_seqs) > 1:
+            Warning(
+                f"Multiple proteins with the same ID {uniprot_id} found in the fasta file. Using the first one."
+            )
+        bio_seq = uniprot_seqs[0]
+        if bio_seq.seq is None:
+            raise ValueError(f"Protein sequence for {uniprot_id} is empty.")
+        prot_seq = str(bio_seq.seq)
+
+        prot_desc = bio_seq.description
+        factor_names = [
+            f"[{f1} * {f2}]" if f1 != f2 else f"[{f1}]"
+            for f1, f2 in combinations_with_replacement(par.anova_factors, r=2)
+        ] + [f"[{par.metadata_group_col}]"]
+        for factor_name in factor_names:
+            pept_df = lip.analyze_tryptic_pattern(
+                pept_df,
+                prot_seq,
+                pairwise_ttest_groups,
+                groups,
+                par.peptide_col,
+                description=prot_desc,
+                anova_type=factor_name,
+                id_separator=par.id_separator,
+                sig_type=par.sig_type,
+                sig_thr=par.sig_thr,
+            )
+            pept_df = lip.analyze_tryptic_pattern(
+                pept_df,
+                prot_seq,
+                user_pairwise_ttest_groups,
+                groups,
+                par.peptide_col,
+                description=prot_desc,
+                anova_type=factor_name,
+                id_separator=par.id_separator,
+                sig_type=par.sig_type,
+                sig_thr=par.sig_thr,
+            )
+        if pept_df.shape[0] < 1:
+            Warning(
+                f"Protein {uniprot_id} has no peptides that could be mapped to the sequence. Skipping the protein."
+            )
+            continue
+
+        pept_list.append(pept_df)
+    return pd.concat(pept_list)
 
 
 def _double_site(
@@ -164,7 +278,9 @@ def _double_site(
                 f"Multiple proteins with the same ID {uniprot_id} found in the fasta file. Using the first one."
             )
         bio_seq = uniprot_seqs[0]
-        prot_seq = bio_seq.seq
+        if bio_seq.seq is None:
+            raise ValueError(f"Protein sequence for {uniprot_id} is empty.")
+        prot_seq = str(bio_seq.seq)
         prot_desc = bio_seq.description
         pept_df_r = lip.rollup_to_lytic_site(
             pept_df,
@@ -183,8 +299,20 @@ def _double_site(
             )
             continue
         if anova_cols:
-            pept_df_a = stats.anova(pept_df_r, anova_cols, metadata)
-            pept_df_a = stats.anova(pept_df_a, anova_cols, metadata, par.anova_factors)
+            pept_df_a = stats.anova(
+                pept_df_r,
+                anova_cols,
+                metadata,
+                [par.metadata_group_col],
+                par.metadata_sample_col,
+            )
+            pept_df_a = stats.anova(
+                pept_df_a,
+                anova_cols,
+                metadata,
+                par.anova_factors,
+                par.metadata_sample_col,
+            )
         else:
             pept_df_a = pept_df_r
         pept_df_p = stats.pairwise_ttest(pept_df_a, pairwise_ttest_groups)

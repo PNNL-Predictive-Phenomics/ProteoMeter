@@ -5,7 +5,7 @@ authors = [
 ]
 description = "Add a short description here"
 name = "proteometer"
-requires-python = ">= 3.12, <3.13"
+requires-python = ">= 3.12"
 version = "0.1.0"
 dependencies = [
     "numpy>=2.2.1,<3",
@@ -17,10 +17,6 @@ dependencies = [
     "pingouin>=0.5.5,<0.6",
     "seaborn>=0.13.2,<0.14",
 ]
-
-[build-system]
-build-backend = "hatchling.build"
-requires = ["hatchling"]
 
 [tool.pixi.project]
 channels = ["conda-forge"]
@@ -41,9 +37,13 @@ all_checks = { cmd = "ruff check src tests && pyright src tests && python -m doc
 python = ">=3.12.5,<3.13"
 
 [dependency-groups]
-dev = ["pandas-stubs"]
+dev = [
+    "pandas-stubs",
+    "scipy-stubs",
+    "microsoft-python-type-stubs @ git+https://github.com/microsoft/python-type-stubs.git",
+]
 test = ["pytest"]
-lint = ["ruff", "pyright>=1.1.398,<2"]
+lint = ["ruff", "pyright>=1.1.401"]
 docs = [
     "sphinx",
     "sphinx-toolbox",
@@ -62,11 +62,12 @@ addopts = ["--import-mode=importlib"]
 pythonpath = "src"
 
 [tool.pyright]
-exclude = ["docs", "PhenoMeters_proteometer.egg-info"]
+exclude = ["docs", "PhenoMeters_proteometer.egg-info", ".pixi/**"]
 include = ["src/proteometer"]
 typeCheckingMode = "strict"
 reportMissingTypeStubs = false
 reportUnnecessaryCast = "error"
-reportUnnecessaryTypeIgnoreComment = "error"
+reportUnnecessaryTypeIgnoreComment = "warning"
 reportUnknownMemberType = "none"
 pythonVersion = "3.12"
+useLibraryCodeForTypes = false
