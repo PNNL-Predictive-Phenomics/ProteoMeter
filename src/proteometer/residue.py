@@ -1,50 +1,6 @@
 from __future__ import annotations
 
-import re
-from collections.abc import Iterable
-
 import pandas as pd
-
-
-def get_res_names(residues: Iterable[str]) -> list[list[str]]:
-    """Extracts residue names from an iterable of residue strings.
-
-    Args:
-        residues (Iterable[str]): An iterable of residue strings, each containing
-            an uppercase letter followed by digits and optional lowercase letters or hyphens.
-
-    Returns:
-        list[list[str]]: A list of lists, where each inner list contains the extracted
-            residue names from the corresponding input string. If a residue string starts
-            with 'P', the entire string is returned in the inner list.
-    """
-    res_names = [
-        [res for res in re.findall(r"[A-Z]\d+[a-z\-]+", residue)]
-        if residue[0] != "P"
-        else [residue]
-        for residue in residues
-    ]
-    return res_names
-
-
-def get_res_pos(residues: Iterable[str]) -> list[list[int]]:
-    """Extracts residue positions from an iterable of residue strings.
-
-    Args:
-        residues (Iterable[str]): An iterable of residue strings, each containing
-            an uppercase letter followed by digits and optional lowercase letters or hyphens.
-
-    Returns:
-        list[list[int]]: A list of lists, where each inner list contains the extracted
-            residue positions from the corresponding input string. If a residue string starts
-            with 'P', the entire string is returned in the inner list as a single element
-            with the value of 0.
-    """
-    res_pos = [
-        [int(res) for res in re.findall(r"\d+", residue)] if residue[0] != "P" else [0]
-        for residue in residues
-    ]
-    return res_pos
 
 
 def count_site_number(

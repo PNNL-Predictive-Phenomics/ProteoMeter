@@ -5,43 +5,10 @@ import re
 import pandas as pd
 
 from proteometer.params import Params
-from proteometer.peptide import nip_off_pept
 from proteometer.residue import (
     count_site_number,
     count_site_number_with_global_proteomics,
 )
-
-
-def get_ptm_pos_in_pept(
-    peptide: str,
-    ptm_label: str = "*",
-    special_chars: str = r".]+-=@_!#$%^&*()<>?/\|}{~:[",
-) -> list[int]:
-    """Get the positions of PTM labels in a peptide.
-
-    This function processes a peptide string to find the positions of
-    post-translational modification (PTM) labels. It accounts for special
-    characters and returns a list of positions adjusted to the stripped
-    peptide sequence.
-
-    Args:
-        peptide (str): The peptide string potentially containing PTM labels.
-        ptm_label (str, optional): The label representing PTM. Defaults to '*'.
-        special_chars (str, optional): A string of special characters that
-            might need escaping in regex operations. Defaults to common
-            special characters.
-
-    Returns:
-        list[int]: A sorted list of integer positions where the PTM labels
-            occur in the peptide, adjusted for any modifications made during
-            processing.
-    """
-    peptide = nip_off_pept(peptide)
-    if ptm_label in special_chars:
-        ptm_label = "\\" + ptm_label
-    ptm_pos = [m.start() for m in re.finditer(ptm_label, peptide)]
-    pos = sorted([val - i - 1 for i, val in enumerate(ptm_pos)])
-    return pos
 
 
 def get_yst(strip_pept: str, ptm_aa: str = "YSTyst") -> list[tuple[int, str]]:
