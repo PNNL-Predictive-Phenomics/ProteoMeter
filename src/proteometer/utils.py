@@ -94,9 +94,9 @@ def filter_missingness(
         df["missing_check"] = df["missing_check"] + (
             (len(cols) - df[f"{name} missingness"]) < min_replicates_qc
         ).astype(int)
-    if method == "any":
+    if method == "all":
         df_w = df[df["missing_check"] == 0].copy()
-    elif method == "all":
+    elif method == "any":
         df_w = df[df["missing_check"] < len(groups)].copy()
     else:
         raise ValueError(f"Unknown method: {method}. Use 'all' or 'any'.")
