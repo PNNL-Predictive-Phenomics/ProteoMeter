@@ -14,3 +14,27 @@ def test_median_normalize_columns():
     )
     result = median_normalize_columns(df, ["A1", "A2", "A3"])
     pd.testing.assert_frame_equal(result, expected)
+
+
+def test_median_normalize_columns_with_nan():
+    df = pd.DataFrame(
+        {
+            "A1": [1, 2, 3, 0],
+            "A2": [4, 5, 6, float("nan")],
+            "A3": [7, 8, 9, 10],
+        },
+        dtype="float64",
+    )
+    expected = pd.DataFrame(
+        {
+            "A1": [4, 5, 6],
+            "A2": [4, 5, 6],
+            "A3": [4, 5, 6],
+        },
+        dtype="float64",
+    )
+    result = median_normalize_columns(df, ["A1", "A2", "A3"])
+
+    print(expected)
+    print(result)
+    pd.testing.assert_frame_equal(result, expected)
