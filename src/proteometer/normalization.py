@@ -103,7 +103,7 @@ def median_normalize_columns(
         df_filtered[cols].median(axis=0, skipna=True).fillna(0),
     )
     if not zero_center:
-        median_correction_T = median_correction_T - median_correction_T.mean()  # type: ignore
+        median_correction_T = median_correction_T.sub(median_correction_T.mean())
     df_filtered[cols] = df_filtered[cols].sub(median_correction_T, axis=1)
 
     return df_filtered
