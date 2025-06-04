@@ -1,0 +1,58 @@
+proteometer.peptide
+===================
+
+.. py:module:: proteometer.peptide
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   proteometer.peptide.nip_off_pept
+   proteometer.peptide.strip_peptide
+   proteometer.peptide.relable_pept
+
+
+Module Contents
+---------------
+
+.. py:function:: nip_off_pept(peptide: str) -> str
+
+   Extracts the core peptide sequence surrounded by `.` characters.
+
+   :param peptide: The peptide string containing flanking characters.
+   :type peptide: str
+
+   :returns: The core peptide sequence without flanking characters.
+   :rtype: str
+
+
+.. py:function:: strip_peptide(peptide: str, nip_off: bool = True) -> str
+
+   Removes non-alphabetic characters and optionally nips off flanking characters.
+
+   :param peptide: The peptide string to be cleaned.
+   :type peptide: str
+   :param nip_off: Whether to nip off flanking characters. Defaults to True.
+   :type nip_off: bool, optional
+
+   :returns: The cleaned peptide string.
+   :rtype: str
+
+
+.. py:function:: relable_pept(peptide: str, label_pos: Iterable[int], ptm_label: str = '*') -> str
+
+   Relabels the peptide with PTM labels at specified positions.
+
+   :param peptide: The original peptide string.
+   :type peptide: str
+   :param label_pos: Positions where the PTM labels should be inserted.
+   :type label_pos: Iterable[int]
+   :param ptm_label: The label to insert. Defaults to '*'.
+   :type ptm_label: str, optional
+
+   :returns: The peptide string with inserted PTM labels.
+   :rtype: str
+
+
