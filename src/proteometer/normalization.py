@@ -161,18 +161,18 @@ def median_normalization(
 # Batch correction for PTM data
 def batch_correction(
     df4batcor: pd.DataFrame,
-    metadata_ori: pd.DataFrame,
+    metadata: pd.DataFrame,
     batch_correct_samples: Iterable[str] | pd.Series[str] | None = None,
     batch_col: str = "Batch",
     sample_col: str = "Sample",
 ) -> pd.DataFrame:
     """
-    Applies batch correction to peptide data.
+    Applies batch correction to peptide data using row-mean centering.
 
     Args:
         df4batcor (pd.DataFrame): DataFrame to correct.
-        metadata_ori (pd.DataFrame): Metadata for batch correction.
-        batch_correct_samples (Iterable[str] | pd.Series[str] | None, optional): Samples to correct. Defaults to None.
+        metadata (pd.DataFrame): Metadata for batch correction.
+        batch_correct_samples (Iterable[str] | pd.Series[str] | None, optional): Samples (column names) to correct. Defaults to None, in which case it is all samples as defined in metadata.
         batch_col (str, optional): Batch column name. Defaults to "Batch".
         sample_col (str, optional): Sample column name. Defaults to "Sample".
 
@@ -180,33 +180,32 @@ def batch_correction(
         pd.DataFrame: Batch-corrected DataFrame.
     """
     df = df4batcor.copy()
-    metadata = metadata_ori.copy()
     if batch_correct_samples is None:
         batch_correct_samples = cast("pd.Series[str]", metadata[sample_col])
-    batch_means_dict = {}
-    for batch in metadata[metadata[sample_col].isin(batch_correct_samples)][
-        batch_col
-    ].unique():
-        df_batch: pd.DataFrame = df[  # type: ignore
-            metadata[
-                (metadata[batch_col] == batch)
-                & (metadata[sample_col].isin(batch_correct_samples))
-            ][sample_col]
-        ].copy()
-        df_batch_means: pd.DataFrame = df_batch.mean(axis=1)  # type: ignore
-        batch_means_dict.update({batch: df_batch_means})
-    batch_means = cast("pd.Series[float]", pd.DataFrame(batch_means_dict).mean(axis=1))
-    batch_means_diffs = batch_means.sub(batch_means, axis=0)
-    metadata.index = metadata[sample_col].to_list()  # type: ignore
 
     batches = cast(
         Iterable[str],
         metadata[metadata[sample_col].isin(batch_correct_samples)][batch_col].unique(),
     )
+    batch_means_dict = {}
+    for batch in batches:
+        df_batch: pd.DataFrame = df[
+            metadata[
+                (metadata[batch_col] == batch)
+                & (metadata[sample_col].isin(batch_correct_samples))
+            ][sample_col]
+        ].copy()
+
+        row_means_for_batch = cast("pd.Series[float]", df_batch.mean(axis=1))
+        batch_means_dict.update({batch: row_means_for_batch})
+
+    batch_means = pd.DataFrame(batch_means_dict)
+
+    batch_means_diffs = batch_means.sub(batch_means.mean(axis=1), axis=0)
 
     for batch in batches:
         int_cols_per_batch = cast(
-            pd.Series[int], metadata[(metadata[batch_col] == batch)][sample_col]
+            "pd.Series[int]", metadata[(metadata[batch_col] == batch)][sample_col]
         )
         df[int_cols_per_batch] = df[int_cols_per_batch].sub(
             batch_means_diffs[batch], axis=0
