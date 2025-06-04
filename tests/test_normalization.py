@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import pandas as pd
 
-from proteometer.normalization import batch_correction, median_normalize_columns
+from proteometer.normalization import (
+    batch_correction,
+    median_normalize_columns,
+    tmt_normalization,
+)
 
 
 def test_median_normalize_columns():
@@ -70,4 +74,41 @@ def test_batch_correction():
     print(expected)
     print(result)
 
+    pd.testing.assert_frame_equal(result, expected)
+
+
+def test_tmt_normalization():
+    df = pd.DataFrame(
+        {
+            "A1": [10, 20, 30, 0],  # 15
+            "A2": [40, 50, 60, 10],  # 45
+            "A3": [76, 80, 90, 10],  # 78
+        },
+        dtype="float64",
+    )  # mean of medians is (15 + 45 + 78)/ 3 = 46
+
+    df_global = pd.DataFrame(
+        {
+            "A1": [1, 2, 3, 0],  # 2
+            "A2": [4, 5, 6, float("nan")],  # 5
+            "A3": [7, 8, 9, 10],  # 8
+        },
+        dtype="float64",
+    )
+
+    expected = (
+        pd.DataFrame(
+            {
+                "A1": [8, 18, 28, -2],
+                "A2": [35, 45, 55, 5],
+                "A3": [68, 72, 82, 2],
+            },
+            dtype="float64",
+        )
+        + (2 + 5 + 8) / 3
+    )
+    result = tmt_normalization(df, df_global, ["A1", "A2", "A3"])
+
+    print(expected)
+    print(result)
     pd.testing.assert_frame_equal(result, expected)

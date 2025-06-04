@@ -64,13 +64,8 @@ def tmt_normalization(
         "pd.Series[float]", global_filtered[int_cols].median(axis=0, skipna=True)
     )
     df_transformed = df2transform.copy()
-    df_filtered = df2transform[df2transform[int_cols].isna().sum(axis=1) == 0].copy()
-    df_medians = cast(
-        "pd.Series[float]",
-        (df_filtered[int_cols].median(axis=0, skipna=True).fillna(0)),
-    )
     df_transformed[int_cols] = (
-        df_transformed[int_cols].sub(global_medians, axis=1) + df_medians.mean()
+        df_transformed[int_cols].sub(global_medians, axis=1) + global_medians.mean()
     )
     return df_transformed
 
