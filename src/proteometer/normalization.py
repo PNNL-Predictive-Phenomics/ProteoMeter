@@ -75,10 +75,44 @@ def tmt_normalization(
     return df_transformed
 
 
+def median_normalize_columns(
+    df: pd.DataFrame,
+    cols: list[str],
+    skipna: bool = True,
+    zero_center: bool = False,
+) -> pd.DataFrame:
+    """
+    Performs median normalization on columns of a DataFrame.
+
+    Args:
+        df (pd.DataFrame): DataFrame to transform.
+        cols (list[str]): List of column names to normalize.
+        skipna (bool, optional): Whether to skip NaN values. Defaults to True.
+        zero_center (bool, optional): Whether to zero-center the data. Defaults to False.
+
+    Returns:
+        pd.DataFrame: Median-normalized DataFrame.
+    """
+    if skipna:
+        df_filtered = df[df[cols].isna().sum(axis=1) == 0].copy()
+    else:
+        df_filtered = df.copy()
+
+    median_correction_T = cast(
+        "pd.Series[float]",
+        df_filtered[cols].median(axis=0, skipna=True).fillna(0),
+    )
+    if not zero_center:
+        median_correction_T = median_correction_T - median_correction_T.mean()  # type: ignore
+    df_filtered[cols] = df_filtered[cols].sub(median_correction_T, axis=1)
+
+    return df_filtered
+
+
 def median_normalization(
-    df2transform: pd.DataFrame,
+    df: pd.DataFrame,
     int_cols: list[str],
-    metadata_ori: pd.DataFrame | None = None,
+    metadata: pd.DataFrame | None = None,
     batch_correct_samples: Iterable[str] | pd.Series[str] | None = None,
     batch_col: str | None = None,
     sample_col: str = "Sample",
@@ -89,7 +123,7 @@ def median_normalization(
     Performs median normalization on peptide data.
 
     Args:
-        df2transform (pd.DataFrame): DataFrame to transform.
+        df (pd.DataFrame): DataFrame to transform.
         int_cols (list[str]): List of intensity column names.
         metadata_ori (pd.DataFrame | None, optional): Metadata for batch correction. Defaults to None.
         batch_correct_samples (Iterable[str] | pd.Series[str] | None, optional): Samples to correct. Defaults to None.
@@ -101,64 +135,24 @@ def median_normalization(
     Returns:
         pd.DataFrame: Median-normalized DataFrame.
     """
-    df_transformed = df2transform.copy()
-    if batch_col is None or metadata_ori is None:
-        if skipna:
-            df_filtered = df_transformed[
-                df_transformed[int_cols].isna().sum(axis=1) == 0
-            ].copy()
-        else:
-            df_filtered = df_transformed.copy()
+    if batch_col is None or metadata is None:
+        return median_normalize_columns(df, int_cols, skipna, zero_center)
 
-        if zero_center:
-            median_correction_T = cast(
-                "pd.Series[float]",
-                df_filtered[int_cols].median(axis=0, skipna=True).fillna(0),
-            )
-        else:
-            median_correction_T = cast(
-                "pd.Series[float]",
-                df_filtered[int_cols].median(axis=0, skipna=True).fillna(0)
-                - df_filtered[int_cols].median(axis=0, skipna=True).fillna(0).mean(),
-            )
-        df_transformed[int_cols] = df_transformed[int_cols].sub(
-            median_correction_T, axis=1
-        )
-
-        return df_transformed
-
-    metadata = metadata_ori.copy()
     if batch_correct_samples is None:
         batch_correct_samples = cast("pd.Series[str]", metadata[sample_col])
+
+    df_transformed = df.copy()
     for batch in metadata[metadata[sample_col].isin(batch_correct_samples)][
         batch_col
     ].unique():
         int_cols_per_batch = cast(
-            pd.Series[int], metadata[(metadata[batch_col] == batch)][sample_col]
+            pd.Series[str], metadata[(metadata[batch_col] == batch)][sample_col]
         )
-        if skipna:
-            df_filtered = df_transformed[
-                df_transformed[int_cols_per_batch].isna().sum(axis=1) == 0
-            ].copy()
-        else:
-            df_filtered = df_transformed.copy()
-
-        if zero_center:
-            median_correction_T = cast(
-                "pd.Series[float]",
-                df_filtered[int_cols_per_batch].median(axis=0, skipna=True).fillna(0),
-            )
-        else:
-            median_correction_T = cast(
-                "pd.Series[float]",
-                df_filtered[int_cols_per_batch].median(axis=0, skipna=True).fillna(0)
-                - df_filtered[int_cols_per_batch]
-                .median(axis=0, skipna=True)
-                .fillna(0)
-                .mean(),
-            )
-        df_transformed[int_cols_per_batch] = df_transformed[int_cols_per_batch].sub(
-            median_correction_T, axis=1
+        df_transformed = median_normalize_columns(
+            df_transformed,
+            int_cols_per_batch.to_list(),
+            skipna,
+            zero_center,
         )
 
     return df_transformed
