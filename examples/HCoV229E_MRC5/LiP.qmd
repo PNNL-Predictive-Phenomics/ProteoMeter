@@ -1,0 +1,466 @@
+---
+title: The example code for processing the PTM proteomics data
+jupyter: python3
+---
+
+```{python}
+from utils import *
+
+import os
+import warnings
+
+warnings.filterwarnings("ignore")
+
+from IPython.display import display
+plt.rcParams['figure.figsize'] = [7, 5]
+# plt.rcParams['figure.dpi'] = 100 # 200 e.g. is really fine, but slower
+
+```
+
+## User inputs
+
+```{python}
+working_dir = "."
+
+data_dir = f"{os.path.abspath(working_dir)}/data/LiP" # same
+result_dir = f"{os.path.abspath(working_dir)}/results/LiP" # same
+Path(result_dir).mkdir(parents=True, exist_ok=True)
+
+# All the required files
+fasta_file = f"{data_dir}/reference_proteome.fasta"
+metadata_file = f"{data_dir}/metadata.txt"   # 
+global_prot_file = f"{data_dir}/trypsin_prot.tsv"
+global_pept_file = f"{data_dir}/trypsin_pept.tsv"
+double_pept_file = f"{data_dir}/double_pept.tsv"
+
+# Experiment information
+experiment_name = "Test" # same
+search_tool = "FragPipe" # this might not be necessary anymore, maybe fore preprocessing, but not here
+experiment_type = "Label-free" # TMT or Label-free
+
+# Statistics setup
+pairwise_factor = "Time"
+anova_factors = ["Treatment", pairwise_factor] # Optional
+
+# normali the batch correction only for TMT data
+batch_correct_samples = "" # If it is TMT experiment then batch correction might be needed. User need to provide a list of column names of samples are used for batch correction. If "" provided, then batch_correct_samples should be all samples except the pooled channel samples
+# TMT data are usually processed into log2 scale, but not always
+log2_scale = False
+# If there is multiple batches
+batch_correction = True # If False, then no batch correction will be performed
+
+# Unique to TMT data
+Pooled_Chanel_Condition = "Total"
+
+# User defined pair-wise comparison groups, possibly need a function to generate from a list of group pairs 
+user_ttest_pairs = [["Infected_8h", "Infected_16h"], ["Infected_8h", "Infected_16h"]]
+
+### Unique for PTM data
+phospho_symbol = '#'
+redox_symbol = '@'
+acetyl_symbol = '@'
+phospho_ascore_col = "AScore"
+
+```
+
+## Setting up the parameters, custermizable for users, but recommend to use the default values. That requires prepare the metadata file following the correct format
+
+```{python}
+id_separator = '@'  # same
+sig_thr = 0.05 # same
+sig_type = "pval" #same either "pval" or "adj-p"
+missing_thr = 0 # same
+min_pept_count = 2 # unique to lip
+# metadata columns
+metadata_batch_col = "Batch"
+metadata_sample_col = "Sample"
+metadata_group_col = "Group"
+metadata_condition_col = "Condition"
+metadata_control_condition = "Control"
+metadata_treatment_condition = "Treatment"
+```
+
+```{python}
+# Output table columns
+id_col = 'id'
+uniprot_col = "UniProt"
+protein_col = "Protein"
+peptide_col = "Peptide"
+site_col = "Site"
+residue_col = "Residue"
+type_col = "Type"
+experiment_col = "Experiment"
+site_number_col = "site_number"
+```
+
+## PTM data analysis
+
+### Import all the data
+
+In this section, we define parameters and import all the data.
+
+```{python}
+prot_seqs = get_sequences_from_fasta(fasta_file)
+len(prot_seqs)
+```
+
+```{python}
+metadata = pd.read_csv(metadata_file, sep='\t')
+metadata
+```
+
+
+```{python}
+control_groups = list(metadata[metadata[metadata_condition_col]==metadata_control_condition][metadata_group_col].unique())
+control_group_cols = [metadata[metadata[metadata_group_col] == group][metadata_sample_col].to_list() for group in control_groups]
+treat_groups = list(metadata[metadata[metadata_condition_col]==metadata_treatment_condition][metadata_group_col].unique())
+treat_group_cols = [metadata[metadata[metadata_group_col] == group][metadata_sample_col].to_list() for group in treat_groups]
+groups = control_groups + treat_groups
+group_cols = control_group_cols + treat_group_cols
+all_groups = list(metadata[metadata_group_col].unique())
+all_group_cols = [metadata[metadata[metadata_group_col] == group][metadata_sample_col].to_list() for group in all_groups]
+TT_groups = list(metadata[metadata[metadata_condition_col] == Pooled_Chanel_Condition][metadata_group_col].unique())
+TT_group_cols = [metadata[metadata[metadata_group_col] == group][metadata_sample_col].to_list() for group in TT_groups]
+int_cols = metadata[metadata_sample_col].to_list()
+
+if batch_correct_samples == "":
+    batch_correct_samples = [sample for sample in metadata[metadata_sample_col].values if sample not in flatten(TT_group_cols)] # If it is TMT experiment then batch correction might be needed. If "" provided, then batch_correct_samples should be all samples except the pooled channel samples
+
+anova_cols = [sample for sample in metadata[metadata_sample_col].values if sample not in flatten(TT_group_cols)]
+
+pairwise_pars = metadata[pairwise_factor].unique()
+pairwise_ttest_groups = []
+for par in pairwise_pars:
+    for control_group in list(set(metadata[(metadata[metadata_condition_col]==metadata_control_condition) & (metadata[pairwise_factor] == par)][metadata_group_col])):
+        for treat_group in list(set(metadata[(metadata[metadata_condition_col]==metadata_treatment_condition) & (metadata[pairwise_factor] == par)][metadata_group_col])):
+            pairwise_ttest_groups.append([f"{treat_group}/{control_group}", control_group, treat_group, metadata[metadata[metadata_group_col] == control_group][metadata_sample_col].to_list(), metadata[metadata[metadata_group_col] == treat_group][metadata_sample_col].to_list()])
+
+user_pairwise_ttest_groups = []
+for user_test_pair in user_ttest_pairs:
+    user_ctrl_group = user_test_pair[0]
+    user_treat_group = user_test_pair[1]
+    user_pairwise_ttest_groups.append([f"{user_treat_group}/{user_ctrl_group}", user_ctrl_group, user_treat_group, metadata[metadata[metadata_group_col] == user_ctrl_group][metadata_sample_col].to_list(), metadata[metadata[metadata_group_col] == user_treat_group][metadata_sample_col].to_list()])
+
+stats_cols = ["Total missingness"] + [f"{group} missingness" for group in groups] + [pairwise_ttest_group[0] for pairwise_ttest_group in pairwise_ttest_groups] + [f"{pairwise_ttest_group[0]}_pval" for pairwise_ttest_group in pairwise_ttest_groups] + [f"{pairwise_ttest_group[0]}_adj-p" for pairwise_ttest_group in pairwise_ttest_groups] + [time_pairwise_ttest_group[0] for time_pairwise_ttest_group in user_pairwise_ttest_groups] + [f"{time_pairwise_ttest_group[0]}_pval" for time_pairwise_ttest_group in user_pairwise_ttest_groups] + [f"{time_pairwise_ttest_group[0]}_adj-p" for time_pairwise_ttest_group in user_pairwise_ttest_groups]
+
+if len(groups) > 2:
+    if len(anova_factors) < 1 or 'anova_factors' not in locals() or 'anova_factors' not in globals():
+        anova_factors = [metadata_group_col]
+    anova_factor_names = [f"{anova_factors[i]} * {anova_factors[j]}" if i != j else f"{anova_factors[i]}" for i in range(len(anova_factors)) for j in range(i, len(anova_factors))]
+    stats_cols += [f"ANOVA_[{anova_factor_name}]_pval" for anova_factor_name in anova_factor_names] 
+    stats_cols += [f"ANOVA_[{anova_factor_name}]_adj-p" for anova_factor_name in anova_factor_names] 
+
+```
+
+
+```{python}
+prot_info_cols = [id_col, uniprot_col, protein_col, site_col, residue_col, type_col, experiment_col, site_number_col] 
+prot_info_stats_cols = prot_info_cols + int_cols + stats_cols 
+pept_info_cols = [id_col, uniprot_col, protein_col, site_col, residue_col, type_col, experiment_col, site_number_col]
+pept_info_stats_cols = pept_info_cols + int_cols + stats_cols
+```
+
+
+#### Load all the cross tabs data
+
+```{python}
+global_prot = pd.read_csv(global_prot_file, sep='\t')
+global_prot
+```
+
+```{python}
+global_pept = pd.read_csv(global_pept_file, sep='\t')
+global_pept
+```
+
+```{python}
+double_pept = pd.read_csv(double_pept_file, sep='\t')
+double_pept
+```
+
+#################################################################################
+#################################################################################
+
+# The analysis pipeline
+
+## Data process and analysis
+
+```{python}
+print(global_pept.shape)
+print(double_pept.shape)
+print(global_prot.shape)
+```
+
+```{python}
+double_pept = filter_contaminants_reverse_pept(double_pept, search_tool, protein_col, uniprot_col)
+global_pept = filter_contaminants_reverse_pept(global_pept, search_tool, protein_col, uniprot_col)
+global_prot = filter_contaminants_reverse_prot(global_prot, search_tool, protein_col, uniprot_col)
+```
+
+```{python}
+double_pept = generate_index(double_pept, uniprot_col, peptide_col, id_separator)
+global_pept = generate_index(global_pept, uniprot_col, peptide_col, id_separator)
+global_prot = generate_index(global_prot, uniprot_col)
+```
+
+```{python}
+print(global_pept.shape)
+print(double_pept.shape)
+print(global_prot.shape)
+```
+
+```{python}
+if not log2_scale:
+    double_pept = log2_transformation(double_pept, int_cols)
+    global_pept = log2_transformation(global_pept, int_cols)
+    global_prot = log2_transformation(global_prot, int_cols)
+```
+
+```{python}
+# # Optional: filter out proteins with missing values
+# prot = filter_missingness(prot, groups, group_cols, missing_thr)
+```
+
+```{python}
+if not batch_correction:
+    global_prot = median_normalization(global_prot, int_cols)
+else:
+    # NB: median normalization is only for global proteomics data, PTM data need to be normalized by global proteomics data
+    global_prot = median_normalization(global_prot, int_cols, metadata, batch_correct_samples, batch_col=metadata_batch_col, sample_col=metadata_sample_col)
+    # Batch correction
+    global_prot = batch_correction(global_prot, metadata, batch_correct_samples, batch_col=metadata_batch_col, sample_col=metadata_sample_col)
+```
+
+```{python}
+if len(groups) > 2:
+    global_prot = anova(global_prot, anova_cols, metadata)
+    global_prot = anova(global_prot, anova_cols, metadata, anova_factors)
+```
+
+```{python}
+global_prot = pairwise_ttest(global_prot, pairwise_ttest_groups)
+global_prot = pairwise_ttest(global_prot, user_pairwise_ttest_groups)
+```
+
+```{python}
+# global_prot = calculate_all_pairwise_scalars(global_prot, pairwise_ttest_groups, sig_type, sig_thr)
+# global_prot = calculate_all_pairwise_scalars(global_prot, pairwise_ttest_groups, sig_type, 1)
+# print(global_prot.shape)
+```
+
+```{python}
+# global_prot.to_csv(f"{result_dir}/trypsin_prot_processed.tsv", sep='\t')
+# global_prot.to_pickle(f"{result_dir}/trypsin_prot_processed.pkl")
+```
+
+
+```{python}
+# # Optional: roll up to the unique peptide level
+# global_pept = rollup_to_peptide(global_pept, int_cols, peptide_col, id_col, id_separator)
+# double_pept = rollup_to_peptide(double_pept, int_cols, peptide_col, id_col, id_separator)
+```
+
+```{python}
+# # Optional: filter out peptides with missing values
+# global_pept = filter_missingness(global_pept, groups, group_cols, missing_thr)
+# double_pept = filter_missingness(double_pept, groups, group_cols, missing_thr)
+```
+
+```{python}
+if experiment_type == "TMT":
+    double_pept = TMT_normalization(double_pept, global_pept, int_cols)
+    if batch_correction:
+        global_pept = median_normalization(global_pept, int_cols, metadata, batch_correct_samples, batch_col=metadata_batch_col, sample_col=metadata_sample_col)
+else:
+    double_pept = median_normalization(double_pept, int_cols)
+    global_pept = median_normalization(global_pept, int_cols)
+```
+
+```{python}
+if batch_correction:
+    double_pept = batch_correction(double_pept, metadata, batch_correct_samples, batch_col=metadata_batch_col, sample_col=metadata_sample_col)
+    global_pept = batch_correction(global_pept, metadata, batch_correct_samples, batch_col=metadata_batch_col, sample_col=metadata_sample_col)
+
+```
+
+```{python}
+double_pept_uncorrected = double_pept.copy()
+global_pept_uncorrected = global_pept.copy()
+```
+
+#### Normalization by protein abundance changes
+
+```{python}
+# double_pept = prot_abund_correction_sig_only(double_pept, global_prot, pairwise_ttest_groups, uniprot_col, sig_type, sig_thr)
+# global_pept = prot_abund_correction_sig_only(global_pept, global_prot, pairwise_ttest_groups, uniprot_col, sig_type, sig_thr)
+double_pept = prot_abund_correction(double_pept, global_prot, int_cols, uniprot_col)
+global_pept = prot_abund_correction(global_pept, global_prot, int_cols, uniprot_col)
+```
+
+## Analyze at the peptide level
+
+```{python}
+# if len(groups) > 2:
+#     double_pept = anova(double_pept, anova_cols, metadata)
+#     global_pept = anova(global_pept, anova_cols, metadata)
+#     double_pept = anova(double_pept, anova_cols, metadata, anova_factors)
+#     global_pept = anova(global_pept, anova_cols, metadata, anova_factors)
+
+```
+
+```{python}
+# double_pept = pairwise_ttest(double_pept, pairwise_ttest_groups)
+# global_pept = pairwise_ttest(global_pept, pairwise_ttest_groups)
+
+# double_pept = pairwise_ttest(double_pept, user_pairwise_ttest_groups)
+# global_pept = pairwise_ttest(global_pept, user_pairwise_ttest_groups)
+```
+
+
+```{python}
+# ## Analyze the tryptic patterns of the peptides
+# double_pept_t = []
+# double_single_site = []
+# for uniprot_id in double_pept[uniprot_col].unique():
+#     pept_df = double_pept[double_pept[uniprot_col] == uniprot_id].copy()
+#     uniprot_seq = [prot_seq for prot_seq in prot_seqs if uniprot_id in prot_seq.id]
+#     if len(uniprot_seq) < 1:
+#         Warning(f"Protein {uniprot_id} not found in the fasta file. Skipping the protein.")
+#         continue
+#     elif len(uniprot_seq) > 1:
+#         Warning(f"Multiple proteins with the same ID {uniprot_id} found in the fasta file. Using the first one.")
+#     bio_seq = uniprot_seq[0]
+#     prot_seq = bio_seq.seq
+#     prot_desc = bio_seq.description
+#     pept_df = analyze_tryptic_pattern(pept_df, prot_seq, pairwise_ttest_groups, groups, description = prot_desc, keep_non_tryptic = True, peptide_col=peptide_col)
+#     double_pept_t.append(pept_df)
+#     pept_df_r = LiP_rollup_to_site(pept_df, int_cols, prot_seq, uniprot_col, uniprot_id = uniprot_id, peptide_col=peptide_col, rollup_func="median")
+#     if len(groups) > 2:
+#         pept_df_a = anova(pept_df_r, anova_cols, metadata)
+#         pept_df_a = anova(pept_df_r, anova_cols, metadata, anova_factors)
+#     pept_df_p = pairwise_ttest(pept_df_a, pairwise_ttest_groups)
+#     double_single_site.append(pept_df_p)
+# double_pept_t = pd.concat(double_pept_t).copy()
+# double_single_site = pd.concat(double_single_site).copy()
+
+```
+
+```{python}
+# double_pept_t.to_csv(f"{result_dir}/double_pept_processed.tsv", sep='\t')
+# # double_pept_t.to_pickle(f"{result_dir}/double_pept_processed.pkl")
+# double_single_site.to_csv(f"{result_dir}/double_pept_single_site_w_full_pept.tsv", sep='\t')
+```
+
+## Analyze at the digested site level
+
+#### Quantifying and Barcoding with proteolytic sites
+
+
+```{python}
+# ## Analyze the lytic sites of the peptides without any protein abundance correction (not recommended)
+# double_site_uncorrected = []
+# for uniprot_id in double_pept_uncorrected[uniprot_col].unique():
+#     pept_df = double_pept_uncorrected[double_pept_uncorrected[uniprot_col] == uniprot_id].copy()
+#     uniprot_seq = [prot_seq for prot_seq in prot_seqs if uniprot_id in prot_seq.id]
+#     if len(uniprot_seq) < 1:
+#         Warning(f"Protein {uniprot_id} not found in the fasta file. Skipping the protein.")
+#         continue
+#     elif len(uniprot_seq) > 1:
+#         Warning(f"Multiple proteins with the same ID {uniprot_id} found in the fasta file. Using the first one.")
+#     bio_seq = uniprot_seq[0]
+#     prot_seq = bio_seq.seq
+#     prot_desc = bio_seq.description
+#     pept_df_r = LiP_rollup_to_lytic_site(pept_df, int_cols, uniprot_col, prot_seq, residue_col="Residue", description = prot_desc, tryptic_pattern="all", peptide_col=peptide_col, rollup_func="median")
+#     if pept_df_r is None or pept_df_r.shape[0] < 1:
+#         Warning(f"Protein {uniprot_id} has no peptides that could be mapped to the sequence. Skipping the protein.")
+#         continue
+#     if len(groups) > 2:
+#         pept_df_a = anova(pept_df_r, anova_cols, metadata)
+#         pept_df_a = anova(pept_df_a, anova_cols, metadata, anova_factors)
+#     pept_df_p = pairwise_ttest(pept_df_a, pairwise_ttest_groups)
+#     pept_df_p = pairwise_ttest(pept_df_p, user_pairwise_ttest_groups)
+#     double_site_uncorrected.append(pept_df_p)
+# double_site_uncorrected = pd.concat(double_site_uncorrected).copy()
+```
+
+```{python}
+# double_pept_uncorrected_l.to_csv(f"{result_dir}/double_lytic_sites_uncorrected.tsv", sep='\t')
+# double_pept_uncorrected_l.to_pickle(f"{result_dir}/double_lytic_sites_uncorrected.pkl")
+```
+
+```{python}
+## Now apply these functions to the whole proteome
+double_site = []
+for uniprot_id in double_pept[uniprot_col].unique():
+    pept_df = double_pept[double_pept[uniprot_col] == uniprot_id].copy()
+    uniprot_seq = [prot_seq for prot_seq in prot_seqs if uniprot_id in prot_seq.id]
+    if len(uniprot_seq) < 1:
+        Warning(f"Protein {uniprot_id} not found in the fasta file. Skipping the protein.")
+        continue
+    elif len(uniprot_seq) > 1:
+        Warning(f"Multiple proteins with the same ID {uniprot_id} found in the fasta file. Using the first one.")
+    bio_seq = uniprot_seq[0]
+    prot_seq = bio_seq.seq
+    prot_desc = bio_seq.description
+    pept_df_r = LiP_rollup_to_lytic_site(pept_df, int_cols, uniprot_col, prot_seq, residue_col="Residue", description = prot_desc, tryptic_pattern="all", peptide_col=peptide_col, rollup_func="median")
+    if pept_df_r is None or pept_df_r.shape[0] < 1:
+        Warning(f"Protein {uniprot_id} has no peptides that could be mapped to the sequence. Skipping the protein.")
+        continue
+    if len(groups) > 2:
+        pept_df_a = anova(pept_df_r, anova_cols, metadata)
+        pept_df_a = anova(pept_df_a, anova_cols, metadata, anova_factors)
+    pept_df_p = pairwise_ttest(pept_df_a, pairwise_ttest_groups)
+    pept_df_p = pairwise_ttest(pept_df_p, user_pairwise_ttest_groups)
+    double_site.append(pept_df_p)
+double_site = pd.concat(double_site).copy()
+```
+
+```{python}
+double_site.to_csv(f"{result_dir}/double_lytic_sites.tsv", sep='\t')
+double_site.to_pickle(f"{result_dir}/double_lytic_sites.pkl")
+```
+
+
+# Merge protein and site level data
+
+```{python}
+global_prot[type_col] = "Global"
+global_prot[experiment_col] = "LiP"
+global_prot[residue_col] = "GLB"
+global_prot[site_col] = global_prot[uniprot_col] + id_separator + global_prot[residue_col].astype(str)
+global_prot[protein_col] = global_prot[protein_col].map(lambda x: x.split("|")[-1])
+```
+
+```{python}
+double_site[type_col] = ["Tryp" if (i.split(id_separator)[1][0] == 'K' or i.split(id_separator)[1][0] == 'R') else "ProK" for i in double_site.index]
+double_site[experiment_col] = "LiP"
+double_site[residue_col] = double_site[site_col]
+double_site[site_col] = double_site[uniprot_col] + id_separator + double_site[site_col]
+double_site[protein_col] = double_site[protein_col].map(lambda x: x.split("|")[-1])
+```
+
+```{python}
+all_lips = pd.concat([global_prot, double_site], axis=0, join='outer', ignore_index=True).sort_values(by=["id", "Type", "Experiment", "Site"]).reset_index(drop=True)
+all_lips = count_site_number_with_global_proteomics(all_lips, uniprot_col, id_col, site_number_col)
+
+```
+
+```{python}
+all_lips = check_missingness(all_lips, groups, group_cols)
+all_lips_uncorrected = check_missingness(all_lips_uncorrected, groups, group_cols)
+```
+
+```{python}
+all_lips.to_csv(f"{result_dir}/{sample}_all_lips.tsv", sep='\t', index=False)
+all_lips.to_pickle(f"{result_dir}/{sample}_all_lips.pkl")
+```
+
+
+```{python}
+print(all_lips.columns.to_list())
+```
+
+```{python}
+all_lips[pept_info_stats_cols].to_csv(f"{result_dir}/{sample}_all_lips_for_integration.tsv", sep='\t', index=False)
+all_lips[pept_info_stats_cols].to_pickle(f"{result_dir}/{sample}_all_lips_for_integration.pkl")
+```

@@ -5,11 +5,7 @@
 
 Proteometer documentation
 =========================
-
-Add your content using ``reStructuredText`` syntax. See the
-`reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_
-documentation for details.
-
+Proteometer is a Python package for analyzing limited proteolysis and multi-post-translational modification data. 
 
 .. toctree::
    :maxdepth: 2

@@ -1,11 +1,23 @@
-# type: ignore
+from __future__ import annotations
+
 import re
+from collections.abc import Iterable
 
 import pandas as pd
-from peptide import strip_peptide
 
 
-def get_res_names(residues):
+def get_res_names(residues: Iterable[str]) -> list[list[str]]:
+    """Extracts residue names from an iterable of residue strings.
+
+    Args:
+        residues (Iterable[str]): An iterable of residue strings, each containing
+            an uppercase letter followed by digits and optional lowercase letters or hyphens.
+
+    Returns:
+        list[list[str]]: A list of lists, where each inner list contains the extracted
+            residue names from the corresponding input string. If a residue string starts
+            with 'P', the entire string is returned in the inner list.
+    """
     res_names = [
         [res for res in re.findall(r"[A-Z]\d+[a-z\-]+", residue)]
         if residue[0] != "P"
@@ -15,7 +27,19 @@ def get_res_names(residues):
     return res_names
 
 
-def get_res_pos(residues):
+def get_res_pos(residues: Iterable[str]) -> list[list[int]]:
+    """Extracts residue positions from an iterable of residue strings.
+
+    Args:
+        residues (Iterable[str]): An iterable of residue strings, each containing
+            an uppercase letter followed by digits and optional lowercase letters or hyphens.
+
+    Returns:
+        list[list[int]]: A list of lists, where each inner list contains the extracted
+            residue positions from the corresponding input string. If a residue string starts
+            with 'P', the entire string is returned in the inner list as a single element
+            with the value of 0.
+    """
     res_pos = [
         [int(res) for res in re.findall(r"\d+", residue)] if residue[0] != "P" else [0]
         for residue in residues
@@ -23,37 +47,19 @@ def get_res_pos(residues):
     return res_pos
 
 
-def get_protein_res(proteome, uniprot_id, prot_seqs):
-    protein = proteome[proteome["uniprot_id"] == uniprot_id]
-    protein.reset_index(drop=True, inplace=True)
-    prot_seq_search = [seq for seq in prot_seqs if seq.id == uniprot_id]
-    prot_seq = prot_seq_search[0]
-    sequence = str(prot_seq.seq)
-    clean_pepts = [strip_peptide(pept) for pept in protein["peptide"].to_list()]
-    protein["clean_pept"] = clean_pepts
-    pept_start = [sequence.find(clean_pept) for clean_pept in clean_pepts]
-    pept_end = [
-        sequence.find(clean_pept) + len(clean_pept) for clean_pept in clean_pepts
-    ]
-    protein["pept_start"] = pept_start
-    protein["pept_end"] = pept_end
-    protein["residue"] = [
-        [res + str(sequence.find(clean_pept) + i) for i, res in enumerate(clean_pept)]
-        for clean_pept in clean_pepts
-    ]
-    protein_res = protein.explode("residue")
-    protein_res.reset_index(drop=True, inplace=True)
-    return protein_res
-
-
-def count_site_number(df, uniprot_col, site_number_col="site_number"):
-    """_summary_
+def count_site_number(
+    df: pd.DataFrame, uniprot_col: str, site_number_col: str = "site_number"
+) -> pd.DataFrame:
+    """Counts the number of sites per protein in a given DataFrame.
 
     Args:
-        df (_type_): _description_
+        df (pd.DataFrame): DataFrame containing protein and site information.
+        uniprot_col (str): Column name of the protein identifier.
+        site_number_col (str, optional): Name of the column to store the site number.
+            Defaults to 'site_number'.
 
     Returns:
-        _type_: _description_
+        pd.DataFrame: DataFrame with the site number added.
     """
     site_number = df.groupby(uniprot_col).size()
     site_number.name = site_number_col
@@ -62,18 +68,27 @@ def count_site_number(df, uniprot_col, site_number_col="site_number"):
 
 
 def count_site_number_with_global_proteomics(
-    df, uniprot_col, id_col, site_number_col="site_number"
-):
-    """_summary_
+    df: pd.DataFrame,  # index must match id_col
+    uniprot_col: str,
+    id_col: str,
+    site_number_col: str = "site_number",
+) -> pd.DataFrame:
+    """Counts the number of sites per protein in a given DataFrame, with the global proteomics
+    data used as the reference.
 
     Args:
-        df (_type_): _description_
+        df (pd.DataFrame): DataFrame containing protein and site information. The index of
+            this DataFrame must match `id_col`.
+        uniprot_col (str): Column name of the protein identifier.
+        id_col (str): Column name of the identifier that matches the index of the DataFrame.
+        site_number_col (str, optional): Name of the column to store the site number.
+            Defaults to 'site_number'.
 
     Returns:
-        _type_: _description_
+        pd.DataFrame: DataFrame with the site number added.
     """
-    site_number = df.groupby(uniprot_col).size() - 1
+    site_number = df.groupby(uniprot_col).size() - 1  # type: ignore
     site_number.name = site_number_col
-    for uniprot in site_number.index:
+    for uniprot in site_number.index:  # type: ignore
         df.loc[df[id_col] == uniprot, site_number_col] = site_number[uniprot]
     return df

@@ -1,60 +1,101 @@
-# type: ignore
+from __future__ import annotations
+
 import re
+from collections.abc import Collection, Iterable
+from typing import TYPE_CHECKING, Any, Callable, Literal, cast
 
 import numpy as np
 import pandas as pd
-from peptide import strip_peptide
+
+from proteometer.peptide import strip_peptide
+
+if TYPE_CHECKING:
+    from proteometer.stats import TTestGroup
+
+    AggDictFloat = dict[str, Callable[[pd.Series[float]], float]]
+    AggDictStr = dict[str, Callable[[pd.Series[str]], str]]
+    AggDictAny = dict[str, Callable[[pd.Series[Any]], Any]]
 
 
 # This part is filtering all the contaminants and reverse hits
-def filter_contaminants_reverse_pept(df, search_tool, ProteinID_col_pept, uniprot_col):
-    """_summary_
+def filter_contaminants_reverse_pept(
+    df: pd.DataFrame,
+    search_tool: Literal["maxquant", "msfragger", "fragpipe"],
+    protein_id_col_pept: str,
+    uniprot_col: str,
+) -> pd.DataFrame:
+    """
+    Filters out contaminants and reverse hits from a peptide DataFrame.
 
     Args:
-        df (_type_): _description_
+        df (pd.DataFrame): Input DataFrame containing peptide data.
+        search_tool (Literal["maxquant", "msfragger", "fragpipe"]): The search tool used for data generation.
+        protein_id_col_pept (str): Column name containing protein IDs in the peptide DataFrame.
+        uniprot_col (str): Column name to store UniProt IDs.
+
+    Returns:
+        pd.DataFrame: Filtered DataFrame with contaminants and reverse hits removed.
     """
     if search_tool.lower() == "maxquant":
         df = df[
             (df["Reverse"].isna())
             & (df["Potential contaminant"].isna())
-            & (~df[ProteinID_col_pept].str.contains("(?i)Contaminant"))
-            & (~df[ProteinID_col_pept].str.contains("(?i)REV__"))
-            & (~df[ProteinID_col_pept].str.contains("(?i)CON__"))
+            & (~df[protein_id_col_pept].str.contains("(?i)Contaminant"))
+            & (~df[protein_id_col_pept].str.contains("(?i)REV__"))
+            & (~df[protein_id_col_pept].str.contains("(?i)CON__"))
         ].copy()
-        df[uniprot_col] = df[ProteinID_col_pept]
+        df[uniprot_col] = df[protein_id_col_pept]
     elif search_tool.lower() == "msfragger" or search_tool.lower() == "fragpipe":
-        df = df[(~df[ProteinID_col_pept].str.contains("(?i)contam_"))].copy()
-        df[uniprot_col] = df[ProteinID_col_pept]
+        df = df[(~df[protein_id_col_pept].str.contains("(?i)contam_"))].copy()
+        df[uniprot_col] = df[protein_id_col_pept]
     else:
         print(
-            "The search tool is not specified or not supported yet. The user should provide the tables that have been filtered and without the contaminants and reverse hits."
+            "The search tool is not specified or not supported yet. "
+            "The user should provide the tables that have been filtered "
+            "and without the contaminants and reverse hits."
         )
 
     return df
 
 
-def filter_contaminants_reverse_prot(df, search_tool, ProteinID_col_prot, uniprot_col):
-    """_summary_
+def filter_contaminants_reverse_prot(
+    df: pd.DataFrame,
+    search_tool: Literal["maxquant", "msfragger", "fragpipe"],
+    protein_id_col_prot: str,
+    uniprot_col: str,
+) -> pd.DataFrame:
+    """
+    Filters out contaminants and reverse hits from a protein DataFrame.
 
     Args:
-        df (_type_): _description_
+        df (pd.DataFrame): Input DataFrame containing protein data.
+        search_tool (Literal["maxquant", "msfragger", "fragpipe"]): The search tool used for data generation.
+        protein_id_col_prot (str): Column name containing protein IDs in the protein DataFrame.
+        uniprot_col (str): Column name to store UniProt IDs.
+
+    Returns:
+        pd.DataFrame: Filtered DataFrame with contaminants and reverse hits removed.
     """
     if search_tool.lower() == "maxquant":
         df = df[
             (df["Only identified by site"].isna())
             & (df["Reverse"].isna())
             & (df["Potential contaminant"].isna())
-            & (~df[ProteinID_col_prot].str.contains("(?i)Contaminant"))
-            & (~df[ProteinID_col_prot].str.contains("(?i)REV__"))
-            & (~df[ProteinID_col_prot].str.contains("CON__"))
+            & (~df[protein_id_col_prot].str.contains("(?i)Contaminant"))
+            & (~df[protein_id_col_prot].str.contains("(?i)REV__"))
+            & (~df[protein_id_col_prot].str.contains("CON__"))
         ].copy()
-        df[uniprot_col] = [ids.split(";")[0] for ids in df[ProteinID_col_prot]]
+        df[uniprot_col] = [
+            ids.split(";")[0] for ids in cast("pd.Series[str]", df[protein_id_col_prot])
+        ]
     elif search_tool.lower() == "msfragger" or search_tool.lower() == "fragpipe":
-        df = df[(~df[ProteinID_col_prot].str.contains("(?i)contam_"))].copy()
-        df[uniprot_col] = df[ProteinID_col_prot]
+        df = df[(~df[protein_id_col_prot].str.contains("(?i)contam_"))].copy()
+        df[uniprot_col] = df[protein_id_col_prot]
     else:
         print(
-            "The search tool is not specified or not supported yet. The user should provide the tables that have been filtered and without the contaminants and reverse hits."
+            "The search tool is not specified or not supported yet. "
+            "The user should provide the tables that have been filtered "
+            "and without the contaminants and reverse hits."
         )
 
     return df
@@ -62,61 +103,99 @@ def filter_contaminants_reverse_prot(df, search_tool, ProteinID_col_prot, unipro
 
 # Filtering out the protein groups with less than 2 peptides
 def filtering_protein_based_on_peptide_number(
-    df2filter, PeptCounts_col, search_tool, min_pept_count=2
-):
-    """_summary_
+    df2filter: pd.DataFrame,
+    peptide_counts_col: str,
+    search_tool: Literal["maxquant", "msfragger", "fragpipe"],
+    min_pept_count: int = 2,
+) -> pd.DataFrame:
+    """
+    Filters proteins based on the minimum number of peptides.
 
     Args:
-        df2filter (_type_): _description_
+        df2filter (pd.DataFrame): Input DataFrame containing proteomics data.
+        peptide_counts_col (str): Column name containing peptide counts.
+        search_tool (Literal["maxquant", "msfragger", "fragpipe"]): The search tool used for data generation.
+        min_pept_count (int, optional): Minimum number of peptides required. Defaults to 2.
+
+    Returns:
+        pd.DataFrame: Filtered DataFrame with proteins having at least `min_pept_count` peptides.
     """
     if search_tool.lower() == "maxquant":
         df2filter["Pept count"] = [
-            int(count.split(";")[0]) for count in df2filter[PeptCounts_col]
+            int(count.split(";")[0])
+            for count in cast("pd.Series[str]", df2filter[peptide_counts_col])
         ]
     elif search_tool.lower() == "msfragger" or search_tool.lower() == "fragpipe":
-        df2filter["Pept count"] = df2filter[PeptCounts_col]
+        df2filter["Pept count"] = df2filter[peptide_counts_col]
     else:
         print(
-            "The search tool is not specified or not supported yet. The user should provide the tables that have been filtered and without the contaminants and reverse hits."
+            "The search tool is not specified or not supported yet. "
+            "The user should provide the tables that have been filtered "
+            "and without the contaminants and reverse hits."
         )
     df2filter = df2filter[df2filter["Pept count"] >= min_pept_count].copy()
     return df2filter
 
 
 # This function analyze the trypic pattern of the peptides in pept dataframe
-def get_clean_peptides(pept_df, peptide_col, clean_pept_col="clean_pept"):
-    """_summary_
+def get_clean_peptides(
+    pept_df: pd.DataFrame, peptide_col: str, clean_pept_col: str = "clean_pept"
+) -> pd.DataFrame:
+    """
+    Cleans peptide sequences by removing modifications and returns a DataFrame with cleaned peptides.
 
     Args:
-        pept_df (_type_): _description_
-        peptide_col (_type_): _description_
+        pept_df (pd.DataFrame): Input DataFrame containing peptide data.
+        peptide_col (str): Column name containing peptide sequences.
+        clean_pept_col (str, optional): Column name to store cleaned peptide sequences. Defaults to "clean_pept".
 
     Returns:
-        _type_: _description_
+        pd.DataFrame: DataFrame with an additional column for cleaned peptide sequences.
     """
     clean_pepts = [
-        strip_peptide(pept, nip_off=False) for pept in pept_df[peptide_col].to_list()
+        strip_peptide(pept, nip_off=False)
+        for pept in cast("list[str]", pept_df[peptide_col].to_list())
     ]
     pept_df[clean_pept_col] = clean_pepts
     return pept_df
 
 
 # This function analyze the trypic pattern of the peptides in pept dataframe
-def get_tryptic_types(pept_df, prot_seq, peptide_col, clean_pept_col="clean_pept"):
+def get_tryptic_types(
+    pept_df: pd.DataFrame,
+    prot_seq: str,
+    peptide_col: str,
+    clean_pept_col: str = "clean_pept",
+) -> pd.DataFrame:
+    """
+    Analyzes the tryptic pattern of peptides and classifies them as tryptic, semi-tryptic, or non-tryptic.
+
+    Args:
+        pept_df (pd.DataFrame): Input DataFrame containing peptide data.
+        prot_seq (str): Protein sequence to analyze against.
+        peptide_col (str): Column name containing peptide sequences.
+        clean_pept_col (str, optional): Column name for cleaned peptide sequences. Defaults to "clean_pept".
+
+    Returns:
+        pd.DataFrame: DataFrame with additional columns for peptide start, end, and type.
+    """
     seq_len = len(prot_seq)
     # pept_df.reset_index(drop=True, inplace=True)
     if pept_df.shape[0] == 0:
-        print("The peptide dataframe is empty. Please check the input dataframe.")
-        return
+        raise ValueError(
+            "The peptide dataframe is empty. Please check the input dataframe."
+        )
+
     else:
         if clean_pept_col not in pept_df.columns:
             pept_df = get_clean_peptides(pept_df, peptide_col, clean_pept_col)
         pept_start = [
-            prot_seq.find(clean_pept) + 1 for clean_pept in pept_df[clean_pept_col]
+            prot_seq.find(clean_pept) + 1
+            for clean_pept in cast("pd.Series[str]", pept_df[clean_pept_col])
         ]
         pept_end = [
             prot_seq.find(clean_pept) + len(clean_pept)
-            for clean_pept in pept_df[clean_pept_col]
+            for clean_pept in cast("pd.Series[str]", pept_df[clean_pept_col])
         ]
         pept_df["pept_start"] = pept_start
         pept_df["pept_end"] = pept_end
@@ -136,26 +215,29 @@ def get_tryptic_types(pept_df, prot_seq, peptide_col, clean_pept_col="clean_pept
     return pept_df
 
 
-# Select peptides based on the digestion pattern, depending on the type of peptides (all, any-tryptic, tryptic, semi-tryptic, or non-tryptic)
+# Select peptides based on the digestion pattern, depending on the type of
+# peptides (all, any-tryptic, tryptic, semi-tryptic, or non-tryptic)
 def select_tryptic_pattern(
-    pept_df,
-    prot_seq,
-    tryptic_pattern="all",
-    peptide_col=None,
-    clean_pept_col="clean_pept",
-):
-    """_summary_
+    pept_df: pd.DataFrame,
+    prot_seq: str,
+    tryptic_pattern: str = "all",
+    peptide_col: str = "Sequence",
+    clean_pept_col: str = "clean_pept",
+) -> pd.DataFrame:
+    """
+    Selects peptides based on their digestion pattern.
 
     Args:
-        pept_df (_type_): _description_
-        prot_seq (_type_): _description_
-        pept_type (str, optional): _description_. Defaults to "all".
-        peptide_col (str, optional): _description_. Defaults to "Sequence".
+        pept_df (pd.DataFrame): Input DataFrame containing peptide data.
+        prot_seq (str): Protein sequence to analyze against.
+        tryptic_pattern (str, optional): Digestion pattern to filter peptides. Defaults to "all".
+            must be one of: all, any-tryptic, tryptic, semi-tryptic, non-tryptic.
+        peptide_col (str, optional): Column name containing peptide sequences. Defaults to "Sequence".
+        clean_pept_col (str, optional): Column name for cleaned peptide sequences. Defaults to "clean_pept".
 
-    Raises:
-        ValueError: _description_
+    Returns:
+        pd.DataFrame: Filtered DataFrame with peptides matching the specified digestion pattern.
     """
-
     if "pept_type" not in pept_df.columns:
         pept_df = get_tryptic_types(pept_df, prot_seq, peptide_col, clean_pept_col)
 
@@ -174,31 +256,45 @@ def select_tryptic_pattern(
         protein = pept_df[pept_df["pept_type"] == "Non-tryptic"].copy()
     else:
         raise ValueError(
-            "The peptide type is not recognized. Please choose from the following: all, any-tryptic, tryptic, semi-tryptic, non-tryptic"
+            "The peptide type is not recognized. Please choose from the following: "
+            "all, any-tryptic, tryptic, semi-tryptic, non-tryptic"
         )
     return protein
 
 
 def analyze_tryptic_pattern(
-    protein,
-    sequence,
-    pairwise_ttest_groups,
-    groups,
-    description="",
-    peptide_col=None,
-    clean_pept_col="clean_pept",
-    anova_type="[Group]",
-    keep_non_tryptic=True,
-    id_separator="@",
-    sig_type="pval",
-    sig_thr=0.05,
-):
-    """_summary_
+    protein: pd.DataFrame,
+    sequence: str,
+    pairwise_ttest_groups: Iterable[TTestGroup],
+    groups: Collection[str],
+    peptide_col: str,
+    description: str = "",
+    clean_pept_col: str = "clean_pept",
+    anova_type: str = "[Group]",
+    keep_non_tryptic: bool = True,
+    id_separator: str = "@",
+    sig_type: str = "pval",
+    sig_thr: float = 0.05,
+) -> pd.DataFrame:
+    """
+    Analyzes tryptic patterns and calculates statistics for peptides.
 
     Args:
-        protein (_type_): _description_
-        sequence (_type_): _description_
-        description (str, optional): _description_. Defaults to "".
+        protein (pd.DataFrame): Input DataFrame containing proteomics data.
+        sequence (str): Protein sequence to analyze against.
+        pairwise_ttest_groups (Iterable[TTestGroup]): Groups for pairwise t-tests.
+        groups (Collection[str]): Collection of group names.
+        peptide_col (str): Column name containing peptide sequences.
+        description (str, optional): Protein description to add to data frame. Defaults to "".
+        clean_pept_col (str, optional): Column name for cleaned peptide sequences. Defaults to "clean_pept".
+        anova_type (str, optional): Type of ANOVA analysis. Defaults to "[Group]".
+        keep_non_tryptic (bool, optional): Whether to keep non-tryptic peptides. Defaults to True.
+        id_separator (str, optional): Separator for peptide IDs. Defaults to "@".
+        sig_type (str, optional): Significance type (e.g., "pval"). Defaults to "pval".
+        sig_thr (float, optional): Significance threshold. Defaults to 0.05.
+
+    Returns:
+        pd.DataFrame: DataFrame with analyzed tryptic patterns and statistics.
     """
     # protein.reset_index(drop=True, inplace=True)
     seq_len = len(sequence)
@@ -213,9 +309,9 @@ def analyze_tryptic_pattern(
     )
 
     pairwise_ttest_names = [
-        pairwise_ttest_group[0] for pairwise_ttest_group in pairwise_ttest_groups
+        pairwise_ttest_group.label() for pairwise_ttest_group in pairwise_ttest_groups
     ]
-    if len(groups) > 2:
+    if len(list(pairwise_ttest_groups)) > 2:
         sig_semi_pepts = protein[
             (protein["pept_type"] == "Semi-tryptic")
             & (protein[f"ANOVA_{anova_type}_{sig_type}"] < sig_thr)
@@ -224,13 +320,24 @@ def analyze_tryptic_pattern(
 
         if sig_semi_pepts.shape[0] != 0:
             protein[f"Max absFC of All ANOVA_{anova_type} Sig Semi Pept"] = np.nanmax(
-                sig_semi_pepts[pairwise_ttest_names].abs().values
+                cast(
+                    "pd.Series[float]",
+                    sig_semi_pepts[pairwise_ttest_names].abs().values,
+                )
             )
             protein[f"Sum absFC of All ANOVA_{anova_type} Sig Semi Pept"] = np.nansum(
-                sig_semi_pepts[pairwise_ttest_names].abs().values
+                cast(
+                    "pd.Series[float]",
+                    sig_semi_pepts[pairwise_ttest_names].abs().values,
+                )
             )
             protein[f"Median absFC of All ANOVA_{anova_type} Sig Semi Pept"] = (
-                np.nanmedian(sig_semi_pepts[pairwise_ttest_names].abs().values)
+                np.nanmedian(
+                    cast(
+                        "pd.Series[float]",
+                        sig_semi_pepts[pairwise_ttest_names].abs().values,
+                    )
+                )
             )
         else:
             protein[f"Max absFC of All ANOVA_{anova_type} Sig Semi Pept"] = np.nan
@@ -245,13 +352,28 @@ def analyze_tryptic_pattern(
         protein[f"{pairwise_ttest_name} Sig Semi Pept num"] = sig_semi_pepts.shape[0]
         if sig_semi_pepts.shape[0] != 0:
             protein[f"Max absFC of All {pairwise_ttest_name} Sig Semi Pept"] = (
-                np.nanmax(sig_semi_pepts[pairwise_ttest_name].abs().values)
+                np.nanmax(
+                    cast(
+                        "pd.Series[float]",
+                        sig_semi_pepts[pairwise_ttest_name].abs().values,
+                    )
+                )
             )
             protein[f"Sum absFC of All {pairwise_ttest_name} Sig Semi Pept"] = (
-                np.nansum(sig_semi_pepts[pairwise_ttest_name].abs().values)
+                np.nansum(
+                    cast(
+                        "pd.Series[float]",
+                        sig_semi_pepts[pairwise_ttest_name].abs().values,
+                    )
+                )
             )
             protein[f"Median absFC of All {pairwise_ttest_name} Sig Semi Pept"] = (
-                np.nanmedian(sig_semi_pepts[pairwise_ttest_name].abs().values)
+                np.nanmedian(
+                    cast(
+                        "pd.Series[float]",
+                        sig_semi_pepts[pairwise_ttest_name].abs().values,
+                    )
+                )
             )
         else:
             protein[f"Max absFC of All {pairwise_ttest_name} Sig Semi Pept"] = np.nan
@@ -259,12 +381,12 @@ def analyze_tryptic_pattern(
             protein[f"Median absFC of All {pairwise_ttest_name} Sig Semi Pept"] = np.nan
 
     protein["pept_id"] = [
-        str(protein["pept_start"].to_list()[i]).zfill(4)
+        str(cast("int", protein["pept_start"].to_list()[i])).zfill(4)
         + "-"
-        + str(protein["pept_end"].to_list()[i]).zfill(4)
+        + str(cast("int", protein["pept_end"].to_list()[i])).zfill(4)
         + id_separator
         + pept
-        for i, pept in enumerate(protein[peptide_col].to_list())
+        for i, pept in enumerate(cast("pd.Series[str]", protein[peptide_col].to_list()))
     ]
     # protein.index = protein["pept_id"]
     not_matched = protein[protein["pept_type"] == "Not-matched"].copy().sort_index()
@@ -276,7 +398,9 @@ def analyze_tryptic_pattern(
     if keep_non_tryptic:
         nontryptic = protein[protein["pept_type"] == "Non-tryptic"].copy().sort_index()
         nontryptic["lytic_group"] = 0
-    for i, idx in enumerate(tryptic.index.to_list()):
+    else:
+        nontryptic = None
+    for i, idx in enumerate(cast("list[int]", tryptic.index.to_list())):
         tryptic.loc[idx, "lytic_group"] = i + 1
         semitryptic.loc[
             (
@@ -286,15 +410,16 @@ def analyze_tryptic_pattern(
             "lytic_group",
         ] = i + 1
         if keep_non_tryptic:
+            assert nontryptic is not None
             nontryptic.loc[
                 (
                     (
                         nontryptic["pept_start"].astype(int)
-                        > int(tryptic.loc[idx, "pept_start"])
+                        > int((tryptic.loc[idx, "pept_start"]))  # type: ignore
                     )
                     & (
                         nontryptic["pept_start"].astype(int)
-                        < int(tryptic.loc[idx, "pept_end"])
+                        < int((tryptic.loc[idx, "pept_end"]))  # type: ignore
                     )
                 ),
                 "lytic_group",
@@ -309,181 +434,60 @@ def analyze_tryptic_pattern(
     return protein_any_tryptic
 
 
-# Rollup to site level, NB: this is for individual proteins, because the protein sequence is needed
-# This function is to roll up the LiP pept data to the site level with median values
-def LiP_rollup_to_site(
-    pept,
-    int_cols,
-    sequence,
-    uniprot_col,
-    residue_col="Residue",
-    uniprot_id="Protein ID (provided by user)",
-    peptide_col="Sequence",
-    clean_pept_col="clean_pept",
-    id_col="id",
-    id_separator="@",
-    pept_type_col="pept_type",
-    site_col="Site",
-    pos_col="Pos",
-    multiply_rollup_counts=True,
-    ignore_NA=True,
-    rollup_func="median",
-):
-    """_summary_
-
-    Args:
-        pept (_type_): _description_
-        sequence (_type_): _description_
-        uniprot_id (str, optional): _description_. Defaults to "".
-
-    Raises:
-        ValueError: _description_
-    """
-    raise DeprecationWarning("Deprecated")
-    # seq_len = len(sequence)
-    if clean_pept_col not in pept.columns.to_list():
-        pept = get_tryptic_types(pept, sequence, peptide_col, clean_pept_col)
-    if pept.shape[0] > 0:
-        pept = get_clean_peptides(pept, peptide_col, clean_pept_col)
-        pept[residue_col] = [
-            [
-                res + str(sequence.find(clean_pept) + i + 1)
-                for i, res in enumerate(clean_pept)
-            ]
-            for clean_pept in pept[clean_pept_col]
-        ]
-        info_cols = [col for col in pept.columns if col not in int_cols]
-        pept = pept.explode(residue_col)
-        pept[id_col] = (
-            uniprot_id
-            + id_separator
-            + pept[residue_col]
-            + id_separator
-            + pept[pept_type_col]
-        )
-
-        # pept[id_col] = uniprot_id + id_separator + pept[residue_col]
-        # pept[int_cols] = 2 ** (pept[int_cols])
-        # pept_grouped = pept[int_cols].groupby(pept.index).sum(min_count=1)
-        # pept_grouped = log2_transformation(pept_grouped)
-
-        # Lisa Bramer and Kelly Straton suggested to use median of log2 scale
-        # values rathen than summing up the intenisty values at linear scale
-
-        info_cols_wo_peptide_col = [col for col in info_cols if col != peptide_col]
-        agg_methods_0 = {peptide_col: lambda x: "; ".join(x)}
-        agg_methods_1 = {i: lambda x: x.iloc[0] for i in info_cols_wo_peptide_col}
-        if multiply_rollup_counts:
-            if ignore_NA:
-                if rollup_func.lower() == "median":
-                    agg_methods_2 = {
-                        i: lambda x: np.log2(len(x)) + x.median() for i in int_cols
-                    }
-                elif rollup_func.lower() == "mean":
-                    agg_methods_2 = {
-                        i: lambda x: np.log2(len(x)) + x.mean() for i in int_cols
-                    }
-                elif rollup_func.lower() == "sum":
-                    agg_methods_2 = {
-                        i: lambda x: np.log2(np.nansum(2 ** (x.replace(0, np.nan))))
-                        for i in int_cols
-                    }
-                else:
-                    ValueError(
-                        "The rollup function is not recognized. Please choose from the following: median, mean, sum"
-                    )
-            else:
-                if rollup_func.lower() == "median":
-                    agg_methods_2 = {
-                        i: lambda x: np.log2(x.notna().sum()) + x.median()
-                        for i in int_cols
-                    }
-                elif rollup_func.lower() == "mean":
-                    agg_methods_2 = {
-                        i: lambda x: np.log2(x.notna().sum()) + x.mean()
-                        for i in int_cols
-                    }
-                elif rollup_func.lower() == "sum":
-                    agg_methods_2 = {
-                        i: lambda x: np.log2(np.nansum(2 ** (x.replace(0, np.nan))))
-                        for i in int_cols
-                    }
-                else:
-                    ValueError(
-                        "The rollup function is not recognized. Please choose from the following: median, mean, sum"
-                    )
-        else:
-            if rollup_func.lower() == "median":
-                agg_methods_2 = {i: lambda x: x.median() for i in int_cols}
-            elif rollup_func.lower() == "mean":
-                agg_methods_2 = {i: lambda x: x.mean() for i in int_cols}
-            elif rollup_func.lower() == "sum":
-                agg_methods_2 = {
-                    i: lambda x: np.log2(np.nansum(2 ** (x.replace(0, np.nan))))
-                    for i in int_cols
-                }
-            else:
-                ValueError(
-                    "The rollup function is not recognized. Please choose from the following: median, mean, sum"
-                )
-        pept_grouped = pept.groupby(id_col, as_index=False).agg(
-            {**agg_methods_0, **agg_methods_1, **agg_methods_2}
-        )
-        pept_grouped[uniprot_col] = uniprot_id
-        pept_grouped[site_col] = [
-            site.split(id_separator)[1] for site in pept_grouped[id_col]
-        ]
-        pept_grouped[pos_col] = [
-            int(re.sub(r"\D", "", site)) for site in pept_grouped[site_col]
-        ]
-        pept_grouped.sort_values(by=[pos_col], inplace=True)
-        pept_grouped[pept_type_col] = [
-            site.split(id_separator)[-1] for site in pept_grouped[id_col]
-        ]
-        # pept_grouped.index = uniprot_id + id_separator + pept_grouped["Site"]
-        pept_grouped.index = pept_grouped[id_col].to_list()
-        return pept_grouped
-    else:
-        raise ValueError(
-            "The pept dataframe is empty. Please check the input dataframe."
-        )
-
-
 # This function is to analyze the digestion site pattern of the peptides in LiP pept dataframe
-def LiP_rollup_to_lytic_site(
-    df,
-    int_cols,
-    uniprot_col,
-    sequence,
-    residue_col="Residue",
-    description="",
-    tryptic_pattern="all",
-    peptide_col="Sequence",
-    clean_pept_col="clean_pept",
-    id_separator="@",
-    id_col="id",
-    pept_type_col="pept_type",
-    site_col="Site",
-    pos_col="Pos",
-    multiply_rollup_counts=True,
-    ignore_NA=True,
-    alternative_protease="ProK",
-    rollup_func="median",
-):
-    """_summary_
+def rollup_to_lytic_site(
+    df: pd.DataFrame,
+    int_cols: Iterable[str],
+    uniprot_col: str,
+    sequence: str,
+    residue_col: str = "Residue",
+    description: str = "",
+    tryptic_pattern: str = "all",
+    peptide_col: str = "Sequence",
+    clean_pept_col: str = "clean_pept",
+    id_separator: str = "@",
+    id_col: str = "id",
+    pept_type_col: str = "pept_type",
+    site_col: str = "Site",
+    pos_col: str = "Pos",
+    multiply_rollup_counts: bool = True,
+    ignore_NA: bool = True,
+    alternative_protease: str = "ProK",
+    rollup_func: Literal["median", "mean", "sum"] = "median",
+) -> pd.DataFrame:
+    """
+    Rolls up peptide-level limited proteolysis data to lytic sites.
 
     Args:
-        protein (_type_): _description_
-        sequence (_type_): _description_
-        description (str, optional): _description_. Defaults to "".
+        df (pd.DataFrame): Input DataFrame containing peptide data.
+        int_cols (Iterable[str]): Columns with intensity values to aggregate.
+        uniprot_col (str): Column name for UniProt IDs.
+        sequence (str): Protein sequence to analyze against.
+        residue_col (str, optional): Column name for lytic residues. Defaults to "Residue".
+        description (str, optional): Protein description to add to data frame. Defaults to "".
+        tryptic_pattern (str, optional): Digestion pattern to filter peptides. Defaults to "all".
+        peptide_col (str, optional): Column name containing peptide sequences. Defaults to "Sequence".
+        clean_pept_col (str, optional): Column name for cleaned peptide sequences. Defaults to "clean_pept".
+        id_separator (str, optional): Separator for IDs. Defaults to "@".
+        id_col (str, optional): Column name for IDs. Defaults to "id".
+        pept_type_col (str, optional): Column name for peptide types. Defaults to "pept_type".
+        site_col (str, optional): Column name for lytic sites. Defaults to "Site".
+        pos_col (str, optional): Column name for positions. Defaults to "Pos".
+        multiply_rollup_counts (bool, optional): Whether to multiply rollup counts. Defaults to True.
+        ignore_NA (bool, optional): Whether to ignore NA values. Defaults to True.
+        alternative_protease (str, optional): Name of the alternative protease. Defaults to "ProK".
+        rollup_func (Literal["median", "mean", "sum"], optional): Aggregation function. Defaults to "median".
+
+    Returns:
+        pd.DataFrame: DataFrame with rolled-up lytic site data and aggregated statistics.
     """
-    raise DeprecationWarning("Deprecated")
     protein = df.copy()
     # protein.reset_index(drop=True, inplace=True)
     seq_len = len(sequence)
     uniprot_id = protein[uniprot_col].unique()[0]
     clean_pepts = [
-        strip_peptide(pept, nip_off=False) for pept in protein[peptide_col].to_list()
+        strip_peptide(pept, nip_off=False)
+        for pept in cast("pd.Series[str]", protein[peptide_col].to_list())
     ]
     protein["Protein description"] = description
     protein["Protein length"] = seq_len
@@ -517,513 +521,123 @@ def LiP_rollup_to_lytic_site(
         clean_pept_col=clean_pept_col,
     )
 
-    if protein2explode.shape[0] > 0:
-        protein_lys = protein2explode.explode(residue_col)
-        info_cols = [col for col in protein_lys.columns if col not in int_cols]
-        protein_lys[id_col] = uniprot_id + id_separator + protein_lys[residue_col]
-        info_cols_wo_peptide_col = [col for col in info_cols if col != peptide_col]
-        agg_methods_0 = {peptide_col: lambda x: "; ".join(x)}
-        agg_methods_1 = {i: lambda x: x.iloc[0] for i in info_cols_wo_peptide_col}
-        if multiply_rollup_counts:
-            if ignore_NA:
-                if rollup_func.lower() == "median":
-                    agg_methods_2 = {
-                        i: lambda x: np.log2(len(x)) + x.median() for i in int_cols
-                    }
-                elif rollup_func.lower() == "mean":
-                    agg_methods_2 = {
-                        i: lambda x: np.log2(len(x)) + x.mean() for i in int_cols
-                    }
-                elif rollup_func.lower() == "sum":
-                    agg_methods_2 = {
-                        i: lambda x: np.log2(np.nansum(2 ** (x.replace(0, np.nan))))
-                        for i in int_cols
-                    }
-                else:
-                    ValueError(
-                        "The rollup function is not recognized. Please choose from the following: median, mean, sum"
-                    )
-            else:
-                if rollup_func.lower() == "median":
-                    agg_methods_2 = {
-                        i: lambda x: np.log2(x.notna().sum()) + x.median()
-                        for i in int_cols
-                    }
-                elif rollup_func.lower() == "mean":
-                    agg_methods_2 = {
-                        i: lambda x: np.log2(x.notna().sum()) + x.mean()
-                        for i in int_cols
-                    }
-                elif rollup_func.lower() == "sum":
-                    agg_methods_2 = {
-                        i: lambda x: np.log2(np.nansum(2 ** (x.replace(0, np.nan))))
-                        for i in int_cols
-                    }
-                else:
-                    ValueError(
-                        "The rollup function is not recognized. Please choose from the following: median, mean, sum"
-                    )
-        else:
+    if protein2explode.shape[0] == 0:
+        Warning(
+            f"The resulted dataframe of digestion site in {uniprot_id} is empty. "
+            "Please check the input dataframe."
+        )
+        return protein2explode
+
+    protein_lys = protein2explode.explode(residue_col)
+    info_cols = [col for col in protein_lys.columns if col not in int_cols]
+    protein_lys[id_col] = uniprot_id + id_separator + protein_lys[residue_col]
+    info_cols_wo_peptide_col = [col for col in info_cols if col != peptide_col]
+    agg_methods_0: AggDictStr = {peptide_col: lambda x: "; ".join(x)}
+    agg_methods_1: AggDictAny = {
+        i: lambda x: x.iloc[0] for i in info_cols_wo_peptide_col
+    }
+    if multiply_rollup_counts:
+        if ignore_NA:
             if rollup_func.lower() == "median":
-                agg_methods_2 = {i: lambda x: x.median() for i in int_cols}
+                agg_methods_2: AggDictFloat = {
+                    i: lambda x: np.log2(len(x)) + x.median() for i in int_cols
+                }
             elif rollup_func.lower() == "mean":
-                agg_methods_2 = {i: lambda x: x.mean() for i in int_cols}
+                agg_methods_2: AggDictFloat = {
+                    i: lambda x: np.log2(len(x)) + x.mean() for i in int_cols
+                }
             elif rollup_func.lower() == "sum":
-                agg_methods_2 = {
+                agg_methods_2: AggDictFloat = {
                     i: lambda x: np.log2(np.nansum(2 ** (x.replace(0, np.nan))))
                     for i in int_cols
                 }
             else:
-                ValueError(
-                    "The rollup function is not recognized. Please choose from the following: median, mean, sum"
+                raise ValueError(
+                    "The rollup function is not recognized. Please choose from the following: "
+                    "median, mean, sum"
                 )
-        protein_lys_grouped = protein_lys.groupby(id_col, as_index=False).agg(
-            {**agg_methods_0, **agg_methods_1, **agg_methods_2}
-        )
-
-        protein_lys_grouped[uniprot_col] = uniprot_id
-        protein_lys_grouped[site_col] = [
-            site.split(id_separator)[1] for site in protein_lys_grouped[id_col]
-        ]
-        protein_lys_grouped[pos_col] = [
-            int(re.sub(r"\D", "", site)) for site in protein_lys_grouped[site_col]
-        ]
-        protein_lys_grouped["Lytic site type"] = [
-            "trypsin" if ("K" in i) or ("R" in i) else alternative_protease
-            for i in protein_lys_grouped[site_col]
-        ]
-        protein_lys_grouped["All pept num"] = pept_num
-        protein_lys_grouped["Semi-tryptic pept num"] = semi_num
-        protein_lys_grouped["Non-tryptic pept num"] = non_num
-        protein_lys_grouped[f"{alternative_protease} pept num"] = prok_num
-        protein_lys_grouped[f"{alternative_protease} site num"] = (
-            protein_lys_grouped["Lytic site type"].to_list().count(alternative_protease)
-        )
-        protein_lys_grouped["Tryp site num"] = (
-            protein_lys_grouped["Lytic site type"].to_list().count("trypsin")
-        )
-
-        protein_lys_grouped.sort_values(by=[pos_col], inplace=True)
-        # protein_lys_grouped_sig.sort_values(by=[pos_col], inplace=True)
-        protein_lys_grouped.index = protein_lys_grouped[id_col].to_list()
-        return protein_lys_grouped
+        else:
+            if rollup_func.lower() == "median":
+                agg_methods_2: AggDictFloat = {
+                    i: lambda x: np.log2(x.notna().sum()) + x.median() for i in int_cols
+                }
+            elif rollup_func.lower() == "mean":
+                agg_methods_2: AggDictFloat = {
+                    i: lambda x: np.log2(x.notna().sum()) + x.mean() for i in int_cols
+                }
+            elif rollup_func.lower() == "sum":
+                agg_methods_2: AggDictFloat = {
+                    i: lambda x: np.log2(np.nansum(2 ** (x.replace(0, np.nan))))
+                    for i in int_cols
+                }
+            else:
+                raise ValueError(
+                    "The rollup function is not recognized. Please choose from the following: "
+                    "median, mean, sum"
+                )
     else:
-        # raise ValueError("The pept dataframe is empty. Please check the input dataframe.")
-        print(
-            f"The resulted dataframe of digestion site in {uniprot_id} is empty. Please check the input dataframe."
-        )
-        return None
+        if rollup_func.lower() == "median":
+            agg_methods_2: AggDictFloat = {i: lambda x: x.median() for i in int_cols}
+        elif rollup_func.lower() == "mean":
+            agg_methods_2: AggDictFloat = {i: lambda x: x.mean() for i in int_cols}
+        elif rollup_func.lower() == "sum":
+            agg_methods_2: AggDictFloat = {
+                i: lambda x: np.log2(np.nansum(2 ** (x.replace(0, np.nan))))
+                for i in int_cols
+            }
+        else:
+            raise ValueError(
+                "The rollup function is not recognized. Please choose from the following: "
+                "median, mean, sum"
+            )
+    protein_lys_grouped = protein_lys.groupby(id_col, as_index=False).agg(
+        {**agg_methods_0, **agg_methods_1, **agg_methods_2}
+    )
+
+    protein_lys_grouped[uniprot_col] = uniprot_id
+    protein_lys_grouped[site_col] = [
+        site.split(id_separator)[1]
+        for site in cast("pd.Series[str]", protein_lys_grouped[id_col])
+    ]
+    protein_lys_grouped[pos_col] = [
+        int(re.sub(r"\D", "", site))
+        for site in cast("pd.Series[str]", protein_lys_grouped[site_col])
+    ]
+    protein_lys_grouped["Lytic site type"] = [
+        "trypsin" if ("K" in i) or ("R" in i) else alternative_protease
+        for i in cast("pd.Series[str]", protein_lys_grouped[site_col])
+    ]
+    protein_lys_grouped["All pept num"] = pept_num
+    protein_lys_grouped["Semi-tryptic pept num"] = semi_num
+    protein_lys_grouped["Non-tryptic pept num"] = non_num
+    protein_lys_grouped[f"{alternative_protease} pept num"] = prok_num
+    protein_lys_grouped[f"{alternative_protease} site num"] = (
+        protein_lys_grouped["Lytic site type"].to_list().count(alternative_protease)
+    )
+    protein_lys_grouped["Tryp site num"] = (
+        protein_lys_grouped["Lytic site type"].to_list().count("trypsin")
+    )
+
+    protein_lys_grouped.sort_values(by=[pos_col], inplace=True)
+    protein_lys_grouped.index = protein_lys_grouped[id_col].to_list()  # type: ignore
+    return protein_lys_grouped
 
 
-def select_lytic_sites(site_df, site_type="prok", site_type_col="Lytic site type"):
-    """_summary_
+def select_lytic_sites(
+    site_df: pd.DataFrame,
+    site_type: str = "prok",
+    site_type_col: str = "Lytic site type",
+) -> pd.DataFrame:
+    """
+    Selects lytic sites based on the specified site type.
 
     Args:
-        site_df (_type_): _description_
-        site_type (str, optional): _description_. Defaults to "prok".
-        site_type_col (str, optional): _description_. Defaults to "Lytic site type".
+        site_df (pd.DataFrame): Input DataFrame containing lytic site data.
+        site_type (str, optional): Type of lytic site to select. Defaults to "prok".
+        site_type_col (str, optional): Column name for lytic site types. Defaults to "Lytic site type".
+
+    Returns:
+        pd.DataFrame: Filtered DataFrame with selected lytic sites.
     """
     site_df_out = site_df[site_df[site_type_col] == site_type].copy()
     return site_df_out
-
-
-def LiP_median_rollup_to_site(
-    pept,
-    int_cols,
-    sequence,
-    uniprot_col,
-    residue_col="Residue",
-    uniprot_id="Protein ID (provided by user)",
-    peptide_col="Sequence",
-    clean_pept_col="clean_pept",
-    id_col="id",
-    id_separator="@",
-    pept_type_col="pept_type",
-    site_col="Site",
-    pos_col="Pos",
-    multiply_rollup_counts=True,
-    ignore_NA=True,
-):
-    raise DeprecationWarning("Deprecated")
-    """_summary_
-
-        Args:
-            pept (_type_): _description_
-            sequence (_type_): _description_
-            uniprot_id (str, optional): _description_. Defaults to "".
-
-        Raises:
-            ValueError: _description_
-        """
-    # seq_len = len(sequence)
-    if clean_pept_col not in pept.columns.to_list():
-        pept = get_tryptic_types(pept, sequence, peptide_col, clean_pept_col)
-    if pept.shape[0] > 0:
-        pept = get_clean_peptides(pept, peptide_col, clean_pept_col)
-        pept[residue_col] = [
-            [
-                res + str(sequence.find(clean_pept) + i + 1)
-                for i, res in enumerate(clean_pept)
-            ]
-            for clean_pept in pept[clean_pept_col]
-        ]
-        info_cols = [col for col in pept.columns if col not in int_cols]
-        pept = pept.explode(residue_col)
-        pept[id_col] = (
-            uniprot_id
-            + id_separator
-            + pept[residue_col]
-            + id_separator
-            + pept[pept_type_col]
-        )
-        # pept[id_col] = uniprot_id + id_separator + pept[residue_col]
-        # pept[int_cols] = 2 ** (pept[int_cols])
-        # pept_grouped = pept[int_cols].groupby(pept.index).sum(min_count=1)
-        # pept_grouped = log2_transformation(pept_grouped)
-        # # Lisa Bramer and Kelly Straton suggested to use median of log2 scale values rathen than summing up the intenisty values at linear scale
-        info_cols_wo_peptide_col = [col for col in info_cols if col != peptide_col]
-        agg_methods_0 = {peptide_col: lambda x: "; ".join(x)}
-        agg_methods_1 = {i: lambda x: x.iloc[0] for i in info_cols_wo_peptide_col}
-        if multiply_rollup_counts:
-            if ignore_NA:
-                agg_methods_2 = {
-                    i: lambda x: np.log2(len(x)) + x.median() for i in int_cols
-                }
-            else:
-                agg_methods_2 = {
-                    i: lambda x: np.log2(x.notna().sum()) + x.median() for i in int_cols
-                }
-        else:
-            agg_methods_2 = {i: lambda x: x.median() for i in int_cols}
-        pept_grouped = pept.groupby(id_col, as_index=False).agg(
-            {**agg_methods_0, **agg_methods_1, **agg_methods_2}
-        )
-        pept_grouped[uniprot_col] = uniprot_id
-        pept_grouped[site_col] = [
-            site.split(id_separator)[1] for site in pept_grouped[id_col]
-        ]
-        pept_grouped[pos_col] = [
-            int(re.sub(r"\D", "", site)) for site in pept_grouped[site_col]
-        ]
-        pept_grouped.sort_values(by=[pos_col], inplace=True)
-        pept_grouped[pept_type_col] = [
-            site.split(id_separator)[-1] for site in pept_grouped[id_col]
-        ]
-        # pept_grouped.index = uniprot_id + id_separator + pept_grouped["Site"]
-        pept_grouped.index = pept_grouped[id_col].to_list()
-        return pept_grouped
-    else:
-        raise ValueError(
-            "The pept dataframe is empty. Please check the input dataframe."
-        )
-
-
-def LiP_mean_rollup_to_site(
-    pept,
-    int_cols,
-    sequence,
-    uniprot_col,
-    residue_col="Residue",
-    uniprot_id="Protein ID (provided by user)",
-    peptide_col="Sequence",
-    clean_pept_col="clean_pept",
-    id_col="id",
-    id_separator="@",
-    pept_type_col="pept_type",
-    site_col="Site",
-    pos_col="Pos",
-    multiply_rollup_counts=True,
-    ignore_NA=True,
-):
-    raise DeprecationWarning("Deprecated")
-    # seq_len = len(sequence)
-    if clean_pept_col not in pept.columns.to_list():
-        pept = get_tryptic_types(pept, sequence, peptide_col, clean_pept_col)
-    if pept.shape[0] > 0:
-        pept = get_clean_peptides(pept, peptide_col, clean_pept_col)
-        pept[residue_col] = [
-            [
-                res + str(sequence.find(clean_pept) + i + 1)
-                for i, res in enumerate(clean_pept)
-            ]
-            for clean_pept in pept[clean_pept_col]
-        ]
-        info_cols = [col for col in pept.columns if col not in int_cols]
-        pept = pept.explode(residue_col)
-        pept[id_col] = (
-            uniprot_id
-            + id_separator
-            + pept[residue_col]
-            + id_separator
-            + pept[pept_type_col]
-        )
-        # pept[id_col] = uniprot_id + id_separator + pept[residue_col]
-        # pept[int_cols] = 2 ** (pept[int_cols])
-        # pept_grouped = pept[int_cols].groupby(pept.index).sum(min_count=1)
-        # pept_grouped = log2_transformation(pept_grouped)
-        # # Lisa Bramer and Kelly Straton suggested to use median of log2 scale values rathen than summing up the intenisty values at linear scale
-        info_cols_wo_peptide_col = [col for col in info_cols if col != peptide_col]
-        agg_methods_0 = {peptide_col: lambda x: "; ".join(x)}
-        agg_methods_1 = {i: lambda x: x.iloc[0] for i in info_cols_wo_peptide_col}
-        if multiply_rollup_counts:
-            if ignore_NA:
-                agg_methods_2 = {
-                    i: lambda x: np.log2(len(x)) + x.mean() for i in int_cols
-                }
-            else:
-                agg_methods_2 = {
-                    i: lambda x: np.log2(x.notna().sum()) + x.mean() for i in int_cols
-                }
-        else:
-            agg_methods_2 = {i: lambda x: x.mean() for i in int_cols}
-        pept_grouped = pept.groupby(id_col, as_index=False).agg(
-            {**agg_methods_0, **agg_methods_1, **agg_methods_2}
-        )
-        pept_grouped[uniprot_col] = uniprot_id
-        pept_grouped[site_col] = [
-            site.split(id_separator)[1] for site in pept_grouped[id_col]
-        ]
-        pept_grouped[pos_col] = [
-            int(re.sub(r"\D", "", site)) for site in pept_grouped[site_col]
-        ]
-        pept_grouped.sort_values(by=[pos_col], inplace=True)
-        pept_grouped[pept_type_col] = [
-            site.split(id_separator)[-1] for site in pept_grouped[id_col]
-        ]
-        # pept_grouped.index = uniprot_id + id_separator + pept_grouped["Site"]
-        pept_grouped.index = pept_grouped[id_col].to_list()
-        return pept_grouped
-    else:
-        raise ValueError(
-            "The pept dataframe is empty. Please check the input dataframe."
-        )
-
-
-def LiP_median_rollup_to_lytic_site(
-    df,
-    int_cols,
-    uniprot_col,
-    sequence,
-    residue_col="Residue",
-    description="",
-    tryptic_pattern="all",
-    peptide_col="Sequence",
-    clean_pept_col="clean_pept",
-    id_separator="@",
-    id_col="id",
-    pept_type_col="pept_type",
-    site_col="Site",
-    pos_col="Pos",
-    multiply_rollup_counts=True,
-    ignore_NA=True,
-    alternative_protease="ProK",
-):
-    raise DeprecationWarning("Deprecated")
-    protein = df.copy()
-    # protein.reset_index(drop=True, inplace=True)
-    seq_len = len(sequence)
-    uniprot_id = protein[uniprot_col].unique()[0]
-    clean_pepts = [
-        strip_peptide(pept, nip_off=False) for pept in protein[peptide_col].to_list()
-    ]
-    protein["Protein description"] = description
-    protein["Protein length"] = seq_len
-    protein = get_tryptic_types(protein, sequence, peptide_col, clean_pept_col)
-
-    lyticsites = []
-    for clean_pept in clean_pepts:
-        start_lytic_pos = sequence.find(clean_pept)
-        end_lytic_pos = start_lytic_pos + len(clean_pept)
-        start_lytic_site = sequence[start_lytic_pos - 1]
-        end_lytic_site = sequence[end_lytic_pos - 1]
-        lyticsites.append(
-            [
-                start_lytic_site + str(start_lytic_pos),
-                end_lytic_site + str(end_lytic_pos),
-            ]
-        )
-
-    protein[residue_col] = lyticsites
-    pept_num = len(clean_pepts)
-    semi_num = protein[pept_type_col].to_list().count("Semi-tryptic")
-    non_num = protein[pept_type_col].to_list().count("Non-tryptic")
-    prok_num = protein[pept_type_col].to_list().count("Semi-tryptic") + protein[
-        pept_type_col
-    ].to_list().count("Non-tryptic")
-    protein2explode = select_tryptic_pattern(
-        protein,
-        sequence,
-        tryptic_pattern=tryptic_pattern,
-        peptide_col=peptide_col,
-        clean_pept_col=clean_pept_col,
-    )
-
-    if protein2explode.shape[0] > 0:
-        protein_lys = protein2explode.explode(residue_col)
-        info_cols = [col for col in protein_lys.columns if col not in int_cols]
-        protein_lys[id_col] = uniprot_id + id_separator + protein_lys[residue_col]
-        info_cols_wo_peptide_col = [col for col in info_cols if col != peptide_col]
-        agg_methods_0 = {peptide_col: lambda x: "; ".join(x)}
-        agg_methods_1 = {i: lambda x: x.iloc[0] for i in info_cols_wo_peptide_col}
-        if multiply_rollup_counts:
-            if ignore_NA:
-                agg_methods_2 = {
-                    i: lambda x: np.log2(len(x)) + x.median() for i in int_cols
-                }
-            else:
-                agg_methods_2 = {
-                    i: lambda x: np.log2(x.notna().sum()) + x.median() for i in int_cols
-                }
-        else:
-            agg_methods_2 = {i: lambda x: x.median() for i in int_cols}
-        protein_lys_grouped = protein_lys.groupby(id_col, as_index=False).agg(
-            {**agg_methods_0, **agg_methods_1, **agg_methods_2}
-        )
-
-        protein_lys_grouped[uniprot_col] = uniprot_id
-        protein_lys_grouped[site_col] = [
-            site.split(id_separator)[1] for site in protein_lys_grouped[id_col]
-        ]
-        protein_lys_grouped[pos_col] = [
-            int(re.sub(r"\D", "", site)) for site in protein_lys_grouped[site_col]
-        ]
-        protein_lys_grouped["Lytic site type"] = [
-            "trypsin" if ("K" in i) or ("R" in i) else alternative_protease
-            for i in protein_lys_grouped[site_col]
-        ]
-        protein_lys_grouped["All pept num"] = pept_num
-        protein_lys_grouped["Semi-tryptic pept num"] = semi_num
-        protein_lys_grouped["Non-tryptic pept num"] = non_num
-        protein_lys_grouped[f"{alternative_protease} pept num"] = prok_num
-        protein_lys_grouped[f"{alternative_protease} site num"] = (
-            protein_lys_grouped["Lytic site type"].to_list().count(alternative_protease)
-        )
-        protein_lys_grouped["Tryp site num"] = (
-            protein_lys_grouped["Lytic site type"].to_list().count("trypsin")
-        )
-
-        protein_lys_grouped.sort_values(by=[pos_col], inplace=True)
-        # protein_lys_grouped_sig.sort_values(by=[pos_col], inplace=True)
-        protein_lys_grouped.index = protein_lys_grouped[id_col].to_list()
-        return protein_lys_grouped
-    else:
-        # raise ValueError("The pept dataframe is empty. Please check the input dataframe.")
-        print(
-            f"The resulted dataframe of digestion site in {uniprot_id} is empty. Please check the input dataframe."
-        )
-        return None
-
-
-def LiP_mean_rollup_to_lytic_site(
-    df,
-    int_cols,
-    uniprot_col,
-    sequence,
-    residue_col="Residue",
-    description="",
-    tryptic_pattern="all",
-    peptide_col="Sequence",
-    clean_pept_col="clean_pept",
-    id_separator="@",
-    id_col="id",
-    pept_type_col="pept_type",
-    site_col="Site",
-    pos_col="Pos",
-    multiply_rollup_counts=True,
-    ignore_NA=True,
-    alternative_protease="ProK",
-):
-    raise DeprecationWarning("Deprecated")
-    protein = df.copy()
-    # protein.reset_index(drop=True, inplace=True)
-    seq_len = len(sequence)
-    uniprot_id = protein[uniprot_col].unique()[0]
-    clean_pepts = [
-        strip_peptide(pept, nip_off=False) for pept in protein[peptide_col].to_list()
-    ]
-    protein["Protein description"] = description
-    protein["Protein length"] = seq_len
-    protein = get_tryptic_types(protein, sequence, peptide_col, clean_pept_col)
-
-    lyticsites = []
-    for clean_pept in clean_pepts:
-        start_lytic_pos = sequence.find(clean_pept)
-        end_lytic_pos = start_lytic_pos + len(clean_pept)
-        start_lytic_site = sequence[start_lytic_pos - 1]
-        end_lytic_site = sequence[end_lytic_pos - 1]
-        lyticsites.append(
-            [
-                start_lytic_site + str(start_lytic_pos),
-                end_lytic_site + str(end_lytic_pos),
-            ]
-        )
-
-    protein[residue_col] = lyticsites
-    pept_num = len(clean_pepts)
-    semi_num = protein[pept_type_col].to_list().count("Semi-tryptic")
-    non_num = protein[pept_type_col].to_list().count("Non-tryptic")
-    prok_num = protein[pept_type_col].to_list().count("Semi-tryptic") + protein[
-        pept_type_col
-    ].to_list().count("Non-tryptic")
-    protein2explode = select_tryptic_pattern(
-        protein,
-        sequence,
-        tryptic_pattern=tryptic_pattern,
-        peptide_col=peptide_col,
-        clean_pept_col=clean_pept_col,
-    )
-
-    if protein2explode.shape[0] > 0:
-        protein_lys = protein2explode.explode(residue_col)
-        info_cols = [col for col in protein_lys.columns if col not in int_cols]
-        protein_lys[id_col] = uniprot_id + id_separator + protein_lys[residue_col]
-        info_cols_wo_peptide_col = [col for col in info_cols if col != peptide_col]
-        agg_methods_0 = {peptide_col: lambda x: "; ".join(x)}
-        agg_methods_1 = {i: lambda x: x.iloc[0] for i in info_cols_wo_peptide_col}
-        if multiply_rollup_counts:
-            if ignore_NA:
-                agg_methods_2 = {
-                    i: lambda x: np.log2(len(x)) + x.mean() for i in int_cols
-                }
-            else:
-                agg_methods_2 = {
-                    i: lambda x: np.log2(x.notna().sum()) + x.mean() for i in int_cols
-                }
-        else:
-            agg_methods_2 = {i: lambda x: x.mean() for i in int_cols}
-        protein_lys_grouped = protein_lys.groupby(id_col, as_index=False).agg(
-            {**agg_methods_0, **agg_methods_1, **agg_methods_2}
-        )
-
-        protein_lys_grouped[uniprot_col] = uniprot_id
-        protein_lys_grouped[site_col] = [
-            site.split(id_separator)[1] for site in protein_lys_grouped[id_col]
-        ]
-        protein_lys_grouped[pos_col] = [
-            int(re.sub(r"\D", "", site)) for site in protein_lys_grouped[site_col]
-        ]
-        protein_lys_grouped["Lytic site type"] = [
-            "trypsin" if ("K" in i) or ("R" in i) else alternative_protease
-            for i in protein_lys_grouped[site_col]
-        ]
-        protein_lys_grouped["All pept num"] = pept_num
-        protein_lys_grouped["Semi-tryptic pept num"] = semi_num
-        protein_lys_grouped["Non-tryptic pept num"] = non_num
-        protein_lys_grouped[f"{alternative_protease} pept num"] = prok_num
-        protein_lys_grouped[f"{alternative_protease} site num"] = (
-            protein_lys_grouped["Lytic site type"].to_list().count(alternative_protease)
-        )
-        protein_lys_grouped["Tryp site num"] = (
-            protein_lys_grouped["Lytic site type"].to_list().count("trypsin")
-        )
-
-        protein_lys_grouped.sort_values(by=[pos_col], inplace=True)
-        # protein_lys_grouped_sig.sort_values(by=[pos_col], inplace=True)
-        protein_lys_grouped.index = protein_lys_grouped[id_col].to_list()
-        return protein_lys_grouped
-    else:
-        # raise ValueError("The pept dataframe is empty. Please check the input dataframe.")
-        print(
-            f"The resulted dataframe of digestion site in {uniprot_id} is empty. Please check the input dataframe."
-        )
-        return None
