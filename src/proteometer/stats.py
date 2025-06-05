@@ -13,8 +13,8 @@ import scipy as sp
 class TTestGroup:
     treat_group: str
     control_group: str
-    treat_samples: Sequence[float]
-    control_samples: Sequence[float]
+    treat_samples: Sequence[str]
+    control_samples: Sequence[str]
 
     def label(self):
         return f"{self.treat_group}/{self.control_group}"
