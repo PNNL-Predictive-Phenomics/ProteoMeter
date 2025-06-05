@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
+import numpy as np
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
@@ -91,3 +92,10 @@ def filter_missingness(
         ).astype(int)
     df_w = df[~(df["missing_check"] > 0)].copy()
     return df_w
+
+def expsum(x: pd.Series[float]) -> float:
+    val = cast(float, np.nansum(2 ** (x.replace(0, np.nan))))
+    if val == 0:
+        return np.nan
+    return np.log2(val)
+

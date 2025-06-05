@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 import numpy as np
+from proteometer.utils import expsum
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Literal
@@ -64,14 +65,14 @@ def rollup_to_site(
         if ignore_NA:
             if rollup_func.lower() == "median":
                 agg_methods_2: AggDictFloat = {
-                    i: lambda x: np.log2(len(x)) + x.median() for i in int_cols
+                    i: lambda x: (np.log2(len(x)) + x.median() if (not x[x.notna()].empty) else np.nan) for i in int_cols
                 }
             elif rollup_func.lower() == "mean":
                 agg_methods_2: AggDictFloat = {
-                    i: lambda x: np.log2(len(x)) + x.mean() for i in int_cols
+                    i: lambda x: (np.log2(len(x)) + x.mean() if (not x[x.notna()].empty) else np.nan) for i in int_cols
                 }
             elif rollup_func.lower() == "sum":
-                agg_methods_2: AggDictFloat = {i: _expsum for i in int_cols}
+                agg_methods_2: AggDictFloat = {i: expsum for i in int_cols}
             else:
                 raise ValueError(
                     "The rollup function is not recognized. Please choose from the following: median, mean, sum"
@@ -79,25 +80,25 @@ def rollup_to_site(
         else:
             if rollup_func.lower() == "median":
                 agg_methods_2: AggDictFloat = {
-                    i: lambda x: np.log2(x.notna().sum()) + x.median() for i in int_cols
+                    i: lambda x: (np.log2(x.notna().sum()) + x.median() if (not x[x.notna()].empty) else np.nan) for i in int_cols
                 }
             elif rollup_func.lower() == "mean":
                 agg_methods_2: AggDictFloat = {
-                    i: lambda x: np.log2(x.notna().sum()) + x.mean() for i in int_cols
+                    i: lambda x: (np.log2(x.notna().sum()) + x.mean() if (not x[x.notna()].empty) else np.nan) for i in int_cols
                 }
             elif rollup_func.lower() == "sum":
-                agg_methods_2: AggDictFloat = {i: _expsum for i in int_cols}
+                agg_methods_2: AggDictFloat = {i: expsum for i in int_cols}
             else:
                 raise ValueError(
                     "The rollup function is not recognized. Please choose from the following: median, mean, sum"
                 )
     else:
         if rollup_func.lower() == "median":
-            agg_methods_2: AggDictFloat = {i: lambda x: x.median() for i in int_cols}
+            agg_methods_2: AggDictFloat = {i: lambda x: (x.median() if (not x[x.notna()].empty) else np.nan) for i in int_cols}
         elif rollup_func.lower() == "mean":
-            agg_methods_2: AggDictFloat = {i: lambda x: x.mean() for i in int_cols}
+            agg_methods_2: AggDictFloat = {i: lambda x: (x.mean() if (not x[x.notna()].empty) else np.nan) for i in int_cols}
         elif rollup_func.lower() == "sum":
-            agg_methods_2: AggDictFloat = {i: _expsum for i in int_cols}
+            agg_methods_2: AggDictFloat = {i: expsum for i in int_cols}
         else:
             raise ValueError(
                 "The rollup function is not recognized. Please choose from the following: median, mean, sum"
@@ -111,8 +112,3 @@ def rollup_to_site(
     return df
 
 
-def _expsum(x: pd.Series[float]) -> float:
-    val = cast(float, np.nansum(2 ** (x.replace(0, np.nan))))
-    if val == 0:
-        return np.nan
-    return np.log2(val)
