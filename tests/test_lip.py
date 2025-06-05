@@ -256,9 +256,9 @@ def test_rollup_to_lytic_site_rollup_func_sum(monkeypatch):
 
 def test_rollup_to_lytic_site_rollup_func_ignore_na(monkeypatch):
     # Test rollup_func="sum"
-    # warnings.filterwarnings(
-    #     "error"
-    # )  # example constructed to be numerically fine; let's test that
+    warnings.filterwarnings(
+        "error"
+    )  # example constructed to be numerically fine; let's test that
     monkeypatch.setattr("proteometer.lip.strip_peptide", lambda s, nip_off: s)
     df = pd.DataFrame({
         "Sequence": ["MAAK", "AAK"],
@@ -306,9 +306,9 @@ def test_rollup_to_lytic_site_rollup_func_ignore_na(monkeypatch):
 
 def test_rollup_to_lytic_site_rollup_func_remove_na(monkeypatch):
     # Test rollup_func="sum"
-    # warnings.filterwarnings(
-    #     "error"
-    # )  # example constructed to be numerically fine; let's test that
+    warnings.filterwarnings(
+        "error"
+    )  # example constructed to be numerically fine; let's test that
     monkeypatch.setattr("proteometer.lip.strip_peptide", lambda s, nip_off: s)
     df = pd.DataFrame({
         "Sequence": ["MAAK", "AAK"],
