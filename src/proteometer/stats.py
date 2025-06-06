@@ -40,7 +40,7 @@ def log2_transformation(
 def anova(
     df: pd.DataFrame,
     anova_cols: list[str],
-    metadata_ori: pd.DataFrame,
+    metadata: pd.DataFrame,
     anova_factors: Sequence[str],
     sample_col: str,
 ) -> pd.DataFrame:
@@ -50,7 +50,7 @@ def anova(
     Args:
         df (pd.DataFrame): DataFrame containing the data for analysis.
         anova_cols (list[str]): List of column names to analyze.
-        metadata_ori (pd.DataFrame): Metadata containing sample information.
+        metadata (pd.DataFrame): Metadata containing sample information.
         anova_factors (Sequence[str], optional): Factors for ANOVA analysis.
         sample_col (str, optional): Column name for sample identifiers.
 
@@ -59,8 +59,6 @@ def anova(
     """
     if len(anova_factors) < 1:
         return df
-
-    metadata = metadata_ori[metadata_ori[sample_col].isin(anova_cols)].copy()
 
     anova_factor_names = [
         f"{anova_factors[i]} * {anova_factors[j]}" if i != j else f"{anova_factors[i]}"
@@ -71,7 +69,12 @@ def anova(
     df_w = df[anova_cols].copy()
     f_stats_factors: Sequence[pd.DataFrame] = []
     for df_id, row in df_w.iterrows():  # type: ignore
-        df_f = pd.merge(row, metadata, left_index=True, right_on=sample_col)
+        df_f = pd.merge(
+            row,
+            metadata[metadata[sample_col].isin(anova_cols)],
+            left_index=True,
+            right_on=sample_col,
+        )
 
         try:
             aov_f = pg.anova(data=df_f, dv=df_id, between=anova_factors, detailed=True)  # type: ignore
