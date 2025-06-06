@@ -24,13 +24,15 @@ def simple_anova_data() -> TestData:
             "sample4": [4.1, 5.1, 6.1],
         },
         index=["feature1", "feature2", "feature3"],
+        dtype="float64",
     )
 
     metadata = pd.DataFrame(
         {
             "sample": ["sample1", "sample2", "sample3", "sample4"],
             "group": ["A", "A", "B", "B"],
-        }
+        },
+        dtype="str",
     )
 
     return df, metadata
@@ -41,18 +43,20 @@ def test_anova_values(simple_anova_data: TestDataFixture):
     result = anova(
         df, ["sample1", "sample2", "sample3", "sample4"], metadata, ["group"], "sample"
     )
+    res = cast("pd.Series[float]", result["ANOVA_[group]_pval"])
     with pd.option_context("display.max_rows", None, "display.max_columns", None):
         print(result)
 
-    pvals = []
-    for _, row in df.iterrows():
-        g1 = np.array([row["sample1"], row["sample2"]])
-        g2 = np.array([row["sample3"], row["sample4"]])
+    pvals: list[float] = []
+    for _, row in df.iterrows():  # type: ignore
+        g1 = np.array([row["sample1"], row["sample2"]], dtype="float64")
+        g2 = np.array([row["sample3"], row["sample4"]], dtype="float64")
         fval, pval = sp.stats.f_oneway(g1, g2)
         print(fval, pval)
-        pvals.append(pval)
-    print(result["ANOVA_[group]_pval"])
-    assert np.isclose(result["ANOVA_[group]_pval"], pvals).all()
+        pvals.append(float(pval))
+
+    print(res)
+    assert np.isclose(res, pvals).all()
 
 
 def test_anova_returns_original_if_no_factors(simple_anova_data: TestDataFixture):
