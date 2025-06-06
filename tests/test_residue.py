@@ -1,4 +1,3 @@
-import pytest
 from proteometer.residue import get_res_names
 from proteometer.residue import get_res_pos
 

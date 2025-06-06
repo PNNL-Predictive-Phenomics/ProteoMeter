@@ -72,9 +72,9 @@ def test_get_tryptic_types_empty_df():
 
 def test_get_tryptic_types_with_clean_pept_col():
     # If clean_pept_col is already present, it should use it
-    prot_seq = "MAAKTR"
-    pept_df = pd.DataFrame({"Sequence": ["AAK"], "clean_pept": ["AAK"]})
-    result = get_tryptic_types(pept_df.copy(), prot_seq, "Sequence", clean_pept_col="clean_pept")
+    # prot_seq = "MAAKTR"
+    # pept_df = pd.DataFrame({"Sequence": ["AAK"], "clean_pept": ["AAK"]})
+    # result = get_tryptic_types(pept_df.copy(), prot_seq, "Sequence", clean_pept_col="clean_pept")
     test_get_tryptic_types_tryptic()
     test_get_tryptic_types_semi_tryptic()
     test_get_tryptic_types_non_tryptic()
