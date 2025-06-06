@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 
 from proteometer.peptide import strip_peptide
+from proteometer.utils import expsum
 
 if TYPE_CHECKING:
     from proteometer.stats import TTestGroup
@@ -453,7 +454,7 @@ def rollup_to_lytic_site(
     multiply_rollup_counts: bool = True,
     ignore_NA: bool = True,
     alternative_protease: str = "ProK",
-    rollup_func: Literal["median", "mean", "sum"] = "median",
+    rollup_func: Literal["median", "mean", "sum"] = "sum",
 ) -> pd.DataFrame:
     """
     Rolls up peptide-level limited proteolysis data to lytic sites.
@@ -481,6 +482,11 @@ def rollup_to_lytic_site(
     Returns:
         pd.DataFrame: DataFrame with rolled-up lytic site data and aggregated statistics.
     """
+    if df.empty:
+        Warning(
+            "The input dataframe is empty. Please check the input dataframe."
+        )
+        return df
     protein = df.copy()
     # protein.reset_index(drop=True, inplace=True)
     seq_len = len(sequence)
@@ -497,12 +503,18 @@ def rollup_to_lytic_site(
     for clean_pept in clean_pepts:
         start_lytic_pos = sequence.find(clean_pept)
         end_lytic_pos = start_lytic_pos + len(clean_pept)
-        start_lytic_site = sequence[start_lytic_pos - 1]
+        if start_lytic_pos == 0:
+            start_lytic_site = 'K'
+            start_lytic_res = start_lytic_site + str(start_lytic_pos)
+        else:
+            start_lytic_site = sequence[start_lytic_pos - 1]
+            start_lytic_res = start_lytic_site + str(start_lytic_pos)
         end_lytic_site = sequence[end_lytic_pos - 1]
+        end_lytic_res = end_lytic_site + str(end_lytic_pos)
         lyticsites.append(
             [
-                start_lytic_site + str(start_lytic_pos),
-                end_lytic_site + str(end_lytic_pos),
+                start_lytic_res,
+                end_lytic_res
             ]
         )
 
@@ -540,17 +552,14 @@ def rollup_to_lytic_site(
         if ignore_NA:
             if rollup_func.lower() == "median":
                 agg_methods_2: AggDictFloat = {
-                    i: lambda x: np.log2(len(x)) + x.median() for i in int_cols
+                    i: lambda x: ((np.log2(len(x)) + x.median()) if (not x[x.notna()].empty) else np.nan) for i in int_cols
                 }
             elif rollup_func.lower() == "mean":
                 agg_methods_2: AggDictFloat = {
-                    i: lambda x: np.log2(len(x)) + x.mean() for i in int_cols
+                    i: lambda x: ((np.log2(len(x)) + x.mean()) if (not x[x.notna()].empty) else np.nan) for i in int_cols
                 }
             elif rollup_func.lower() == "sum":
-                agg_methods_2: AggDictFloat = {
-                    i: lambda x: np.log2(np.nansum(2 ** (x.replace(0, np.nan))))
-                    for i in int_cols
-                }
+                agg_methods_2: AggDictFloat = {i: expsum for i in int_cols}
             else:
                 raise ValueError(
                     "The rollup function is not recognized. Please choose from the following: "
@@ -559,17 +568,14 @@ def rollup_to_lytic_site(
         else:
             if rollup_func.lower() == "median":
                 agg_methods_2: AggDictFloat = {
-                    i: lambda x: np.log2(x.notna().sum()) + x.median() for i in int_cols
+                    i: lambda x: ((np.log2(x.notna().sum()) + x.median()) if (not x[x.notna()].empty) else np.nan) for i in int_cols
                 }
             elif rollup_func.lower() == "mean":
                 agg_methods_2: AggDictFloat = {
-                    i: lambda x: np.log2(x.notna().sum()) + x.mean() for i in int_cols
+                    i: lambda x: ((np.log2(x.notna().sum()) + x.mean()) if (not x[x.notna()].empty) else np.nan) for i in int_cols
                 }
             elif rollup_func.lower() == "sum":
-                agg_methods_2: AggDictFloat = {
-                    i: lambda x: np.log2(np.nansum(2 ** (x.replace(0, np.nan))))
-                    for i in int_cols
-                }
+                agg_methods_2: AggDictFloat = {i: expsum for i in int_cols}
             else:
                 raise ValueError(
                     "The rollup function is not recognized. Please choose from the following: "
@@ -577,14 +583,11 @@ def rollup_to_lytic_site(
                 )
     else:
         if rollup_func.lower() == "median":
-            agg_methods_2: AggDictFloat = {i: lambda x: x.median() for i in int_cols}
+            agg_methods_2: AggDictFloat = {i: lambda x: (x.median() if (not x[x.notna()].empty) else np.nan) for i in int_cols}
         elif rollup_func.lower() == "mean":
-            agg_methods_2: AggDictFloat = {i: lambda x: x.mean() for i in int_cols}
+            agg_methods_2: AggDictFloat = {i: lambda x: (x.mean() if (not x[x.notna()].empty) else np.nan) for i in int_cols}
         elif rollup_func.lower() == "sum":
-            agg_methods_2: AggDictFloat = {
-                i: lambda x: np.log2(np.nansum(2 ** (x.replace(0, np.nan))))
-                for i in int_cols
-            }
+            agg_methods_2: AggDictFloat = {i: expsum for i in int_cols}
         else:
             raise ValueError(
                 "The rollup function is not recognized. Please choose from the following: "
