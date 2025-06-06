@@ -1,12 +1,110 @@
 from __future__ import annotations
 
-from typing import cast
+from typing import TypeAlias, Union, cast
 
 import numpy as np
 import pandas as pd
+import pytest
 import scipy as sp
 
-from proteometer.stats import TTestGroup, pairwise_ttest
+from proteometer.stats import TTestGroup, anova, pairwise_ttest
+
+TestData: TypeAlias = tuple[pd.DataFrame, pd.DataFrame]
+TestDataFixture = Union[TestData]
+
+
+@pytest.fixture
+def simple_anova_data() -> TestData:
+    # Simulate a simple dataset with two groups and one factor
+    df = pd.DataFrame(
+        {
+            "sample1": [1.0, 2.0, 3.0],
+            "sample2": [1.1, 2.1, 3.1],
+            "sample3": [4.0, 5.0, 6.0],
+            "sample4": [4.1, 5.1, 6.1],
+        },
+        index=["feature1", "feature2", "feature3"],
+    )
+
+    metadata = pd.DataFrame(
+        {
+            "sample": ["sample1", "sample2", "sample3", "sample4"],
+            "group": ["A", "A", "B", "B"],
+        }
+    )
+
+    return df, metadata
+
+
+def test_anova_values(simple_anova_data: TestDataFixture):
+    df, metadata = simple_anova_data
+    result = anova(
+        df, ["sample1", "sample2", "sample3", "sample4"], metadata, ["group"], "sample"
+    )
+    with pd.option_context("display.max_rows", None, "display.max_columns", None):
+        print(result)
+
+    pvals = []
+    for _, row in df.iterrows():
+        g1 = np.array([row["sample1"], row["sample2"]])
+        g2 = np.array([row["sample3"], row["sample4"]])
+        fval, pval = sp.stats.f_oneway(g1, g2)
+        print(fval, pval)
+        pvals.append(pval)
+    print(result["ANOVA_[group]_pval"])
+    assert np.isclose(result["ANOVA_[group]_pval"], pvals).all()
+
+
+def test_anova_returns_original_if_no_factors(simple_anova_data: TestDataFixture):
+    df, metadata = simple_anova_data
+    result = anova(df, ["sample1", "sample2"], metadata, [], "sample")
+    pd.testing.assert_frame_equal(result, df)
+
+
+def test_anova_adds_pvals_and_adj_pvals(simple_anova_data: TestDataFixture):
+    df, metadata = simple_anova_data
+    result = anova(
+        df, ["sample1", "sample2", "sample3", "sample4"], metadata, ["group"], "sample"
+    )
+    # Should add columns for p-values and adjusted p-values
+    assert any(
+        col.startswith("ANOVA_") and col.endswith("_pval") for col in result.columns
+    )
+    assert any(
+        col.startswith("ANOVA_") and col.endswith("_adj-p") for col in result.columns
+    )
+    # Should have same index as input
+    assert all(result.index == df.index)
+
+
+def test_anova_handles_missing_data(simple_anova_data: TestDataFixture):
+    df, metadata = simple_anova_data
+    df.loc["feature1", "sample1"] = np.nan
+    result = anova(
+        df, ["sample1", "sample2", "sample3", "sample4"], metadata, ["group"], "sample"
+    )
+    # Should still produce pval columns, possibly with NaN values
+    pval_cols = [col for col in result.columns if col.endswith("_pval")]
+    assert len(pval_cols) > 0
+    assert result[pval_cols].isnull().sum().sum() >= 0
+
+
+def test_anova_multiple_factors(simple_anova_data: TestDataFixture):
+    df, metadata = simple_anova_data
+    metadata["batch"] = ["X", "X", "Y", "Y"]
+    result = anova(
+        df,
+        ["sample1", "sample2", "sample3", "sample4"],
+        metadata,
+        ["group", "batch"],
+        "sample",
+    )
+    # Should have pval columns for both main effects and interaction
+    assert any("group" in col for col in result.columns if col.endswith("_pval"))
+    assert any("batch" in col for col in result.columns if col.endswith("_pval"))
+    assert any(
+        "group * batch" in col for col in result.columns if col.endswith("_pval")
+    )
 
 
 def test_pairwise_ttest():
