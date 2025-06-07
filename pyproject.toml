@@ -54,7 +54,8 @@ docs = [
 
 [tool.pixi.environments]
 default = { features = ["dev", "test", "lint", "docs"] }
-test = { features = ["test"] }
+test = { features = ["dev", "test"] }
+lint = { features = ["lint"] }
 docs = { features = ["docs"] }
 
 [tool.pytest.ini_options]

@@ -143,17 +143,17 @@ def t_test_groups(metadata: pd.DataFrame, par: Params) -> list[TTestGroup]:
             ].unique()
 
             for treat_group in tgroups:
-                control_samples: list[float] = metadata[  # type: ignore
+                control_samples: list[str] = metadata[  # type: ignore
                     metadata[par.metadata_group_col] == control_group
                 ][par.metadata_sample_col].to_list()
-                treat_samples: list[float] = metadata[  # type: ignore
+                treat_samples: list[str] = metadata[  # type: ignore
                     metadata[par.metadata_group_col] == treat_group
                 ][par.metadata_sample_col].to_list()
                 t_test_group = TTestGroup(
                     treat_group=treat_group,
                     control_group=control_group,
-                    treat_samples=cast(list[float], treat_samples),
-                    control_samples=cast(list[float], control_samples),
+                    treat_samples=cast(list[str], treat_samples),
+                    control_samples=cast(list[str], control_samples),
                 )
                 pairwise_ttest_groups.append(t_test_group)
 
@@ -184,8 +184,8 @@ def user_t_test_groups(metadata: pd.DataFrame, par: Params) -> list[TTestGroup]:
         t_test_group = TTestGroup(
             treat_group=user_treat_group,
             control_group=user_ctrl_group,
-            treat_samples=cast(list[float], treat_samples),
-            control_samples=cast(list[float], control_samples),
+            treat_samples=cast(list[str], treat_samples),
+            control_samples=cast(list[str], control_samples),
         )
 
         user_pairwise_ttest_groups.append(t_test_group)
