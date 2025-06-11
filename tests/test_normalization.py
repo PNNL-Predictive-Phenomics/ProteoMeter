@@ -31,9 +31,9 @@ def test_median_normalize_columns_with_nan():
     )
     expected = pd.DataFrame(
         {
-            "A1": [4, 5, 6],
-            "A2": [4, 5, 6],
-            "A3": [4, 5, 6],
+            "A1": [4, 5, 6, 3],
+            "A2": [4, 5, 6, float("nan")],
+            "A3": [4, 5, 6, 7],
         },
         dtype="float64",
     )
