@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Collection, Iterable
+from collections.abc import Iterable
 from typing import TYPE_CHECKING, Any, Callable, Literal, cast
 
 import numpy as np
@@ -267,10 +267,8 @@ def analyze_tryptic_pattern(
     protein: pd.DataFrame,
     sequence: str,
     pairwise_ttest_groups: Iterable[TTestGroup],
-    groups: Collection[str],
     peptide_col: str,
     description: str = "",
-    clean_pept_col: str = "clean_pept",
     anova_type: str = "[Group]",
     keep_non_tryptic: bool = True,
     id_separator: str = "@",
@@ -284,10 +282,8 @@ def analyze_tryptic_pattern(
         protein (pd.DataFrame): Input DataFrame containing proteomics data.
         sequence (str): Protein sequence to analyze against.
         pairwise_ttest_groups (Iterable[TTestGroup]): Groups for pairwise t-tests.
-        groups (Collection[str]): Collection of group names.
         peptide_col (str): Column name containing peptide sequences.
         description (str, optional): Protein description to add to data frame. Defaults to "".
-        clean_pept_col (str, optional): Column name for cleaned peptide sequences. Defaults to "clean_pept".
         anova_type (str, optional): Type of ANOVA analysis. Defaults to "[Group]".
         keep_non_tryptic (bool, optional): Whether to keep non-tryptic peptides. Defaults to True.
         id_separator (str, optional): Separator for peptide IDs. Defaults to "@".
@@ -301,7 +297,6 @@ def analyze_tryptic_pattern(
     seq_len = len(sequence)
     protein["Protein description"] = description
     protein["Protein length"] = seq_len
-    protein = get_tryptic_types(protein, sequence, peptide_col, clean_pept_col)
     protein["Tryp Pept num"] = (
         protein[(protein["pept_type"] == "Tryptic")].copy().shape[0]
     )
@@ -483,9 +478,7 @@ def rollup_to_lytic_site(
         pd.DataFrame: DataFrame with rolled-up lytic site data and aggregated statistics.
     """
     if df.empty:
-        Warning(
-            "The input dataframe is empty. Please check the input dataframe."
-        )
+        Warning("The input dataframe is empty. Please check the input dataframe.")
         return df
     protein = df.copy()
     # protein.reset_index(drop=True, inplace=True)
@@ -504,19 +497,14 @@ def rollup_to_lytic_site(
         start_lytic_pos = sequence.find(clean_pept)
         end_lytic_pos = start_lytic_pos + len(clean_pept)
         if start_lytic_pos == 0:
-            start_lytic_site = 'K'
+            start_lytic_site = "K"
             start_lytic_res = start_lytic_site + str(start_lytic_pos)
         else:
             start_lytic_site = sequence[start_lytic_pos - 1]
             start_lytic_res = start_lytic_site + str(start_lytic_pos)
         end_lytic_site = sequence[end_lytic_pos - 1]
         end_lytic_res = end_lytic_site + str(end_lytic_pos)
-        lyticsites.append(
-            [
-                start_lytic_res,
-                end_lytic_res
-            ]
-        )
+        lyticsites.append([start_lytic_res, end_lytic_res])
 
     protein[residue_col] = lyticsites
     pept_num = len(clean_pepts)
@@ -552,11 +540,21 @@ def rollup_to_lytic_site(
         if ignore_NA:
             if rollup_func.lower() == "median":
                 agg_methods_2: AggDictFloat = {
-                    i: lambda x: ((np.log2(len(x)) + x.median()) if (not x[x.notna()].empty) else np.nan) for i in int_cols
+                    i: lambda x: (
+                        (np.log2(len(x)) + x.median())
+                        if (not x[x.notna()].empty)
+                        else np.nan
+                    )
+                    for i in int_cols
                 }
             elif rollup_func.lower() == "mean":
                 agg_methods_2: AggDictFloat = {
-                    i: lambda x: ((np.log2(len(x)) + x.mean()) if (not x[x.notna()].empty) else np.nan) for i in int_cols
+                    i: lambda x: (
+                        (np.log2(len(x)) + x.mean())
+                        if (not x[x.notna()].empty)
+                        else np.nan
+                    )
+                    for i in int_cols
                 }
             elif rollup_func.lower() == "sum":
                 agg_methods_2: AggDictFloat = {i: expsum for i in int_cols}
@@ -568,11 +566,21 @@ def rollup_to_lytic_site(
         else:
             if rollup_func.lower() == "median":
                 agg_methods_2: AggDictFloat = {
-                    i: lambda x: ((np.log2(x.notna().sum()) + x.median()) if (not x[x.notna()].empty) else np.nan) for i in int_cols
+                    i: lambda x: (
+                        (np.log2(x.notna().sum()) + x.median())
+                        if (not x[x.notna()].empty)
+                        else np.nan
+                    )
+                    for i in int_cols
                 }
             elif rollup_func.lower() == "mean":
                 agg_methods_2: AggDictFloat = {
-                    i: lambda x: ((np.log2(x.notna().sum()) + x.mean()) if (not x[x.notna()].empty) else np.nan) for i in int_cols
+                    i: lambda x: (
+                        (np.log2(x.notna().sum()) + x.mean())
+                        if (not x[x.notna()].empty)
+                        else np.nan
+                    )
+                    for i in int_cols
                 }
             elif rollup_func.lower() == "sum":
                 agg_methods_2: AggDictFloat = {i: expsum for i in int_cols}
@@ -583,9 +591,15 @@ def rollup_to_lytic_site(
                 )
     else:
         if rollup_func.lower() == "median":
-            agg_methods_2: AggDictFloat = {i: lambda x: (x.median() if (not x[x.notna()].empty) else np.nan) for i in int_cols}
+            agg_methods_2: AggDictFloat = {
+                i: lambda x: (x.median() if (not x[x.notna()].empty) else np.nan)
+                for i in int_cols
+            }
         elif rollup_func.lower() == "mean":
-            agg_methods_2: AggDictFloat = {i: lambda x: (x.mean() if (not x[x.notna()].empty) else np.nan) for i in int_cols}
+            agg_methods_2: AggDictFloat = {
+                i: lambda x: (x.mean() if (not x[x.notna()].empty) else np.nan)
+                for i in int_cols
+            }
         elif rollup_func.lower() == "sum":
             agg_methods_2: AggDictFloat = {i: expsum for i in int_cols}
         else:
