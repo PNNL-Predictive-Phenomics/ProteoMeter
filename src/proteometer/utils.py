@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Literal, cast
 
 import numpy as np
+
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
@@ -103,9 +104,9 @@ def filter_missingness(
         raise ValueError(f"Unknown method: {method}. Use 'all' or 'any'.")
     return df_w
 
+
 def expsum(x: pd.Series[float]) -> float:
     val = cast(float, np.nansum(2 ** (x.replace(0, np.nan))))
     if val == 0:
         return np.nan
     return np.log2(val)
-
