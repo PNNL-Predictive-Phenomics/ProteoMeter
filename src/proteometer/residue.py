@@ -15,13 +15,10 @@ def get_res_names(residues: Iterable[str]) -> list[list[str]]:
 
     Returns:
         list[list[str]]: A list of lists, where each inner list contains the extracted
-            residue names from the corresponding input string. If a residue string starts
-            with 'P', the entire string is returned in the inner list.
+            residue names from the corresponding input string. 
     """
     res_names = [
-        [res for res in re.findall(r"[A-Z]\d+[a-z\-]+", residue)]
-        if residue[0] != "P"
-        else [residue]
+        [res for res in re.findall(r"[A-Z]\d+[a-z\-]*", residue)]
         for residue in residues
     ]
     return res_names
@@ -36,12 +33,10 @@ def get_res_pos(residues: Iterable[str]) -> list[list[int]]:
 
     Returns:
         list[list[int]]: A list of lists, where each inner list contains the extracted
-            residue positions from the corresponding input string. If a residue string starts
-            with 'P', the entire string is returned in the inner list as a single element
-            with the value of 0.
+            residue positions from the corresponding input string.
     """
     res_pos = [
-        [int(res) for res in re.findall(r"\d+", residue)] if residue[0] != "P" else [0]
+        [int(res) for res in re.findall(r"\d+", residue)]
         for residue in residues
     ]
     return res_pos

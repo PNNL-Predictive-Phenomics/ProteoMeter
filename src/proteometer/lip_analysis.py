@@ -110,7 +110,9 @@ def lip_analysis(par: Params) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]
             global_prot,
             par,
             columns_to_correct=int_cols,
+            pairwise_ttest_groups=pairwise_ttest_groups,
         )
+
     double_pept = _double_pept_statistics(
         double_pept,
         prot_seqs,
@@ -135,14 +137,6 @@ def lip_analysis(par: Params) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]
 
     global_prot = _annotate_global_prot(global_prot, par)
     double_site = _annotate_double_site(double_site, par)
-
-    # all_lips = (
-    #     pd.concat([global_prot, double_site], axis=0, join="outer", ignore_index=True)
-    #     .sort_values(by=["id", "Type", "Experiment", "Site"])
-    #     .reset_index(drop=True)
-    # )
-
-    # all_lips = check_missingness(all_lips, groups, group_cols)
 
     return double_pept, double_site, global_prot
 
@@ -192,13 +186,13 @@ def _double_pept_statistics(
         factor_names = [
             f"[{f1} * {f2}]" if f1 != f2 else f"[{f1}]"
             for f1, f2 in combinations_with_replacement(par.anova_factors, r=2)
-        ] + [f"[{par.metadata_group_col}]"]
+        ]
+        pept_df = lip.get_tryptic_types(pept_df, prot_seq, par.peptide_col)
         for factor_name in factor_names:
             pept_df = lip.analyze_tryptic_pattern(
                 pept_df,
                 prot_seq,
                 pairwise_ttest_groups,
-                groups,
                 par.peptide_col,
                 description=prot_desc,
                 anova_type=factor_name,
@@ -210,7 +204,6 @@ def _double_pept_statistics(
                 pept_df,
                 prot_seq,
                 user_pairwise_ttest_groups,
-                groups,
                 par.peptide_col,
                 description=prot_desc,
                 anova_type=factor_name,

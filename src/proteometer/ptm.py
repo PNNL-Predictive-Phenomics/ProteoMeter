@@ -22,7 +22,7 @@ def get_ptm_pos_in_pept(
     This function processes a peptide string to find the positions of
     post-translational modification (PTM) labels. It accounts for special
     characters and returns a list of positions adjusted to the stripped
-    peptide sequence.
+    peptide sequence. Positions are 0-indexed from the start of the peptide.
 
     Args:
         peptide (str): The peptide string potentially containing PTM labels.
@@ -40,7 +40,7 @@ def get_ptm_pos_in_pept(
     if ptm_label in special_chars:
         ptm_label = "\\" + ptm_label
     ptm_pos = [m.start() for m in re.finditer(ptm_label, peptide)]
-    pos = sorted([val - i - 1 for i, val in enumerate(ptm_pos)])
+    pos = sorted([val - i for i, val in enumerate(ptm_pos)])
     return pos
 
 
