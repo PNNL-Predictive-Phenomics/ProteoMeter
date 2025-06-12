@@ -78,10 +78,9 @@ class Params:
         ]  # TMT or Label-free
 
         # Statistics setup
-        self.pairwise_factor = str(cfg["statistics"]["pairwise_factor"])
         self.anova_factors = [str(x) for x in cfg["statistics"]["anova_factors"]]
-        self.user_ttest_pairs = [
-            [str(x) for x in y] for y in cfg["statistics"]["user_ttest_pairs"]
+        self.ttest_pairs = [
+            [str(x) for x in y] for y in cfg["statistics"]["ttest_pairs"]
         ]
 
         # Abundance correction, generally recommended to help decompose effects
