@@ -149,7 +149,7 @@ def prot_abund_correction_sig_only(
                     cast("pd.Index[str]", prot.index),
                     cast(
                         "pd.Series[float]",
-                        prot[f"{pairwise_ttest_group.label()}_scalar"],
+                        prot[f"{pairwise_ttest_group.label()}"],
                     ),
                 )
             )
