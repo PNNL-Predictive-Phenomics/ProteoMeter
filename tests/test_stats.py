@@ -7,6 +7,8 @@ import pandas as pd
 import pytest
 import scipy as sp
 
+import warnings
+
 from proteometer.stats import TTestGroup, anova, pairwise_ttest
 
 TestData: TypeAlias = tuple[pd.DataFrame, pd.DataFrame]
@@ -151,3 +153,134 @@ def test_pairwise_ttest():
     result = pairwise_ttest(df, [ttest_group])
     print(result)
     assert result["A/B_pval"].iloc[0] == pval
+
+
+def test_pairwise_ttest_basic():
+    # Simple case: two groups, no missing data
+    df = pd.DataFrame(
+        {
+            "T1": [1.0, 2.0, 3.0],
+            "T2": [1.5, 2.5, 3.5],
+            "C1": [4.0, 5.0, 6.0],
+            "C2": [4.5, 5.5, 6.5],
+        },
+        index=["f1", "f2", "f3"],
+    )
+    ttest_group = TTestGroup(
+        treat_group="T",
+        control_group="C",
+        treat_samples=["T1", "T2"],
+        control_samples=["C1", "C2"],
+    )
+    result = pairwise_ttest(df.copy(), [ttest_group])
+    label = ttest_group.label()
+    # Check mean difference
+    expected_diff = (
+        df[ttest_group.treat_samples].mean(axis=1)
+        - df[ttest_group.control_samples].mean(axis=1)
+    )
+    pd.testing.assert_series_equal(result[label], expected_diff, check_names=False)
+    # Check p-values match scipy
+    for i, row in df.iterrows():
+        t, p = sp.stats.ttest_ind(
+            [row["T1"], row["T2"]],
+            [row["C1"], row["C2"]],
+            nan_policy="omit",
+        )
+        assert np.isclose(result.loc[i, f"{label}_pval"], p)
+
+
+def test_pairwise_ttest_with_nan():
+    # Test with missing values
+    warnings.filterwarnings(
+        "error"
+    )  # example constructed to be numerically fine; let's test that
+    df = pd.DataFrame(
+        {
+            "T1": [1.0, np.nan, 3.0, 4.0],
+            "T2": [1.5, 2.5, np.nan, 3.0],
+            "C1": [4.0, 5.0, 6.0, 5.0],
+            "C2": [4.5, np.nan, 6.5, 2.0],
+        },
+        index=["f1", "f2", "f3", "f4"],
+    )
+    ttest_group = TTestGroup(
+        treat_group="T",
+        control_group="C",
+        treat_samples=["T1", "T2"],
+        control_samples=["C1", "C2"],
+    )
+    result = pairwise_ttest(df.copy(), [ttest_group])
+    label = ttest_group.label()
+    # Should still produce output, possibly with NaN p-values
+    assert f"{label}_pval" in result.columns
+    assert result[f"{label}_pval"].isnull().sum() >= 0
+
+
+def test_pairwise_ttest_multiple_groups():
+    # Test with two different group comparisons
+    df = pd.DataFrame(
+        {
+            "A1": [1.0, 2.0],
+            "A2": [1.1, 2.1],
+            "B1": [3.0, 4.0],
+            "B2": [3.1, 4.1],
+            "C1": [5.0, 6.0],
+            "C2": [5.1, 6.1],
+        },
+        index=["f1", "f2"],
+    )
+    group1 = TTestGroup("A", "B", ["A1", "A2"], ["B1", "B2"])
+    group2 = TTestGroup("B", "C", ["B1", "B2"], ["C1", "C2"])
+    result = pairwise_ttest(df.copy(), [group1, group2])
+    assert "A/B" in result.columns
+    assert "B/C" in result.columns
+    assert "A/B_pval" in result.columns
+    assert "B/C_pval" in result.columns
+
+
+def test_pairwise_ttest_adj_pval_nan():
+    # If all p-values are nan, adj-p should also be nan
+    warnings.filterwarnings(
+        "error"
+    )  # example constructed to be numerically fine; let's test that
+    df = pd.DataFrame(
+        {
+            "T1": [np.nan, np.nan],
+            "T2": [np.nan, np.nan],
+            "C1": [np.nan, np.nan],
+            "C2": [np.nan, np.nan],
+        },
+        index=["f1", "f2"],
+    )
+    ttest_group = TTestGroup(
+        treat_group="T",
+        control_group="C",
+        treat_samples=["T1", "T2"],
+        control_samples=["C1", "C2"],
+    )
+    result = pairwise_ttest(df.copy(), [ttest_group])
+    label = ttest_group.label()
+    assert result[f"{label}_adj-p"].isnull().all()
+
+
+def test_pairwise_ttest_returns_input_shape():
+    # Output should have same index as input
+    df = pd.DataFrame(
+        {
+            "T1": [1.0, 2.0, 3.0],
+            "T2": [1.5, 2.5, 3.5],
+            "C1": [4.0, 5.0, 6.0],
+            "C2": [4.5, 5.5, 6.5],
+        },
+        index=["f1", "f2", "f3"],
+    )
+    ttest_group = TTestGroup(
+        treat_group="T",
+        control_group="C",
+        treat_samples=["T1", "T2"],
+        control_samples=["C1", "C2"],
+    )
+    result = pairwise_ttest(df.copy(), [ttest_group])
+    assert all(result.index == df.index)
+

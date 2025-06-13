@@ -8,6 +8,7 @@ import pandas as pd
 import pingouin as pg
 import scipy as sp
 
+import warnings
 
 @dataclass
 class TTestGroup:
@@ -145,12 +146,15 @@ def pairwise_ttest(
         df[label] = df[pairwise_ttest_group.treat_samples].mean(axis=1) - df[
             pairwise_ttest_group.control_samples
         ].mean(axis=1)
-        df[f"{label}_pval"] = sp.stats.ttest_ind(
-            df[pairwise_ttest_group.treat_samples],
-            df[pairwise_ttest_group.control_samples],
-            axis=1,
-            nan_policy="omit",
-        ).pvalue
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', category=RuntimeWarning)
+            
+            df[f"{label}_pval"] = sp.stats.ttest_ind(
+                df[pairwise_ttest_group.treat_samples],
+                df[pairwise_ttest_group.control_samples],
+                axis=1,
+                nan_policy="omit",
+            ).pvalue
         df[f"{label}_adj-p"] = sp.stats.false_discovery_control(
             df[f"{label}_pval"].fillna(1.0).astype(float)
         )
