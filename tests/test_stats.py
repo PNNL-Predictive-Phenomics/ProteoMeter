@@ -175,19 +175,19 @@ def test_pairwise_ttest_basic():
     result = pairwise_ttest(df.copy(), [ttest_group])
     label = ttest_group.label()
     # Check mean difference
-    expected_diff = (
-        df[ttest_group.treat_samples].mean(axis=1)
-        - df[ttest_group.control_samples].mean(axis=1)
-    )
+    expected_diff = cast("pd.Series[float]", df[ttest_group.treat_samples].mean(axis=1) - df[ttest_group.control_samples].mean(axis=1))
+    
     pd.testing.assert_series_equal(result[label], expected_diff, check_names=False)
     # Check p-values match scipy
-    for i, row in df.iterrows():
-        t, p = sp.stats.ttest_ind(
+    for i, row in df.iterrows(): # type: ignore
+        row = cast("pd.Series[float]", row)
+        _, p = sp.stats.ttest_ind(
             [row["T1"], row["T2"]],
             [row["C1"], row["C2"]],
             nan_policy="omit",
         )
-        assert np.isclose(result.loc[i, f"{label}_pval"], p)
+        p = cast("float", p)
+        assert np.isclose(float(result.at[i, f"{label}_pval"]), float(p)) # type: ignore
 
 
 def test_pairwise_ttest_with_nan():
