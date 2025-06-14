@@ -1,0 +1,35 @@
+proteometer.ptm_analysis
+========================
+
+.. py:module:: proteometer.ptm_analysis
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   proteometer.ptm_analysis.ptm_analysis
+
+
+Module Contents
+---------------
+
+.. py:function:: ptm_analysis(par: proteometer.params.Params) -> tuple[pandas.DataFrame, pandas.DataFrame]
+
+   Runs the PTM proteomics processing and statistical analysis pipeline.
+
+   This function reads in data from proteomics files specified in the `par`
+   object, and performs normalization and batch correction, site-level rollup,
+   and statistical analysis. The resulting DataFrame contains the processed PTM
+   data, including the statistical results.
+
+   :param par: A Params object that contains all the parameters for the analysis.
+
+   :returns:
+
+             Two pandas DataFrames that contains the result of the PTM analysis.
+                 The first is the processed PTM data, and the second is the global proteomics data.
+   :rtype: tuple[pd.DataFrame,pd.DataFrame]
+
+

@@ -1,0 +1,42 @@
+proteometer.peptide
+===================
+
+.. py:module:: proteometer.peptide
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   proteometer.peptide.nip_off_pept
+   proteometer.peptide.strip_peptide
+
+
+Module Contents
+---------------
+
+.. py:function:: nip_off_pept(peptide: str) -> str
+
+   Extracts the core peptide sequence surrounded by `.` characters.
+
+   :param peptide: The peptide string containing flanking characters.
+   :type peptide: str
+
+   :returns: The core peptide sequence without flanking characters.
+   :rtype: str
+
+
+.. py:function:: strip_peptide(peptide: str, nip_off: bool = True) -> str
+
+   Removes non-alphabetic characters and optionally nips off flanking characters.
+
+   :param peptide: The peptide string to be cleaned.
+   :type peptide: str
+   :param nip_off: Whether to nip off flanking characters. Defaults to True.
+   :type nip_off: bool, optional
+
+   :returns: The cleaned peptide string.
+   :rtype: str
+
+

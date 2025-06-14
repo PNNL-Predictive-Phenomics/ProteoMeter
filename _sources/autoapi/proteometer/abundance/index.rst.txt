@@ -1,0 +1,161 @@
+proteometer.abundance
+=====================
+
+.. py:module:: proteometer.abundance
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   proteometer.abundance.get_prot_abund_scalars
+   proteometer.abundance.prot_abund_correction
+   proteometer.abundance.prot_abund_correction_sig_only
+   proteometer.abundance.prot_abund_correction_matched
+   proteometer.abundance.global_prot_normalization_and_stats
+
+
+Module Contents
+---------------
+
+.. py:function:: get_prot_abund_scalars(prot: pandas.DataFrame, pairwise_ttest_name: str, sig_type: str = 'pval', sig_thr: float = 0.05) -> dict[str, float]
+
+   Return a dictionary of protein abundance scalars for the given pairwise t-test.
+
+   :param prot: DataFrame containing protein-level data.
+   :type prot: pd.DataFrame
+   :param pairwise_ttest_name: Name of the pairwise t-test.
+   :type pairwise_ttest_name: str
+   :param sig_type: Type of significance metric to use for filtering.
+                    Defaults to "pval".
+   :type sig_type: str, optional
+   :param sig_thr: Threshold for significance filtering. Defaults to 0.05.
+   :type sig_thr: float, optional
+
+   :returns: Dictionary of protein abundance scalars.
+   :rtype: dict[str, float]
+
+
+.. py:function:: prot_abund_correction(pept: pandas.DataFrame, prot: pandas.DataFrame, par: proteometer.params.Params, columns_to_correct: collections.abc.Iterable[str] | None = None, pairwise_ttest_groups: collections.abc.Iterable[proteometer.stats.TTestGroup] | None = None, non_tt_cols: collections.abc.Iterable[str] | None = None) -> pandas.DataFrame
+
+   Perform protein abundance correction based on the provided parameters.
+
+   This function applies either paired or unpaired sample abundance correction
+   depending on the `abundance_correction_paired_samples` attribute of the `par` parameter.
+
+   :param pept: A DataFrame containing peptide-level data.
+   :type pept: pd.DataFrame
+   :param prot: A DataFrame containing protein-level data.
+   :type prot: pd.DataFrame
+   :param par: A parameter object containing configuration for abundance correction.
+   :type par: Params
+   :param columns_to_correct: Columns to correct for paired sample abundance correction.
+                              Required if `par.abundance_correction_paired_samples` is True.
+   :type columns_to_correct: Iterable[str] | None, optional
+   :param pairwise_ttest_groups: Groups for pairwise t-tests in unpaired sample abundance correction.
+                                 Required if `par.abundance_correction_paired_samples` is False.
+   :type pairwise_ttest_groups: Iterable[stats.TTestGroup] | None, optional
+   :param non_tt_cols: Columns that should not be included in the t-test correction.
+   :type non_tt_cols: Iterable[str] | None, optional
+
+   :returns: A DataFrame with corrected protein abundances.
+   :rtype: pd.DataFrame
+
+   :raises ValueError: If `columns_to_correct` is not provided for paired sample correction.
+   :raises ValueError: If `pairwise_ttest_groups` is not provided for unpaired sample correction.
+
+
+.. py:function:: prot_abund_correction_sig_only(pept: pandas.DataFrame, prot: pandas.DataFrame, pairwise_ttest_groups: collections.abc.Iterable[proteometer.stats.TTestGroup], uniprot_col: str, sig_type: str = 'pval', sig_thr: float = 0.05) -> pandas.DataFrame
+
+   Adjusts peptide abundance values based on protein abundance scalars for
+   significant pairwise t-test groups.
+
+   This function iterates over a collection of pairwise t-test groups, computes
+   or retrieves protein abundance scalars, and applies these scalars to adjust
+   the peptide abundance values for the specified treatment samples.
+
+   :param pept: DataFrame containing peptide-level data. Must include
+                a column corresponding to `uniprot_col` for mapping protein identifiers.
+   :type pept: pd.DataFrame
+   :param prot: DataFrame containing protein-level data. Must include
+                columns for protein abundance scalars or data required to compute them.
+   :type prot: pd.DataFrame
+   :param pairwise_ttest_groups: An iterable of
+                                 TTestGroup objects, each representing a pairwise t-test group with
+                                 associated metadata (e.g., labels and treatment samples).
+   :type pairwise_ttest_groups: Iterable[stats.TTestGroup]
+   :param uniprot_col: Column name in `pept` that contains UniProt identifiers
+                       for mapping to protein abundance data.
+   :type uniprot_col: str
+   :param sig_type: Type of significance metric to use for filtering
+                    (e.g., "pval" for p-value or "adj-p" for adjusted p-value). Defaults to "pval".
+   :type sig_type: str, optional
+   :param sig_thr: Threshold for significance filtering. Only proteins
+                   meeting this threshold will have their abundance scalars applied. Defaults to 0.05.
+   :type sig_thr: float, optional
+
+   :returns:
+
+             Updated `pept` DataFrame with adjusted abundance values for
+                 treatment samples and additional columns for protein abundance scalars.
+   :rtype: pd.DataFrame
+
+
+.. py:function:: prot_abund_correction_matched(pept: pandas.DataFrame, prot: pandas.DataFrame, columns_to_correct: collections.abc.Iterable[str], uniprot_col: str, non_tt_cols: collections.abc.Iterable[str] | None = None) -> pandas.DataFrame
+
+   Correct the peptide abundance data using the protein abundance values.
+
+   This function takes the peptide data and corrects the intensity values
+   for each peptide using the protein abundance values from the protein
+   data. The correction is only applied to the treatment samples.
+
+   :param pept: A DataFrame containing peptide-level data.
+   :type pept: pd.DataFrame
+   :param prot: A DataFrame containing protein-level data.
+   :type prot: pd.DataFrame
+   :param columns_to_correct: Columns to correct for protein
+                              abundance changes. Must be shared by `pept` and `prot`.
+   :type columns_to_correct: Iterable[str]
+   :param uniprot_col: Column name for the Uniprot ID in both `pept` and `prot`.
+   :type uniprot_col: str
+   :param non_tt_cols: Columns that should not
+                       be included in the abundance correction. Must be shared by `pept` and `prot`.
+   :type non_tt_cols: Iterable[str] | None, optional
+
+   :returns:
+
+             Updated `pept` DataFrame with adjusted abundance values
+                 for treatment samples and additional columns for protein abundance
+                 scalars.
+   :rtype: pd.DataFrame
+
+
+.. py:function:: global_prot_normalization_and_stats(global_prot: pandas.DataFrame, int_cols: list[str], anova_cols: list[str], pairwise_ttest_groups: collections.abc.Iterable[proteometer.stats.TTestGroup], metadata: pandas.DataFrame, par: proteometer.params.Params) -> pandas.DataFrame
+
+   Perform global protein normalization and statistical analysis.
+
+   This function applies normalization and statistical tests to global proteomics
+   data. It handles both median normalization and batch correction, depending on
+   the parameters provided in the `par` object. It also performs ANOVA and pairwise t-tests.
+
+   :param global_prot: DataFrame containing global protein-level data.
+   :type global_prot: pd.DataFrame
+   :param int_cols: List of column names representing intensity data to normalize.
+   :type int_cols: list[str]
+   :param anova_cols: List of column names for ANOVA analysis.
+   :type anova_cols: list[str]
+   :param pairwise_ttest_groups: Iterable of TTestGroup objects
+                                 for performing pairwise t-tests (each defines a control-treatment pair).
+   :type pairwise_ttest_groups: Iterable[stats.TTestGroup]
+   :param metadata: DataFrame containing metadata for batch correction and
+                    ANOVA analysis.
+   :type metadata: pd.DataFrame
+   :param par: Parameter object containing configuration for normalization and
+               statistical analysis.
+   :type par: Params
+
+   :returns: The normalized and statistically analyzed global protein data.
+   :rtype: pd.DataFrame
+
+
