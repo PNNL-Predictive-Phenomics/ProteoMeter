@@ -36,7 +36,6 @@ def ptm_analysis(par: Params) -> tuple[pd.DataFrame, pd.DataFrame]:
     anova_cols = parse_metadata.anova_columns(metadata, par)
     group_cols, groups = parse_metadata.group_columns(metadata, par)
     pairwise_ttest_groups = parse_metadata.t_test_groups(metadata, par)
-    user_pairwise_ttest_groups = parse_metadata.user_t_test_groups(metadata, par)
 
     ptm_pept = [
         generate_index(pept, par.uniprot_col, par.peptide_col, par.id_separator)
@@ -66,7 +65,6 @@ def ptm_analysis(par: Params) -> tuple[pd.DataFrame, pd.DataFrame]:
         int_cols=int_cols,
         anova_cols=anova_cols,
         pairwise_ttest_groups=pairwise_ttest_groups,
-        user_pairwise_ttest_groups=user_pairwise_ttest_groups,
         metadata=metadata,
         par=par,
     )
@@ -113,7 +111,6 @@ def ptm_analysis(par: Params) -> tuple[pd.DataFrame, pd.DataFrame]:
         ptm_rolled=ptm_rolled,
         anova_cols=anova_cols,
         pairwise_ttest_groups=pairwise_ttest_groups,
-        user_pairwise_ttest_groups=user_pairwise_ttest_groups,
         metadata=metadata,
         par=par,
     )
@@ -131,7 +128,6 @@ def _rollup_stats(
     ptm_rolled: list[pd.DataFrame],
     anova_cols: list[str],
     pairwise_ttest_groups: list[stats.TTestGroup],
-    user_pairwise_ttest_groups: list[stats.TTestGroup],
     metadata: pd.DataFrame,
     par: Params,
 ):
@@ -146,8 +142,6 @@ def _rollup_stats(
         anova_cols (list[str]): List of column names for performing ANOVA.
         pairwise_ttest_groups (list[stats.TTestGroup]): List of TTestGroup objects
             specifying control-treatment pairs for pairwise t-tests.
-        user_pairwise_ttest_groups (list[stats.TTestGroup]): List of user-defined
-            TTestGroup objects for additional pairwise t-tests.
         metadata (pd.DataFrame): DataFrame containing metadata for ANOVA analysis.
         par (Params): Parameter object containing configuration for statistical analysis.
 
@@ -164,10 +158,6 @@ def _rollup_stats(
         ]
     ptm_rolled = [
         stats.pairwise_ttest(rolled, pairwise_ttest_groups) for rolled in ptm_rolled
-    ]
-    ptm_rolled = [
-        stats.pairwise_ttest(rolled, user_pairwise_ttest_groups)
-        for rolled in ptm_rolled
     ]
 
     return ptm_rolled

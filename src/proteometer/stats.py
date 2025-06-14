@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import warnings
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 
@@ -107,11 +108,12 @@ def anova(
 
     f_stats_factors_df = pd.concat(f_stats_factors).reset_index(drop=True)
     for anova_factor_name in anova_factor_names:
-        f_stats_factors_df[f"ANOVA_[{anova_factor_name}]_adj-p"] = (
+        ind = ~f_stats_factors_df[f"ANOVA_[{anova_factor_name}]_pval"].isna()
+        f_stats_factors_df.loc[ind, f"ANOVA_[{anova_factor_name}]_adj-p"] = (
             sp.stats.false_discovery_control(
-                f_stats_factors_df[f"ANOVA_[{anova_factor_name}]_pval"]
-                .fillna(1.0)
-                .astype(float)
+                f_stats_factors_df[ind][f"ANOVA_[{anova_factor_name}]_pval"].astype(
+                    float
+                )
             )
         )
         f_stats_factors_df.loc[
@@ -145,15 +147,20 @@ def pairwise_ttest(
         df[label] = df[pairwise_ttest_group.treat_samples].mean(axis=1) - df[
             pairwise_ttest_group.control_samples
         ].mean(axis=1)
-        df[f"{label}_pval"] = sp.stats.ttest_ind(
-            df[pairwise_ttest_group.treat_samples],
-            df[pairwise_ttest_group.control_samples],
-            axis=1,
-            nan_policy="omit",
-        ).pvalue
-        df[f"{label}_adj-p"] = sp.stats.false_discovery_control(
-            df[f"{label}_pval"].fillna(1.0).astype(float)
-        )
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=RuntimeWarning)
+            df[f"{label}_pval"] = sp.stats.ttest_ind(
+                df[pairwise_ttest_group.treat_samples],
+                df[pairwise_ttest_group.control_samples],
+                axis=1,
+                nan_policy="omit",
+            ).pvalue
+
+            ind = ~df[f"{label}_pval"].isna()
+            df.loc[ind, f"{label}_adj-p"] = sp.stats.false_discovery_control(
+                df[ind][f"{label}_pval"].astype(float)
+            )
         df.loc[
             df[f"{label}_pval"].isna(),
             f"{label}_adj-p",

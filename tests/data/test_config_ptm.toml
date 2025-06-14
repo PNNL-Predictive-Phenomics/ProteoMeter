@@ -20,9 +20,8 @@ experiment_type = "TMT"  # TMT or Label-free
 search_tool = ""
 
 [statistics]
-pairwise_factor = "Time"
+ttest_pairs = [["Mock_8h", "Infected_8h"], ["Mock_16h", "Infected_16h"], ["Mock_24h", "Infected_24h"], ["Infected_8h", "Infected_16h"], ["Infected_8h", "Infected_24h"]]
 anova_factors = ["Treatment", "Time"]
-user_ttest_pairs = [["Infected_8h", "Infected_16h"]]
 
 [corrections]
 abundance_correction = true

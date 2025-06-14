@@ -105,62 +105,6 @@ def anova_columns(metadata: pd.DataFrame, par: Params) -> list[str]:
 
 
 def t_test_groups(metadata: pd.DataFrame, par: Params) -> list[TTestGroup]:
-    """Generate the pair-wise t-test groups from the metadata.
-
-    Args:
-        metadata (pd.DataFrame): The metadata DataFrame with column names specified in `par`.
-        par (Params): The parameters object with attributes:
-            - metadata_condition_col: Column name for condition.
-            - metadata_control_condition: Control condition name.
-            - metadata_treatment_condition: Treatment condition name.
-            - pairwise_factor: Column name for the pair-wise comparison factor.
-            - metadata_group_col: Column name for group.
-            - metadata_sample_col: Column name for sample.
-
-    Returns:
-        list[TTestGroup]: A list of tuple containing the group name, control group name,
-            treatment group name, control sample columns, and treatment sample columns.
-    """
-    pairwise_pars: Iterable[str] = metadata[par.pairwise_factor].unique()  # type: ignore
-    pairwise_ttest_groups: list[TTestGroup] = []
-
-    cond_column: pd.Series[str] = metadata[par.metadata_condition_col].astype(str)
-    control_ind = cond_column == par.metadata_control_condition
-    treat_ind = cond_column == par.metadata_treatment_condition
-
-    pairwise_column: pd.Series[str] = metadata[par.pairwise_factor].astype(str)
-
-    for pairwise_par in pairwise_pars:
-        pairwise_ind: pd.Series[bool] = pairwise_column == pairwise_par
-
-        cgroups: Iterable[str] = metadata[control_ind & pairwise_ind][  # type: ignore
-            par.metadata_group_col
-        ].unique()
-
-        for control_group in cgroups:
-            tgroups: Iterable[str] = metadata[treat_ind & pairwise_ind][  # type: ignore
-                par.metadata_group_col
-            ].unique()
-
-            for treat_group in tgroups:
-                control_samples: list[str] = metadata[  # type: ignore
-                    metadata[par.metadata_group_col] == control_group
-                ][par.metadata_sample_col].to_list()
-                treat_samples: list[str] = metadata[  # type: ignore
-                    metadata[par.metadata_group_col] == treat_group
-                ][par.metadata_sample_col].to_list()
-                t_test_group = TTestGroup(
-                    treat_group=treat_group,
-                    control_group=control_group,
-                    treat_samples=cast(list[str], treat_samples),
-                    control_samples=cast(list[str], control_samples),
-                )
-                pairwise_ttest_groups.append(t_test_group)
-
-    return pairwise_ttest_groups
-
-
-def user_t_test_groups(metadata: pd.DataFrame, par: Params) -> list[TTestGroup]:
     """Generate the user-defined pairwise t-test groups from the metadata.
 
     Args:
@@ -168,25 +112,25 @@ def user_t_test_groups(metadata: pd.DataFrame, par: Params) -> list[TTestGroup]:
         par (Params): The parameters object with the following attributes:
             - metadata_group_col: Column name for group.
             - metadata_sample_col: Column name for sample.
-            - user_ttest_pairs: List of tuples containing the user-defined control and treatment group pairs.
+            - ttest_pairs: List of tuples containing the user-defined control and treatment group pairs.
 
     Returns:
         list[TTestGroup]: A list of TTestGroup objects with the user-defined pairwise t-test groups.
     """
-    user_pairwise_ttest_groups: list[TTestGroup] = []
-    for user_ctrl_group, user_treat_group in par.user_ttest_pairs:
-        control_samples = metadata[metadata[par.metadata_group_col] == user_ctrl_group][  # type: ignore
+    pairwise_ttest_groups: list[TTestGroup] = []
+    for ctrl_group, treat_group in par.ttest_pairs:
+        control_samples = metadata[metadata[par.metadata_group_col] == ctrl_group][  # type: ignore
             par.metadata_sample_col
         ].to_list()
-        treat_samples = metadata[metadata[par.metadata_group_col] == user_treat_group][  # type: ignore
+        treat_samples = metadata[metadata[par.metadata_group_col] == treat_group][  # type: ignore
             par.metadata_sample_col
         ].to_list()
         t_test_group = TTestGroup(
-            treat_group=user_treat_group,
-            control_group=user_ctrl_group,
+            treat_group=treat_group,
+            control_group=ctrl_group,
             treat_samples=cast(list[str], treat_samples),
             control_samples=cast(list[str], control_samples),
         )
 
-        user_pairwise_ttest_groups.append(t_test_group)
-    return user_pairwise_ttest_groups
+        pairwise_ttest_groups.append(t_test_group)
+    return pairwise_ttest_groups
