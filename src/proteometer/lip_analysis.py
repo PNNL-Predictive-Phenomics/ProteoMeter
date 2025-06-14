@@ -41,7 +41,6 @@ def lip_analysis(par: Params) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]
     anova_cols = parse_metadata.anova_columns(metadata, par)
     group_cols, groups = parse_metadata.group_columns(metadata, par)
     pairwise_ttest_groups = parse_metadata.t_test_groups(metadata, par)
-    user_pairwise_ttest_groups = parse_metadata.user_t_test_groups(metadata, par)
 
     if not par.search_tool:
         raise ValueError(
@@ -91,7 +90,6 @@ def lip_analysis(par: Params) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]
         int_cols=int_cols,
         anova_cols=anova_cols,
         pairwise_ttest_groups=pairwise_ttest_groups,
-        user_pairwise_ttest_groups=user_pairwise_ttest_groups,
         metadata=metadata,
         par=par,
     )
@@ -119,7 +117,6 @@ def lip_analysis(par: Params) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]
         groups,
         anova_cols,
         pairwise_ttest_groups,
-        user_pairwise_ttest_groups,
         metadata,
         par,
     )
@@ -130,7 +127,6 @@ def lip_analysis(par: Params) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]
         int_cols,
         anova_cols,
         pairwise_ttest_groups,
-        user_pairwise_ttest_groups,
         metadata,
         par,
     )
@@ -147,7 +143,6 @@ def _double_pept_statistics(
     groups: list[str],
     anova_cols: list[str],
     pairwise_ttest_groups: Iterable[stats.TTestGroup],
-    user_pairwise_ttest_groups: Iterable[stats.TTestGroup],
     metadata: pd.DataFrame,
     par: Params,
 ) -> pd.DataFrame:
@@ -161,7 +156,6 @@ def _double_pept_statistics(
             par.metadata_sample_col,
         )
     double_pept = stats.pairwise_ttest(double_pept, pairwise_ttest_groups)
-    double_pept = stats.pairwise_ttest(double_pept, user_pairwise_ttest_groups)
     for uniprot_id in double_pept[par.uniprot_col].unique():
         pept_df = cast(
             "pd.DataFrame",
@@ -200,17 +194,6 @@ def _double_pept_statistics(
                 sig_type=par.sig_type,
                 sig_thr=par.sig_thr,
             )
-            pept_df = lip.analyze_tryptic_pattern(
-                pept_df,
-                prot_seq,
-                user_pairwise_ttest_groups,
-                par.peptide_col,
-                description=prot_desc,
-                anova_type=factor_name,
-                id_separator=par.id_separator,
-                sig_type=par.sig_type,
-                sig_thr=par.sig_thr,
-            )
         if pept_df.shape[0] < 1:
             Warning(
                 f"Protein {uniprot_id} has no peptides that could be mapped to the sequence. Skipping the protein."
@@ -227,7 +210,6 @@ def _double_site(
     int_cols: Iterable[str],
     anova_cols: list[str],
     pairwise_ttest_groups: Iterable[stats.TTestGroup],
-    user_pairwise_ttest_groups: Iterable[stats.TTestGroup],
     metadata: pd.DataFrame,
     par: Params,
 ) -> pd.DataFrame:
@@ -240,7 +222,6 @@ def _double_site(
         int_cols (Iterable[str]): The names of columns to with intensity values.
         anova_cols (list[str]): The columns for ANOVA.
         pairwise_ttest_groups (Iterable[stats.TTestGroup]): The pairwise T-test groups.
-        user_pairwise_ttest_groups (Iterable[stats.TTestGroup]): Additional user-specified pairwise T-test groups.
         metadata (pd.DataFrame): The metadata data frame.
         par (Params): The parameters for limitied proteolysis analysis.
 
@@ -295,7 +276,6 @@ def _double_site(
         else:
             pept_df_a = pept_df_r
         pept_df_p = stats.pairwise_ttest(pept_df_a, pairwise_ttest_groups)
-        pept_df_p = stats.pairwise_ttest(pept_df_p, user_pairwise_ttest_groups)
         double_site.append(pept_df_p)
     return pd.concat(double_site)
 

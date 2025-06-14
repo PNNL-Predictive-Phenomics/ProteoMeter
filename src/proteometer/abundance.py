@@ -226,7 +226,6 @@ def global_prot_normalization_and_stats(
     int_cols: list[str],
     anova_cols: list[str],
     pairwise_ttest_groups: Iterable[stats.TTestGroup],
-    user_pairwise_ttest_groups: Iterable[stats.TTestGroup],
     metadata: pd.DataFrame,
     par: Params,
 ) -> pd.DataFrame:
@@ -243,8 +242,6 @@ def global_prot_normalization_and_stats(
         anova_cols (list[str]): List of column names for ANOVA analysis.
         pairwise_ttest_groups (Iterable[stats.TTestGroup]): Iterable of TTestGroup objects
             for performing pairwise t-tests (each defines a control-treatment pair).
-        user_pairwise_ttest_groups (Iterable[stats.TTestGroup]): User-defined iterable of
-            TTestGroup objects for performing additional pairwise t-tests.
         metadata (pd.DataFrame): DataFrame containing metadata for batch correction and
             ANOVA analysis.
         par (Params): Parameter object containing configuration for normalization and
@@ -283,6 +280,5 @@ def global_prot_normalization_and_stats(
             par.metadata_sample_col,
         )
     global_prot = stats.pairwise_ttest(global_prot, pairwise_ttest_groups)
-    global_prot = stats.pairwise_ttest(global_prot, user_pairwise_ttest_groups)
 
     return global_prot
