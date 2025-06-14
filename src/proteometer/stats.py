@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import warnings
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 
@@ -8,7 +9,6 @@ import pandas as pd
 import pingouin as pg
 import scipy as sp
 
-import warnings
 
 @dataclass
 class TTestGroup:
@@ -149,7 +149,7 @@ def pairwise_ttest(
         ].mean(axis=1)
 
         with warnings.catch_warnings():
-            warnings.filterwarnings('ignore', category=RuntimeWarning)
+            warnings.filterwarnings("ignore", category=RuntimeWarning)
             df[f"{label}_pval"] = sp.stats.ttest_ind(
                 df[pairwise_ttest_group.treat_samples],
                 df[pairwise_ttest_group.control_samples],
@@ -160,7 +160,7 @@ def pairwise_ttest(
             ind = ~df[f"{label}_pval"].isna()
             df.loc[ind, f"{label}_adj-p"] = sp.stats.false_discovery_control(
                 df[ind][f"{label}_pval"].astype(float)
-        )
+            )
         df.loc[
             df[f"{label}_pval"].isna(),
             f"{label}_adj-p",
