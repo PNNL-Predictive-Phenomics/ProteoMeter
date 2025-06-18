@@ -265,8 +265,11 @@ def ptm_analysis_return_all(par: Params) -> tuple[pd.DataFrame, pd.DataFrame, pd
     ptm_dict: dict[str, pd.DataFrame] = {}
     ptm_dict.update({name: rolled for name, rolled in zip(par.ptm_names, ptm_rolled)})
     all_ptms = ptm.combine_multi_ptms(ptm_dict, par)
+    ptm_dict_uncorrected: dict[str, pd.DataFrame] = {}
+    ptm_dict_uncorrected.update({name: rolled for name, rolled in zip(par.ptm_names, ptm_rolled_uncorrected)})
+    all_ptms_uncorrected = ptm.combine_multi_ptms(ptm_dict_uncorrected, par)
 
-    return all_ptms, global_prot
+    return all_ptms, global_prot, all_ptms_uncorrected
 
 
 def _rollup_stats(
