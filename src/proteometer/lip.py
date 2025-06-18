@@ -732,13 +732,14 @@ def delta_prok_site(
     position_col: str = "Pos",
     pept_start_col: str = "pept_start",
     pept_end_col: str = "pept_end",
+    rollup_method: Literal["median", "mean", "sum"] = "median",
 ) -> pd.DataFrame:
     """
     Computes exposure values for each lytic (ProK) site.
 
-    This is computed as the median log intensity of peptides for which the site
-    is a lytic site minus the median log intensity peptides that contain the
-    site in their sequence.
+    This is computed as the average log intensity of peptides for which the site
+    is a lytic site minus the average log intensity peptides that contain the
+    site in their sequence. The average function is determined by the rollup_method parameter.
 
     Args:
         peptide_df (pd.DataFrame): DataFrame containing peptide data.
@@ -753,6 +754,7 @@ def delta_prok_site(
         position_col (str, optional): Column name for positions in the lytic site DataFrame. Defaults to "Pos".
         pept_start_col (str, optional): Column name for start positions in the peptide DataFrame. Defaults to "pept_start".
         pept_end_col (str, optional): Column name for end positions in the peptide DataFrame. Defaults to "pept_end".
+        rollup_method (Literal["median", "mean", "sum"], optional): Aggregation method to use. Defaults to "median". The "sum" is done in linear space.
 
     Returns:
         pd.DataFrame: DataFrame with delta values for each lytic site.
@@ -782,11 +784,28 @@ def delta_prok_site(
         if pepts_with_site_inside.shape[0] == 0:
             continue
 
-        log_exposure_ratios = cast(
-            "pd.Series[float]",
-            pepts_cleaved_at_site[int_cols].median(axis=0)
-            - pepts_with_site_inside[int_cols].median(axis=0),
-        )
+        if rollup_method == "median":
+            log_exposure_ratios = cast(
+                "pd.Series[float]",
+                pepts_cleaved_at_site[int_cols].median(axis=0)
+                - pepts_with_site_inside[int_cols].median(axis=0),
+            )
+        elif rollup_method == "mean":
+            log_exposure_ratios = cast(
+                "pd.Series[float]",
+                pepts_cleaved_at_site[int_cols].mean(axis=0)
+                - pepts_with_site_inside[int_cols].mean(axis=0),
+            )
+        elif rollup_method == "sum":
+            log_exposure_ratios = cast(
+                "pd.Series[float]",
+                pepts_cleaved_at_site[int_cols].aggregate(expsum, axis=0)
+                - pepts_with_site_inside[int_cols].aggregate(expsum, axis=0),
+            )
+        else:
+            raise ValueError(
+                "The rollup method is not recognized. Please choose from the following: median, mean, sum"
+            )
 
         metadata = pd.Series(
             {
