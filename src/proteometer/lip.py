@@ -717,3 +717,85 @@ def select_lytic_sites(
     """
     site_df_out = site_df[site_df[site_type_col] == site_type].copy()
     return site_df_out
+
+
+def delta_prok_site(
+    peptide_df: pd.DataFrame,
+    site_df: pd.DataFrame,
+    int_cols: list[str],
+    site_type_col: str = "Type",
+    site_protein_col: str = "Protein",
+    pept_protein_col: str = "Protein",
+    protein_length_col: str = "Protein length",
+    site_pept_col: str = "Peptide",
+    pept_pept_col: str = "Peptide",
+    position_col: str = "Pos",
+    pept_start_col: str = "pept_start",
+    pept_end_col: str = "pept_end",
+) -> pd.DataFrame:
+    """
+    Computes exposure values for each lytic (ProK) site.
+
+    This is computed as the median log intensity of peptides for which the site
+    is a lytic site minus the median log intensity peptides that contain the
+    site in their sequence.
+
+    Args:
+        peptide_df (pd.DataFrame): DataFrame containing peptide data.
+        site_df (pd.DataFrame): DataFrame containing lytic site data.
+        int_cols (list[str]): List of columns to aggregate.
+        site_type_col (str, optional): Column name for lytic site types. Defaults to "Type".
+        site_protein_col (str, optional): Column name for protein IDs in the lytic site DataFrame. Defaults to "Protein".
+        pept_protein_col (str, optional): Column name for protein IDs in the peptide DataFrame. Defaults to "Protein".
+        protein_length_col (str, optional): Column name for protein lengths. Defaults to "Protein length".
+        site_pept_col (str, optional): Column name for peptides in the lytic site DataFrame. Defaults to "Peptide".
+        pept_pept_col (str, optional): Column name for peptides in the peptide DataFrame. Defaults to "Peptide".
+        position_col (str, optional): Column name for positions in the lytic site DataFrame. Defaults to "Pos".
+        pept_start_col (str, optional): Column name for start positions in the peptide DataFrame. Defaults to "pept_start".
+        pept_end_col (str, optional): Column name for end positions in the peptide DataFrame. Defaults to "pept_end".
+
+    Returns:
+        pd.DataFrame: DataFrame with delta values for each lytic site.
+    """
+    prok = site_df[site_df[site_type_col] == "ProK"]
+    pept_dfs = dict(list(peptide_df.groupby(pept_protein_col)))
+    df_rows = []
+    for _, row in prok.iterrows():  # type: ignore
+        pept_df = pept_dfs[row[site_protein_col]]
+        if row[protein_length_col] == row[position_col]:
+            continue
+        pepts_to_match = cast("list[str]", row[site_pept_col].split("; "))
+        pepts_cleaved_at_site = pept_df[pept_df[pept_pept_col].isin(pepts_to_match)]
+        if pepts_cleaved_at_site.shape[0] == 0:
+            raise ValueError(
+                "Unable to match a peptide to a lytic site. Please verify that the site dataframe is derived from the peptide dataframe."
+            )
+
+        pepts_with_site_inside = cast(
+            "pd.DataFrame",
+            pept_df[
+                (pept_df[pept_start_col] < row[position_col])
+                & (pept_df[pept_end_col] > row[position_col])
+            ],
+        )
+
+        if pepts_with_site_inside.shape[0] == 0:
+            continue
+
+        log_exposure_ratios = cast(
+            "pd.Series[float]",
+            pepts_cleaved_at_site[int_cols].median(axis=0)
+            - pepts_with_site_inside[int_cols].median(axis=0),
+        )
+
+        metadata = pd.Series(
+            {
+                "Protein": row[site_protein_col],
+                "Pos": row[position_col],
+            }
+        )
+
+        df_rows.append(pd.concat([metadata, log_exposure_ratios], axis=0))
+
+    df_out = pd.DataFrame(df_rows)
+    return df_out
