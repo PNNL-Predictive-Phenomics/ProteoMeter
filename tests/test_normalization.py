@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pandas as pd
+from proteometer.normalization import batch_correction
 
 from proteometer.normalization import (
     batch_correction,
@@ -112,3 +113,93 @@ def test_tmt_normalization():
     print(expected)
     print(result)
     pd.testing.assert_frame_equal(result, expected)
+
+
+def test_batch_correction_with_subset_samples():
+    # Define a small DataFrame and metadata
+    df = pd.DataFrame(
+        {
+            "A1": [1.0, 3.0],
+            "A2": [2.0, 4.0],
+            "B1": [5.0, 7.0],
+        }
+    )
+    metadata = pd.DataFrame(
+        {
+            "Sample": ["A1", "A2", "B1"],
+            "Batch": ["X", "X", "Y"],
+        }
+    )
+    # Only correct A1 and B1; A2 is in batch X but not used to compute batch means
+    result = batch_correction(
+        df,
+        metadata,
+        batch_correct_samples=["A1", "B1"],
+        batch_col="Batch",
+        sample_col="Sample",
+    )
+    # Compute expected by hand:
+    # Batch X means from A1 only: [1,3] -> mean per row = [1,3], grand mean = 2 -> diffs = X: [-1,1]?
+    # Actually batch_means:
+    #  row0: X=1, Y=5 -> mean=3 -> diffs X: -2, Y: +2
+    #  row1: X=3, Y=7 -> mean=5 -> diffs X: -2, Y: +2
+    # Then subtract batch X diffs from A1 and A2, subtract batch Y diffs from B1
+    expected = pd.DataFrame(
+        {
+            "A1": [1.0 - (-2.0), 3.0 - (-2.0)],
+            "A2": [2.0 - (-2.0), 4.0 - (-2.0)],
+            "B1": [5.0 - 2.0, 7.0 - 2.0],
+        }
+    )
+    pd.testing.assert_frame_equal(result, expected)
+
+
+def test_batch_correction_with_no_samples():
+    # An empty batch_correct_samples list should default to all samples
+    df = pd.DataFrame(
+        {
+            "S1": [10.0, 20.0],
+            "S2": [30.0, 40.0],
+        }
+    )
+    metadata = pd.DataFrame(
+        {
+            "Sample": ["S1", "S2"],
+            "Batch": ["B1", "B2"],
+        }
+    )
+    result = batch_correction(df, metadata, batch_correct_samples=[])
+    # For B1 (S1) and B2 (S2), row means are [10,20] and [30,40], grand row-means are [20,30]
+    # diffs: B1: [-10,-10], B2: [10,10] → subtract from each
+    expected = pd.DataFrame(
+        {
+            "S1": [10.0 - (-10.0), 20.0 - (-10.0)],
+            "S2": [30.0 - 10.0, 40.0 - 10.0],
+        }
+    )
+    pd.testing.assert_frame_equal(result, expected)
+
+
+def test_batch_correction_with_custom_column_names():
+    # Test using non-default batch_col and sample_col names
+    df = pd.DataFrame(
+        {
+            "X1": [2.0, 4.0, 6.0],
+            "Y1": [1.0, 3.0, 5.0],
+        }
+    )
+    meta_custom = pd.DataFrame(
+        {
+            "Smp": ["X1", "Y1"],
+            "Bch": ["B1", "B1"],
+        }
+    )
+    # Using the same batch for both samples, batch mean = row mean, so diffs = zero -> no change
+    result = batch_correction(
+        df,
+        meta_custom,
+        batch_col="Bch",
+        sample_col="Smp",
+    )
+    pd.testing.assert_frame_equal(result, df)
+
