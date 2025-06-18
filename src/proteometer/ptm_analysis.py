@@ -12,7 +12,7 @@ from proteometer.params import Params
 from proteometer.utils import filter_missingness, generate_index
 
 
-def ptm_analysis(par: Params) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+def ptm_analysis(par: Params) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Runs the PTM proteomics processing and statistical analysis pipeline.
 
     This function reads in data from proteomics files specified in the `par`
@@ -24,8 +24,8 @@ def ptm_analysis(par: Params) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]
         par: A Params object that contains all the parameters for the analysis.
 
     Returns:
-        tuple[pd.DataFrame,pd.DataFrame, pd.DataFrame]: Three pandas DataFrames that contains the result of the PTM analysis.
-            The first is the processed PTM data, and the second is the global proteomics data, the third is the processed PTM data that are not abundance corrected.
+        tuple[pd.DataFrame,pd.DataFrame]: Two pandas DataFrames that contains the result of the PTM analysis.
+            The first is the processed PTM data, and the second is the global proteomics data.
     """
     metadata = pd.read_csv(par.metadata_file, sep="\t")
     global_prot = pd.read_csv(par.global_prot_file, sep="\t")
@@ -53,8 +53,12 @@ def ptm_analysis(par: Params) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]
         filter_missingness(pept, groups, group_cols, par.min_replicates_qc)
         for pept in ptm_pept
     ]
-    global_pept = filter_missingness(global_pept, groups, group_cols, par.min_replicates_qc)
-    global_prot = filter_missingness(global_prot, groups, group_cols, par.min_replicates_qc)
+    global_pept = filter_missingness(
+        global_pept, groups, group_cols, par.min_replicates_qc
+    )
+    global_prot = filter_missingness(
+        global_prot, groups, group_cols, par.min_replicates_qc
+    )
 
     # must correct protein abundance, before we can use it to correct peptide
     # data; depending on normalization scheme, we may need to test significance
@@ -107,16 +111,6 @@ def ptm_analysis(par: Params) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]
             for mod_pept in ptm_rolled
         ]
 
-    ptm_rolled_uncorrected = ptm_rolled.copy()
-
-    ptm_rolled_uncorrected = _rollup_stats(
-        ptm_rolled=ptm_rolled_uncorrected,
-        anova_cols=anova_cols,
-        pairwise_ttest_groups=pairwise_ttest_groups,
-        metadata=metadata,
-        par=par,
-    )
-
     if par.abundance_correction:
         ptm_rolled = [
             abundance.prot_abund_correction(
@@ -141,11 +135,7 @@ def ptm_analysis(par: Params) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]
     ptm_dict.update({name: rolled for name, rolled in zip(par.ptm_names, ptm_rolled)})
     all_ptms = ptm.combine_multi_ptms(ptm_dict, par)
 
-    ptm_dict_uncorrected: dict[str, pd.DataFrame] = {}
-    ptm_dict_uncorrected.update({name: rolled for name, rolled in zip(par.ptm_names, ptm_rolled_uncorrected)})
-    all_ptms_uncorrected = ptm.combine_multi_ptms(ptm_dict_uncorrected, par)
-
-    return all_ptms, global_prot, all_ptms_uncorrected
+    return all_ptms, global_prot
 
 
 def _rollup_stats(
