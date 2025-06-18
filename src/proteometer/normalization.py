@@ -8,6 +8,64 @@ import pandas as pd
 from proteometer.params import Params
 
 
+def peptide_normalization(
+    global_pept: pd.DataFrame,
+    mod_pept: pd.DataFrame,
+    int_cols: list[str],
+    par: Params,
+) -> pd.DataFrame:
+    """
+    Normalizes and applies batch correction to peptide data.
+
+    Args:
+        global_pept (pd.DataFrame): Global peptide data.
+        mod_pept (pd.DataFrame): Modified peptide data.
+        int_cols (list[str]): List of intensity column names.
+        metadata (pd.DataFrame): Metadata for batch correction.
+        par (Params): Parameters object containing experiment settings.
+
+    Returns:
+        pd.DataFrame: Normalized and batch-corrected peptide data.
+    """
+    if par.experiment_type == "TMT":
+        mod_pept = tmt_normalization(mod_pept, global_pept, int_cols)
+    else:
+        mod_pept = median_normalization(mod_pept, int_cols)
+
+    return mod_pept
+
+
+def peptide_batch_correction(
+    mod_pept: pd.DataFrame,
+    metadata: pd.DataFrame,
+    par: Params,
+) -> pd.DataFrame:
+    """
+    Normalizes and applies batch correction to peptide data.
+
+    Args:
+        global_pept (pd.DataFrame): Global peptide data.
+        mod_pept (pd.DataFrame): Modified peptide data.
+        int_cols (list[str]): List of intensity column names.
+        metadata (pd.DataFrame): Metadata for batch correction.
+        par (Params): Parameters object containing experiment settings.
+
+    Returns:
+        pd.DataFrame: Normalized and batch-corrected peptide data.
+    """
+
+    if par.batch_correction:
+        mod_pept = batch_correction(
+            mod_pept,
+            metadata,
+            par.batch_correct_samples,
+            batch_col=par.metadata_batch_col,
+            sample_col=par.metadata_sample_col,
+        )
+
+    return mod_pept
+
+
 def peptide_normalization_and_correction(
     global_pept: pd.DataFrame,
     mod_pept: pd.DataFrame,
@@ -133,15 +191,20 @@ def median_normalization(
     if batch_col is None or metadata is None:
         return median_normalize_columns(df, int_cols, skipna, zero_center)
 
-    if batch_correct_samples is None:
+    if batch_correct_samples is None or len(list(batch_correct_samples)) == 0:
         batch_correct_samples = cast("pd.Series[str]", metadata[sample_col])
+    if not set(batch_correct_samples).issubset(cast("pd.Series[str]", metadata[sample_col])):
+        batch_correct_samples = cast("pd.Series[str]", metadata[sample_col])
+        Warning(
+            f"Some samples provided for batch correction are not in metadata, using all samples in {sample_col} of metadata."
+        )
 
     df_transformed = df.copy()
     for batch in metadata[metadata[sample_col].isin(batch_correct_samples)][
         batch_col
     ].unique():
         int_cols_per_batch = cast(
-            pd.Series[str], metadata[(metadata[batch_col] == batch)][sample_col]
+            "pd.Series[str]", metadata[(metadata[batch_col] == batch)][sample_col]
         )
         df_transformed = median_normalize_columns(
             df_transformed,
@@ -175,8 +238,13 @@ def batch_correction(
         pd.DataFrame: Batch-corrected DataFrame.
     """
     df = df4batcor.copy()
-    if batch_correct_samples is None:
+    if batch_correct_samples is None or len(list(batch_correct_samples)) == 0:
         batch_correct_samples = cast("pd.Series[str]", metadata[sample_col])
+    if not set(batch_correct_samples).issubset(cast("pd.Series[str]", metadata[sample_col])):
+        batch_correct_samples = cast("pd.Series[str]", metadata[sample_col])
+        Warning(
+            f"Some samples provided for batch correction are not in metadata, using all samples in {sample_col} of metadata."
+        )
 
     batches = cast(
         Iterable[str],

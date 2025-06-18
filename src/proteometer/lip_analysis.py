@@ -94,13 +94,35 @@ def lip_analysis(par: Params) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]
         par=par,
     )
 
-    double_pept = normalization.peptide_normalization_and_correction(
+    double_pept = normalization.peptide_normalization(
         global_pept=global_pept,
         mod_pept=double_pept,
         int_cols=int_cols,
-        metadata=metadata,
         par=par,
     )
+
+    double_site = lip.rollup_to_lytic_site(
+        double_pept,
+        prot_seqs,
+        int_cols,
+        par,
+    )
+
+    if par.batch_correction:
+        normalization.batch_correction(
+            double_pept,
+            metadata,
+            par.batch_correct_samples,
+            batch_col=par.metadata_batch_col,
+            sample_col=par.metadata_sample_col,
+        )
+        normalization.batch_correction(
+            double_site,
+            metadata,
+            par.batch_correct_samples,
+            batch_col=par.metadata_batch_col,
+            sample_col=par.metadata_sample_col,
+        )
 
     if par.abundance_correction:
         double_pept = abundance.prot_abund_correction(
@@ -110,21 +132,25 @@ def lip_analysis(par: Params) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]
             columns_to_correct=int_cols,
             pairwise_ttest_groups=pairwise_ttest_groups,
         )
+        double_site = abundance.prot_abund_correction(
+            double_site,
+            global_prot,
+            par,
+            columns_to_correct=int_cols,
+            pairwise_ttest_groups=pairwise_ttest_groups,
+        )
 
     double_pept = _double_pept_statistics(
         double_pept,
         prot_seqs,
-        groups,
         anova_cols,
         pairwise_ttest_groups,
         metadata,
         par,
     )
 
-    double_site = _double_site(
-        double_pept,
-        prot_seqs,
-        int_cols,
+    double_site = _double_site_statistics(
+        double_site,
         anova_cols,
         pairwise_ttest_groups,
         metadata,
@@ -140,7 +166,6 @@ def lip_analysis(par: Params) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]
 def _double_pept_statistics(
     double_pept: pd.DataFrame,
     prot_seqs: list[fasta.SeqRecord],
-    groups: list[str],
     anova_cols: list[str],
     pairwise_ttest_groups: Iterable[stats.TTestGroup],
     metadata: pd.DataFrame,
@@ -204,10 +229,8 @@ def _double_pept_statistics(
     return pd.concat(pept_list)
 
 
-def _double_site(
-    double_pept: pd.DataFrame,
-    prot_seqs: list[fasta.SeqRecord],
-    int_cols: Iterable[str],
+def _double_site_statistics(
+    double_site: pd.DataFrame,
     anova_cols: list[str],
     pairwise_ttest_groups: Iterable[stats.TTestGroup],
     metadata: pd.DataFrame,
@@ -228,56 +251,18 @@ def _double_site(
     Returns:
         pd.DataFrame: A data frame with the site-level data.
     """
-    double_site: list[pd.DataFrame] = []
-    for uniprot_id in double_pept[par.uniprot_col].unique():
-        pept_df = cast(
-            "pd.DataFrame",
-            double_pept[double_pept[par.uniprot_col] == uniprot_id].copy(),
+    if anova_cols:
+        double_site = stats.anova(
+            double_site,
+            anova_cols,
+            metadata,
+            par.anova_factors,
+            par.metadata_sample_col,
         )
-        uniprot_seqs = [prot_seq for prot_seq in prot_seqs if uniprot_id in prot_seq.id]
-        if not uniprot_seqs:
-            Warning(
-                f"Protein {uniprot_id} not found in the fasta file. Skipping the protein."
-            )
-            continue
-        elif len(uniprot_seqs) > 1:
-            Warning(
-                f"Multiple proteins with the same ID {uniprot_id} found in the fasta file. Using the first one."
-            )
-        bio_seq = uniprot_seqs[0]
-        if bio_seq.seq is None:
-            raise ValueError(f"Protein sequence for {uniprot_id} is empty.")
-        prot_seq = str(bio_seq.seq)
-        prot_desc = bio_seq.description
-        pept_df_r = lip.rollup_to_lytic_site(
-            pept_df,
-            int_cols,
-            par.uniprot_col,
-            prot_seq,
-            residue_col=par.residue_col,
-            description=prot_desc,
-            tryptic_pattern="all",
-            peptide_col=par.peptide_col,
-            rollup_func="median",
-        )
-        if pept_df_r.shape[0] < 1:
-            Warning(
-                f"Protein {uniprot_id} has no peptides that could be mapped to the sequence. Skipping the protein."
-            )
-            continue
-        if anova_cols:
-            pept_df_a = stats.anova(
-                pept_df_r,
-                anova_cols,
-                metadata,
-                par.anova_factors,
-                par.metadata_sample_col,
-            )
-        else:
-            pept_df_a = pept_df_r
-        pept_df_p = stats.pairwise_ttest(pept_df_a, pairwise_ttest_groups)
-        double_site.append(pept_df_p)
-    return pd.concat(double_site)
+
+    double_site = stats.pairwise_ttest(double_site, pairwise_ttest_groups)
+
+    return double_site
 
 
 def _annotate_global_prot(global_prot: pd.DataFrame, par: Params) -> pd.DataFrame:

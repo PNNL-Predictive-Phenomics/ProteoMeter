@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING, Any, Callable, Literal, cast
 import numpy as np
 import pandas as pd
 
+from proteometer import fasta
+from proteometer.params import Params
 from proteometer.peptide import strip_peptide
 from proteometer.utils import expsum
 
@@ -430,8 +432,65 @@ def analyze_tryptic_pattern(
     return protein_any_tryptic
 
 
-# This function is to analyze the digestion site pattern of the peptides in LiP pept dataframe
 def rollup_to_lytic_site(
+    double_pept: pd.DataFrame,
+    prot_seqs: list[fasta.SeqRecord],
+    int_cols: Iterable[str],
+    par: Params,
+) -> pd.DataFrame:
+    """
+    Converts the double-peptide data frame to a site-level data frame.
+
+    Args:
+        double_pept (pd.DataFrame): The double-peptide data frame.
+        prot_seqs (list[fasta.SeqRecord]): The list of protein sequences.
+        int_cols (Iterable[str]): The names of columns to with intensity values.
+        anova_cols (list[str]): The columns for ANOVA.
+        pairwise_ttest_groups (Iterable[stats.TTestGroup]): The pairwise T-test groups.
+        metadata (pd.DataFrame): The metadata data frame.
+        par (Params): The parameters for limitied proteolysis analysis.
+
+    Returns:
+        pd.DataFrame: A data frame with the site-level data.
+    """
+    double_site: list[pd.DataFrame] = []
+    for uniprot_id in double_pept[par.uniprot_col].unique():
+        pept_df = cast(
+            "pd.DataFrame",
+            double_pept[double_pept[par.uniprot_col] == uniprot_id].copy(),
+        )
+        uniprot_seqs = [prot_seq for prot_seq in prot_seqs if uniprot_id in prot_seq.id]
+        if not uniprot_seqs:
+            Warning(
+                f"Protein {uniprot_id} not found in the fasta file. Skipping the protein."
+            )
+            continue
+        elif len(uniprot_seqs) > 1:
+            Warning(
+                f"Multiple proteins with the same ID {uniprot_id} found in the fasta file. Using the first one."
+            )
+        bio_seq = uniprot_seqs[0]
+        if bio_seq.seq is None:
+            raise ValueError(f"Protein sequence for {uniprot_id} is empty.")
+        prot_seq = str(bio_seq.seq)
+        prot_desc = bio_seq.description
+        pept_df_r = rollup_single_protein_to_lytic_site(
+            pept_df,
+            int_cols,
+            par.uniprot_col,
+            prot_seq,
+            residue_col=par.residue_col,
+            description=prot_desc,
+            tryptic_pattern="all",
+            peptide_col=par.peptide_col,
+            rollup_func="sum",
+        )
+        double_site.append(pept_df_r)
+    return pd.concat(double_site)
+
+
+# This function is to analyze the digestion site pattern of the peptides in LiP pept dataframe
+def rollup_single_protein_to_lytic_site(
     df: pd.DataFrame,
     int_cols: Iterable[str],
     uniprot_col: str,
