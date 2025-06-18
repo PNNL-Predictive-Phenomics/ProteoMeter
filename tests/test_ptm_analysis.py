@@ -2,7 +2,7 @@ import pytest
 import pandas as pd
 from pathlib import Path
 from unittest.mock import patch, MagicMock
-from proteometer.ptm_analysis import ptm_analysis
+from proteometer.ptm_analysis import ptm_analysis, ptm_analysis_return_all
 
 
 class DummyParams:
@@ -46,20 +46,20 @@ def dummy_params(tmp_path: Path):
     })
     global_pept = pd.DataFrame({
         "Protein": ["P1", "P2"],
-        "Peptide": ["pep1", "pep2"],
+        "Peptide": ["pepa", "pepb"],
         "S1": [1.1, 2.1],
         "S2": [3.1, 4.1]
     })
     ptm_pept1 = pd.DataFrame({
         "Protein": ["P1"],
-        "Peptide": ["pep1"],
+        "Peptide": ["pepa"],
         "Residue": ["R1"],
         "S1": [1.2],
         "S2": [3.2]
     })
     ptm_pept2 = pd.DataFrame({
         "Protein": ["P2"],
-        "Peptide": ["pep2"],
+        "Peptide": ["pepb"],
         "Residue": ["R2"],
         "S1": [2.2],
         "S2": [4.2]
@@ -102,8 +102,13 @@ def test_ptm_analysis_basic(
     mock_parse_metadata.group_columns.return_value = (["Group"], [["A", "B"]])
     mock_parse_metadata.t_test_groups.return_value = [MagicMock()]
 
-    # Setup generate_index to return input DataFrame
-    mock_generate_index.side_effect = lambda df: df  # type: ignore
+    # Setup generate_index to return the DataFrame (accepts any args)
+    mock_generate_index.side_effect = lambda *args, **kwargs: args[0]  # type: ignore
+
+    # Setup normalization.peptide_normalization to just pass through the modified peptide DF
+    mock_normalization.peptide_normalization.side_effect = (
+        lambda global_pept, mod_pept, *args, **kwargs: mod_pept  # type: ignore
+    )
 
     # Setup stats.log2_transformation to return input DataFrame
     mock_stats.log2_transformation.side_effect = lambda df, cols: df  # type: ignore
@@ -113,9 +118,6 @@ def test_ptm_analysis_basic(
 
     # Setup abundance.global_prot_normalization_and_stats to return input DataFrame
     mock_abundance.global_prot_normalization_and_stats.side_effect = lambda **kwargs: kwargs["global_prot"]  # type: ignore[return-value]
-
-    # Setup normalization.peptide_normalization_and_correction to return input DataFrame
-    mock_normalization.peptide_normalization_and_correction.side_effect = lambda **kwargs: kwargs["mod_pept"]  # type: ignore[return-value]
 
     # Setup rollup.rollup_to_site to return input DataFrame
     def rollup_to_site_side_effect(*args, **kwargs) -> pd.DataFrame: # type: ignore
@@ -135,11 +137,10 @@ def test_ptm_analysis_basic(
     # Setup ptm.combine_multi_ptms to return the first DataFrame in the dict
     mock_ptm.combine_multi_ptms.side_effect = lambda dct, par: list(dct.values())[0] # type: ignore
 
-    all_ptms, global_prot, all_ptms_uncorrected = ptm_analysis(dummy_params) # type: ignore
+    all_ptms, global_prot = ptm_analysis(dummy_params) # type: ignore
 
     assert isinstance(all_ptms, pd.DataFrame)
     assert isinstance(global_prot, pd.DataFrame)
-    assert isinstance(all_ptms_uncorrected, pd.DataFrame)
 
 @patch("proteometer.ptm_analysis.parse_metadata")
 @patch("proteometer.ptm_analysis.generate_index")
@@ -164,10 +165,10 @@ def test_ptm_analysis_no_batch_no_abund(
     mock_parse_metadata.t_test_groups.return_value = [MagicMock()]
 
     mock_generate_index.side_effect = lambda df, *args, **kwargs: df # type: ignore
+    mock_normalization.peptide_normalization.side_effect = lambda **kwargs: kwargs["mod_pept"] # type: ignore
     mock_stats.log2_transformation.side_effect = lambda df, cols: df # type: ignore
     mock_filter_missingness.side_effect = lambda df, *args, **kwargs: df # type: ignore
     mock_abundance.global_prot_normalization_and_stats.side_effect = lambda **kwargs: kwargs["global_prot"] # type: ignore
-    mock_normalization.peptide_normalization_and_correction.side_effect = lambda **kwargs: kwargs["mod_pept"] # type: ignore
     def rollup_to_site_side_effect(data: pd.DataFrame, *args, **kwargs) -> pd.DataFrame: # type: ignore
         return data
     mock_rollup.rollup_to_site.side_effect = rollup_to_site_side_effect
@@ -175,11 +176,10 @@ def test_ptm_analysis_no_batch_no_abund(
     mock_stats.pairwise_ttest.side_effect = lambda df, *args, **kwargs: df # type: ignore
     mock_ptm.combine_multi_ptms.side_effect = lambda dct, par: list(dct.values())[0] # type: ignore
 
-    all_ptms, global_prot, all_ptms_uncorrected = ptm_analysis(dummy_params) # type: ignore
+    all_ptms, global_prot = ptm_analysis(dummy_params) # type: ignore
 
     assert isinstance(all_ptms, pd.DataFrame)
     assert isinstance(global_prot, pd.DataFrame)
-    assert isinstance(all_ptms_uncorrected, pd.DataFrame)
 
 
 @patch("proteometer.ptm_analysis.parse_metadata")
@@ -204,10 +204,17 @@ def test_ptm_analysis_no_abundance_correction(
     mock_parse_metadata.t_test_groups.return_value = [MagicMock()]
 
     mock_generate_index.side_effect = lambda df, *args, **kwargs: df # type: ignore
+    mock_normalization.peptide_normalization.side_effect = (
+        lambda global_pept, mod_pept, *args, **kwargs: mod_pept  # type: ignore
+    )
+    # stub batch_correction to passthrough a DataFrame
+    mock_normalization.batch_correction.side_effect = lambda df, *args, **kwargs: df  # type: ignore
+    # stub prot_abund_correction to passthrough a DataFrame
+    mock_abundance.prot_abund_correction.side_effect = lambda df, *args, **kwargs: df  # type: ignore
+
     mock_stats.log2_transformation.side_effect = lambda df, cols: df # type: ignore
     mock_filter_missingness.side_effect = lambda df, *args, **kwargs: df # type: ignore
     mock_abundance.global_prot_normalization_and_stats.side_effect = lambda **kwargs: kwargs["global_prot"] # type: ignore
-    mock_normalization.peptide_normalization_and_correction.side_effect = lambda **kwargs: kwargs["mod_pept"] # type: ignore
     mock_rollup.rollup_to_site.side_effect = lambda *args, **kwargs: args[0] # type: ignore
     mock_stats.anova.side_effect = lambda df, *args, **kwargs: df # type: ignore
     mock_stats.pairwise_ttest.side_effect = lambda df, *args, **kwargs: df # type: ignore
@@ -217,5 +224,157 @@ def test_ptm_analysis_no_abundance_correction(
 
     assert isinstance(all_ptms, pd.DataFrame)
     assert isinstance(global_prot, pd.DataFrame)
+
+
+@patch("proteometer.ptm_analysis.parse_metadata")
+@patch("proteometer.ptm_analysis.generate_index")
+@patch("proteometer.ptm_analysis.stats")
+@patch("proteometer.ptm_analysis.filter_missingness")
+@patch("proteometer.ptm_analysis.abundance")
+@patch("proteometer.ptm_analysis.normalization")
+@patch("proteometer.ptm_analysis.rollup")
+@patch("proteometer.ptm_analysis.ptm")
+def test_ptm_analysis_return_all_basic(
+    mock_ptm, mock_rollup, mock_normalization, mock_abundance, # type: ignore
+    mock_filter_missingness, mock_stats, mock_generate_index, mock_parse_metadata, dummy_params # type: ignore
+):
+    # Setup parse_metadata mocks
+    mock_parse_metadata.int_columns.return_value = ["S1", "S2"]
+    mock_parse_metadata.anova_columns.return_value = ["Group"]
+    mock_parse_metadata.group_columns.return_value = (["Group"], [["A", "B"]])
+    mock_parse_metadata.t_test_groups.return_value = [MagicMock()]
+
+    # Setup generate_index to return the DataFrame (accepts any args)
+    mock_generate_index.side_effect = lambda *args, **kwargs: args[0]  # type: ignore
+
+    # Setup normalization.peptide_normalization to just pass through the modified peptide DF
+    mock_normalization.peptide_normalization.side_effect = (
+        lambda global_pept, mod_pept, *args, **kwargs: mod_pept  # type: ignore
+    )
+
+    # Setup stats.log2_transformation to return input DataFrame
+    mock_stats.log2_transformation.side_effect = lambda df, cols: df  # type: ignore
+
+    # Setup filter_missingness to return input DataFrame
+    mock_filter_missingness.side_effect = lambda df, *args, **kwargs: df  # type: ignore[return-value]
+
+    # Setup abundance.global_prot_normalization_and_stats to return input DataFrame
+    mock_abundance.global_prot_normalization_and_stats.side_effect = lambda **kwargs: kwargs["global_prot"]  # type: ignore[return-value]
+
+    # Setup rollup.rollup_to_site to return input DataFrame
+    def rollup_to_site_side_effect(*args, **kwargs) -> pd.DataFrame: # type: ignore
+        return args[0] # type: ignore
+    mock_rollup.rollup_to_site.side_effect = rollup_to_site_side_effect
+
+    # Setup normalization.batch_correction to return input DataFrame
+    mock_normalization.batch_correction.side_effect = lambda *args, **kwargs: args[0] # type: ignore
+
+    # Setup abundance.prot_abund_correction to return input DataFrame
+    mock_abundance.prot_abund_correction.side_effect = lambda *args, **kwargs: args[0] # type: ignore
+
+    # Setup stats.anova and stats.pairwise_ttest to return input DataFrame
+    mock_stats.anova.side_effect = lambda df, *args, **kwargs: df # type: ignore
+    mock_stats.pairwise_ttest.side_effect = lambda df, *args, **kwargs: df # type: ignore
+
+    # Setup ptm.combine_multi_ptms to return the first DataFrame in the dict
+    mock_ptm.combine_multi_ptms.side_effect = lambda dct, par: list(dct.values())[0] # type: ignore
+
+    all_ptms, global_prot, all_ptms_uncorrected = ptm_analysis_return_all(dummy_params) # type: ignore
+
+    assert isinstance(all_ptms, pd.DataFrame)
+    assert isinstance(global_prot, pd.DataFrame)
+    assert isinstance(all_ptms_uncorrected, pd.DataFrame)
+
+@patch("proteometer.ptm_analysis.parse_metadata")
+@patch("proteometer.ptm_analysis.generate_index")
+@patch("proteometer.ptm_analysis.stats")
+@patch("proteometer.ptm_analysis.filter_missingness")
+@patch("proteometer.ptm_analysis.abundance")
+@patch("proteometer.ptm_analysis.normalization")
+@patch("proteometer.ptm_analysis.rollup")
+@patch("proteometer.ptm_analysis.ptm")
+def test_ptm_analysis_return_all_no_batch_no_abund(
+    mock_ptm, mock_rollup, mock_normalization, mock_abundance, # type: ignore
+    mock_filter_missingness, mock_stats, mock_generate_index, mock_parse_metadata, dummy_params # type: ignore
+):
+    # Disable batch and abundance correction
+    dummy_params.batch_correction = False
+    dummy_params.abundance_correction = False
+
+    # Setup parse_metadata mocks
+    mock_parse_metadata.int_columns.return_value = ["S1", "S2"]
+    mock_parse_metadata.anova_columns.return_value = ["Group"]
+    mock_parse_metadata.group_columns.return_value = (["Group"], [["A", "B"]])
+    mock_parse_metadata.t_test_groups.return_value = [MagicMock()]
+
+    mock_generate_index.side_effect = lambda df, *args, **kwargs: df # type: ignore
+    mock_normalization.peptide_normalization.side_effect = (
+        lambda global_pept, mod_pept, *args, **kwargs: mod_pept  # type: ignore
+    )
+    # stub batch_correction (will be skipped when batch=False)
+    mock_normalization.batch_correction.side_effect = lambda df, *args, **kwargs: df  # type: ignore
+    # stub prot_abund_correction to passthrough a DataFrame
+    mock_abundance.prot_abund_correction.side_effect = lambda df, *args, **kwargs: df  # type: ignore
+
+    mock_stats.log2_transformation.side_effect = lambda df, cols: df # type: ignore
+    mock_filter_missingness.side_effect = lambda df, *args, **kwargs: df # type: ignore
+    mock_abundance.global_prot_normalization_and_stats.side_effect = lambda **kwargs: kwargs["global_prot"] # type: ignore
+    def rollup_to_site_side_effect(data: pd.DataFrame, *args, **kwargs) -> pd.DataFrame: # type: ignore
+        return data
+    mock_rollup.rollup_to_site.side_effect = rollup_to_site_side_effect
+    mock_stats.anova.side_effect = lambda df, *args, **kwargs: df # type: ignore
+    mock_stats.pairwise_ttest.side_effect = lambda df, *args, **kwargs: df # type: ignore
+    mock_ptm.combine_multi_ptms.side_effect = lambda dct, par: list(dct.values())[0] # type: ignore
+
+    all_ptms, global_prot, all_ptms_uncorrected = ptm_analysis_return_all(dummy_params) # type: ignore
+
+    assert isinstance(all_ptms, pd.DataFrame)
+    assert isinstance(global_prot, pd.DataFrame)
+    assert isinstance(all_ptms_uncorrected, pd.DataFrame)
+
+
+@patch("proteometer.ptm_analysis.parse_metadata")
+@patch("proteometer.ptm_analysis.generate_index")
+@patch("proteometer.ptm_analysis.stats")
+@patch("proteometer.ptm_analysis.filter_missingness")
+@patch("proteometer.ptm_analysis.abundance")
+@patch("proteometer.ptm_analysis.normalization")
+@patch("proteometer.ptm_analysis.rollup")
+@patch("proteometer.ptm_analysis.ptm")
+def test_ptm_analysis_return_all_no_abundance_correction(
+    mock_ptm, mock_rollup, mock_normalization, mock_abundance, # type: ignore
+    mock_filter_missingness, mock_stats, mock_generate_index, mock_parse_metadata, dummy_params # type: ignore
+):
+
+    dummy_params.abundance_correction = False
+
+    # Setup parse_metadata mocks
+    mock_parse_metadata.int_columns.return_value = ["S1", "S2"]
+    mock_parse_metadata.anova_columns.return_value = ["Group"]
+    mock_parse_metadata.group_columns.return_value = (["Group"], [["A", "B"]])
+    mock_parse_metadata.t_test_groups.return_value = [MagicMock()]
+
+    mock_generate_index.side_effect = lambda df, *args, **kwargs: df # type: ignore
+    mock_normalization.peptide_normalization.side_effect = (
+        lambda global_pept, mod_pept, *args, **kwargs: mod_pept  # type: ignore
+    )
+    # stub batch_correction to passthrough a DataFrame
+    mock_normalization.batch_correction.side_effect = lambda df, *args, **kwargs: df  # type: ignore
+    # stub prot_abund_correction to passthrough a DataFrame
+    mock_abundance.prot_abund_correction.side_effect = lambda df, *args, **kwargs: df  # type: ignore
+
+    mock_stats.log2_transformation.side_effect = lambda df, cols: df # type: ignore
+    mock_filter_missingness.side_effect = lambda df, *args, **kwargs: df # type: ignore
+    mock_abundance.global_prot_normalization_and_stats.side_effect = lambda **kwargs: kwargs["global_prot"] # type: ignore
+    mock_rollup.rollup_to_site.side_effect = lambda *args, **kwargs: args[0] # type: ignore
+    mock_stats.anova.side_effect = lambda df, *args, **kwargs: df # type: ignore
+    mock_stats.pairwise_ttest.side_effect = lambda df, *args, **kwargs: df # type: ignore
+    mock_ptm.combine_multi_ptms.side_effect = lambda dct, par: list(dct.values())[0] # type: ignore
+
+    all_ptms, global_prot, all_ptms_uncorrected = ptm_analysis_return_all(dummy_params) # type: ignore
+
+    assert isinstance(all_ptms, pd.DataFrame)
+    assert isinstance(global_prot, pd.DataFrame)
+    assert isinstance(all_ptms_uncorrected, pd.DataFrame)
 
 
