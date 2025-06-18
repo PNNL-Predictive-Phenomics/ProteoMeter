@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pandas as pd
-from proteometer.normalization import batch_correction
 
 from proteometer.normalization import (
     batch_correction,
@@ -202,4 +201,3 @@ def test_batch_correction_with_custom_column_names():
         sample_col="Smp",
     )
     pd.testing.assert_frame_equal(result, df)
-
