@@ -21,6 +21,34 @@ class TTestGroup:
         return f"{self.treat_group}/{self.control_group}"
 
 
+def recalculate_adj_pval(df: pd.DataFrame, comparisons: list[str]):
+    """
+    Recalculates adjusted p-values for specified comparisons.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing p-values and adjusted p-values.
+        comparisons (list[str]): List of comparison names. Each comparison
+            should have a p-value and adjusted p-value indicated by a "_pval" and
+            "_adj-p" suffix, respectively.
+
+    Returns:
+        pd.DataFrame: DataFrame with recalculated adjusted p-values.
+    """
+    for comparison in comparisons:
+        pcol = f"{comparison}_pval"
+        apcol = f"{comparison}_adj-p"
+        ind = ~df[pcol].isna()
+        df.loc[ind, apcol] = sp.stats.false_discovery_control(
+            df[ind][pcol].astype(float)
+        )
+        df.loc[
+            df[pcol].isna(),
+            apcol,
+        ] = np.nan
+
+    return df
+
+
 def log2_transformation(
     df2transform: pd.DataFrame, int_cols: Sequence[str]
 ) -> pd.DataFrame:
