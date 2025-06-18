@@ -12,7 +12,7 @@ from proteometer.params import Params
 from proteometer.utils import filter_missingness, generate_index
 
 
-def ptm_analysis(par: Params) -> tuple[pd.DataFrame, pd.DataFrame]:
+def ptm_analysis(par: Params) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Runs the PTM proteomics processing and statistical analysis pipeline.
 
     This function reads in data from proteomics files specified in the `par`
@@ -24,8 +24,8 @@ def ptm_analysis(par: Params) -> tuple[pd.DataFrame, pd.DataFrame]:
         par: A Params object that contains all the parameters for the analysis.
 
     Returns:
-        tuple[pd.DataFrame,pd.DataFrame]: Two pandas DataFrames that contains the result of the PTM analysis.
-            The first is the processed PTM data, and the second is the global proteomics data.
+        tuple[pd.DataFrame,pd.DataFrame, pd.DataFrame]: Three pandas DataFrames that contains the result of the PTM analysis.
+            The first is the processed PTM data, and the second is the global proteomics data, the third is the processed PTM data that are not abundance corrected.
     """
     metadata = pd.read_csv(par.metadata_file, sep="\t")
     global_prot = pd.read_csv(par.global_prot_file, sep="\t")
@@ -80,17 +80,6 @@ def ptm_analysis(par: Params) -> tuple[pd.DataFrame, pd.DataFrame]:
         for pept in ptm_pept
     ]
 
-    if par.abundance_correction:
-        ptm_pept = [
-            abundance.prot_abund_correction(
-                pept,
-                global_prot,
-                par,
-                columns_to_correct=int_cols,
-            )
-            for pept in ptm_pept
-        ]
-
     ptm_rolled = [
         rollup.rollup_to_site(
             pept,
@@ -107,6 +96,39 @@ def ptm_analysis(par: Params) -> tuple[pd.DataFrame, pd.DataFrame]:
         for pept in ptm_pept
     ]
 
+    if par.batch_correction:
+        ptm_rolled = [
+            normalization.batch_correction(
+                mod_pept,
+                metadata,
+                par.batch_correct_samples,
+                batch_col=par.metadata_batch_col,
+                sample_col=par.metadata_sample_col,
+            )
+            for mod_pept in ptm_rolled
+        ]
+
+    ptm_rolled_uncorrected = ptm_rolled.copy()
+
+    ptm_rolled_uncorrected = _rollup_stats(
+        ptm_rolled=ptm_rolled_uncorrected,
+        anova_cols=anova_cols,
+        pairwise_ttest_groups=pairwise_ttest_groups,
+        metadata=metadata,
+        par=par,
+    )
+
+    if par.abundance_correction:
+        ptm_rolled = [
+            abundance.prot_abund_correction(
+                pept,
+                global_prot,
+                par,
+                columns_to_correct=int_cols,
+            )
+            for pept in ptm_rolled
+        ]
+
     ptm_rolled = _rollup_stats(
         ptm_rolled=ptm_rolled,
         anova_cols=anova_cols,
@@ -119,9 +141,12 @@ def ptm_analysis(par: Params) -> tuple[pd.DataFrame, pd.DataFrame]:
     ptm_dict: dict[str, pd.DataFrame] = {}
     ptm_dict.update({name: rolled for name, rolled in zip(par.ptm_names, ptm_rolled)})
     all_ptms = ptm.combine_multi_ptms(ptm_dict, par)
-    # all_ptms = check_missingness(all_ptms, groups, group_cols)
 
-    return all_ptms, global_prot
+    ptm_dict_uncorrected: dict[str, pd.DataFrame] = {}
+    ptm_dict_uncorrected.update({name: rolled for name, rolled in zip(par.ptm_names, ptm_rolled_uncorrected)})
+    all_ptms_uncorrected = ptm.combine_multi_ptms(ptm_dict_uncorrected, par)
+
+    return all_ptms, global_prot, all_ptms_uncorrected
 
 
 def _rollup_stats(
