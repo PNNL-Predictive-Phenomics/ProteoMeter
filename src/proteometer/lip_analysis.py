@@ -94,11 +94,10 @@ def lip_analysis(par: Params) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]
         par=par,
     )
 
-    double_pept = normalization.peptide_normalization_and_correction(
+    double_pept = normalization.peptide_normalization(
         global_pept=global_pept,
         mod_pept=double_pept,
         int_cols=int_cols,
-        metadata=metadata,
         par=par,
     )
 
@@ -108,13 +107,22 @@ def lip_analysis(par: Params) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]
         int_cols,
         par,
     )
-    double_site = _double_site_statistics(
-        double_site,
-        anova_cols,
-        pairwise_ttest_groups,
-        metadata,
-        par,
-    )
+
+    if par.batch_correction:
+        normalization.batch_correction(
+            double_pept,
+            metadata,
+            par.batch_correct_samples,
+            batch_col=par.metadata_batch_col,
+            sample_col=par.metadata_sample_col,
+        )
+        normalization.batch_correction(
+            double_site,
+            metadata,
+            par.batch_correct_samples,
+            batch_col=par.metadata_batch_col,
+            sample_col=par.metadata_sample_col,
+        )
 
     if par.abundance_correction:
         double_pept = abundance.prot_abund_correction(
@@ -135,6 +143,14 @@ def lip_analysis(par: Params) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]
     double_pept = _double_pept_statistics(
         double_pept,
         prot_seqs,
+        anova_cols,
+        pairwise_ttest_groups,
+        metadata,
+        par,
+    )
+
+    double_site = _double_site_statistics(
+        double_site,
         anova_cols,
         pairwise_ttest_groups,
         metadata,
