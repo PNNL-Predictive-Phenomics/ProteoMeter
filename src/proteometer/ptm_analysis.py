@@ -146,8 +146,8 @@ def ptm_analysis_return_all(par: Params) -> tuple[pd.DataFrame, pd.DataFrame, pd
         par: A Params object that contains all the parameters for the analysis.
 
     Returns:
-        tuple[pd.DataFrame,pd.DataFrame, pd.DataFrame]: Three pandas DataFrames that contains the result of the PTM analysis.
-            The first is the processed PTM data, and the second is the global proteomics data, the third is the processed PTM data that are not abundance corrected.
+        tuple[pd.DataFrame,pd.DataFrame]: Two pandas DataFrames that contains the result of the PTM analysis.
+            The first is the processed PTM data, and the second is the global proteomics data.
     """
     metadata = pd.read_csv(par.metadata_file, sep="\t")
     global_prot = pd.read_csv(par.global_prot_file, sep="\t")
@@ -175,8 +175,12 @@ def ptm_analysis_return_all(par: Params) -> tuple[pd.DataFrame, pd.DataFrame, pd
         filter_missingness(pept, groups, group_cols, par.min_replicates_qc)
         for pept in ptm_pept
     ]
-    global_pept = filter_missingness(global_pept, groups, group_cols, par.min_replicates_qc)
-    global_prot = filter_missingness(global_prot, groups, group_cols, par.min_replicates_qc)
+    global_pept = filter_missingness(
+        global_pept, groups, group_cols, par.min_replicates_qc
+    )
+    global_prot = filter_missingness(
+        global_prot, groups, group_cols, par.min_replicates_qc
+    )
 
     # must correct protein abundance, before we can use it to correct peptide
     # data; depending on normalization scheme, we may need to test significance
@@ -262,11 +266,7 @@ def ptm_analysis_return_all(par: Params) -> tuple[pd.DataFrame, pd.DataFrame, pd
     ptm_dict.update({name: rolled for name, rolled in zip(par.ptm_names, ptm_rolled)})
     all_ptms = ptm.combine_multi_ptms(ptm_dict, par)
 
-    ptm_dict_uncorrected: dict[str, pd.DataFrame] = {}
-    ptm_dict_uncorrected.update({name: rolled for name, rolled in zip(par.ptm_names, ptm_rolled_uncorrected)})
-    all_ptms_uncorrected = ptm.combine_multi_ptms(ptm_dict_uncorrected, par)
-
-    return all_ptms, global_prot, all_ptms_uncorrected
+    return all_ptms, global_prot
 
 
 def _rollup_stats(
