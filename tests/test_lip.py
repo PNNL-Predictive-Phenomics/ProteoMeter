@@ -4,7 +4,11 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from proteometer.lip import get_clean_peptides, get_tryptic_types, rollup_to_lytic_site
+from proteometer.lip import (
+    get_clean_peptides,
+    get_tryptic_types,
+    rollup_single_protein_to_lytic_site,
+)
 from proteometer.lip_analysis import lip_analysis
 from proteometer.params import Params
 
@@ -102,12 +106,12 @@ def test_get_clean_peptides_with_modifications():
     assert list(result["clean_pept"]) == ["MAAK", "AAK"]  # type: ignore
 
 
-def test_rollup_to_lytic_site_basic():
-    # Minimal test for rollup_to_lytic_site with one peptide
+def test_rollup_single_protein_to_lytic_site_basic():
+    # Minimal test for rollup_single_protein_to_lytic_site with one peptide
     df = pd.DataFrame(
         {"Sequence": ["MAAK"], "Intensity": [10.0], "UniProt": ["P12345"]}
     )
-    result = rollup_to_lytic_site(
+    result = rollup_single_protein_to_lytic_site(
         df,
         int_cols=["Intensity"],
         uniprot_col="UniProt",
@@ -126,7 +130,7 @@ def test_rollup_to_lytic_site_basic():
     assert result["All pept num"].iloc[0] == 1
 
 
-def test_rollup_to_lytic_site_multiple_peptides():
+def test_rollup_single_protein_to_lytic_site_multiple_peptides():
     # Test with two peptides, overlapping lytic sites
     df = pd.DataFrame(
         {
@@ -135,7 +139,7 @@ def test_rollup_to_lytic_site_multiple_peptides():
             "UniProt": ["P12345", "P12345"],
         }
     )
-    result = rollup_to_lytic_site(
+    result = rollup_single_protein_to_lytic_site(
         df,
         int_cols=["Intensity"],
         uniprot_col="UniProt",
@@ -154,10 +158,10 @@ def test_rollup_to_lytic_site_multiple_peptides():
     assert result["All pept num"].iloc[0] == 2
 
 
-def test_rollup_to_lytic_site_empty():
+def test_rollup_single_protein_to_lytic_site_empty():
     # Test with empty dataframe
     df = pd.DataFrame({"Sequence": [], "Intensity": [], "UniProt": []})
-    result = rollup_to_lytic_site(
+    result = rollup_single_protein_to_lytic_site(
         df,
         int_cols=["Intensity"],
         uniprot_col="UniProt",
@@ -169,7 +173,7 @@ def test_rollup_to_lytic_site_empty():
     assert result.empty
 
 
-def test_rollup_to_lytic_site_rollup_func_mean():
+def test_rollup_single_protein_to_lytic_site_rollup_func_mean():
     df = pd.DataFrame(
         {
             "Sequence": ["MAAK", "AAK"],
@@ -177,7 +181,7 @@ def test_rollup_to_lytic_site_rollup_func_mean():
             "UniProt": ["P12345", "P12345"],
         }
     )
-    result = rollup_to_lytic_site(
+    result = rollup_single_protein_to_lytic_site(
         df,
         int_cols=["Intensity"],
         uniprot_col="UniProt",
@@ -192,7 +196,7 @@ def test_rollup_to_lytic_site_rollup_func_mean():
     assert np.isclose(result[result["Site"] == "K4"]["Intensity"], 21.0)  # type: ignore
 
 
-def test_rollup_to_lytic_site_rollup_func_median():
+def test_rollup_single_protein_to_lytic_site_rollup_func_median():
     # Test rollup_func="median"
     df = pd.DataFrame(
         {
@@ -201,7 +205,7 @@ def test_rollup_to_lytic_site_rollup_func_median():
             "UniProt": ["P12345", "P12345"],
         }
     )
-    result = rollup_to_lytic_site(
+    result = rollup_single_protein_to_lytic_site(
         df,
         int_cols=["Intensity"],
         uniprot_col="UniProt",
@@ -216,7 +220,7 @@ def test_rollup_to_lytic_site_rollup_func_median():
     assert np.isclose(result[result["Site"] == "K4"]["Intensity"], 21.0)  # type: ignore
 
 
-def test_rollup_to_lytic_site_rollup_func_sum():
+def test_rollup_single_protein_to_lytic_site_rollup_func_sum():
     df = pd.DataFrame(
         {
             "Sequence": ["MAAK", "AAK"],
@@ -224,7 +228,7 @@ def test_rollup_to_lytic_site_rollup_func_sum():
             "UniProt": ["P12345", "P12345"],
         }
     )
-    result = rollup_to_lytic_site(
+    result = rollup_single_protein_to_lytic_site(
         df,
         int_cols=["Intensity"],
         uniprot_col="UniProt",
@@ -240,7 +244,7 @@ def test_rollup_to_lytic_site_rollup_func_sum():
     assert np.isclose(result[result["Site"] == "K4"]["Intensity"], expected)  # type: ignore
 
 
-def test_rollup_to_lytic_site_rollup_func_ignore_na():
+def test_rollup_single_protein_to_lytic_site_rollup_func_ignore_na():
     # Test rollup_func="sum"
     warnings.filterwarnings(
         "error"
@@ -252,7 +256,7 @@ def test_rollup_to_lytic_site_rollup_func_ignore_na():
             "UniProt": ["P12345", "P12345"],
         }
     )
-    result = rollup_to_lytic_site(
+    result = rollup_single_protein_to_lytic_site(
         df,
         int_cols=["Intensity"],
         uniprot_col="UniProt",
@@ -266,7 +270,7 @@ def test_rollup_to_lytic_site_rollup_func_ignore_na():
     expected = np.log2(2**30)
     assert np.isclose(result[result["Site"] == "K4"]["Intensity"], expected)  # type: ignore
 
-    result = rollup_to_lytic_site(
+    result = rollup_single_protein_to_lytic_site(
         df,
         int_cols=["Intensity"],
         uniprot_col="UniProt",
@@ -279,7 +283,7 @@ def test_rollup_to_lytic_site_rollup_func_ignore_na():
     expected = 31.0
     assert np.isclose(result[result["Site"] == "K4"]["Intensity"], expected)  # type: ignore
 
-    result = rollup_to_lytic_site(
+    result = rollup_single_protein_to_lytic_site(
         df,
         int_cols=["Intensity"],
         uniprot_col="UniProt",
@@ -293,7 +297,7 @@ def test_rollup_to_lytic_site_rollup_func_ignore_na():
     assert np.isclose(result[result["Site"] == "K4"]["Intensity"], expected)  # type: ignore
 
 
-def test_rollup_to_lytic_site_rollup_func_remove_na():
+def test_rollup_single_protein_to_lytic_site_rollup_func_remove_na():
     # Test rollup_func="sum"
     warnings.filterwarnings(
         "error"
@@ -305,7 +309,7 @@ def test_rollup_to_lytic_site_rollup_func_remove_na():
             "UniProt": ["P12345", "P12345"],
         }
     )
-    result = rollup_to_lytic_site(
+    result = rollup_single_protein_to_lytic_site(
         df,
         int_cols=["Intensity"],
         uniprot_col="UniProt",
@@ -319,7 +323,7 @@ def test_rollup_to_lytic_site_rollup_func_remove_na():
     expected = 30.0
     assert np.isclose(result[result["Site"] == "K4"]["Intensity"], expected)  # type: ignore
 
-    result = rollup_to_lytic_site(
+    result = rollup_single_protein_to_lytic_site(
         df,
         int_cols=["Intensity"],
         uniprot_col="UniProt",
@@ -333,7 +337,7 @@ def test_rollup_to_lytic_site_rollup_func_remove_na():
     expected = 30.0
     assert np.isclose(result[result["Site"] == "K4"]["Intensity"], expected)  # type: ignore
 
-    result = rollup_to_lytic_site(
+    result = rollup_single_protein_to_lytic_site(
         df,
         int_cols=["Intensity"],
         uniprot_col="UniProt",
@@ -348,12 +352,12 @@ def test_rollup_to_lytic_site_rollup_func_remove_na():
     assert np.isclose(result[result["Site"] == "K4"]["Intensity"], expected)  # type: ignore
 
 
-def test_rollup_to_lytic_site_alternative_protease():
+def test_rollup_single_protein_to_lytic_site_alternative_protease():
     # Test with alternative_protease argument
     df = pd.DataFrame(
         {"Sequence": ["MAAK"], "Intensity": [10.0], "UniProt": ["P12345"]}
     )
-    result = rollup_to_lytic_site(
+    result = rollup_single_protein_to_lytic_site(
         df,
         int_cols=["Intensity"],
         uniprot_col="UniProt",
