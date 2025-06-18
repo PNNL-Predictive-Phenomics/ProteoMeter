@@ -204,7 +204,7 @@ def median_normalization(
         batch_col
     ].unique():
         int_cols_per_batch = cast(
-            pd.Series[str], metadata[(metadata[batch_col] == batch)][sample_col]
+            "pd.Series[int]", metadata[(metadata[batch_col] == batch)][sample_col]
         )
         df_transformed = median_normalize_columns(
             df_transformed,
