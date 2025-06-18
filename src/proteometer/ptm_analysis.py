@@ -70,11 +70,10 @@ def ptm_analysis(par: Params) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]
     )
 
     ptm_pept = [
-        normalization.peptide_normalization_and_correction(
+        normalization.peptide_normalization(
             global_pept=global_pept,
             mod_pept=pept,
             int_cols=int_cols,
-            metadata=metadata,
             par=par,
         )
         for pept in ptm_pept
