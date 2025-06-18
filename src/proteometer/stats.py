@@ -106,7 +106,9 @@ def anova(
         )
 
         try:
-            aov_f = pg.anova(data=df_f, dv=df_id, between=anova_factors, detailed=True)  # type: ignore
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=Warning)
+                aov_f = pg.anova(data=df_f, dv=df_id, between=anova_factors, detailed=True)  # type: ignore
             if not isinstance(aov_f, pd.DataFrame):
                 raise TypeError
             if "p-unc" in aov_f.columns:

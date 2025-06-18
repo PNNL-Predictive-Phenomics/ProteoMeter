@@ -38,7 +38,7 @@ def biplot(
     mat = df[int_cols].T
     scaler = StandardScaler()
     scaler.fit(mat)
-    mat_scaled = cast(npt.NDArray[float64], scaler.transform(mat))
+    mat_scaled = cast("npt.NDArray[float64]", scaler.transform(mat))
     pca = PCA()
     x = pca.fit_transform(mat_scaled)  # type: ignore
     v1, v2, *_ = pca.explained_variance_ratio_
@@ -68,11 +68,11 @@ def biplot(
                 [ptx],
                 [pty],
                 c=color,
-                marker=cast(MarkerStyle, rf"${i}$"),
+                marker=cast("MarkerStyle", rf"${i}$"),
                 s=100,
                 label=f"{df[int_cols].columns[i]}",
             )
-            ax.scatter([ptx], [pty], c="k", marker=cast(MarkerStyle, "."), s=10)
+            ax.scatter([ptx], [pty], c="k", marker=cast("MarkerStyle", "."), s=10)
     ax.set_xlim(-1, 1)
     ax.set_ylim(-1, 1)
     ax.set_xlabel(f"PC1 ({v1:.2%})")
