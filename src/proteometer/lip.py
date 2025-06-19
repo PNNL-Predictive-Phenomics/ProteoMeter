@@ -763,7 +763,9 @@ def delta_prok_site(
     pept_dfs = dict(list(peptide_df.groupby(pept_protein_col)))
     df_rows = []
     for _, row in prok.iterrows():  # type: ignore
-        pept_df = pept_dfs[row[site_protein_col]]
+        pept_df = pept_dfs[
+            row[site_protein_col]
+        ]  # peptides for protein this site (row) is in
         if row[protein_length_col] == row[position_col]:
             continue
         pepts_to_match = cast("list[str]", row[site_pept_col].split("; "))
@@ -807,14 +809,14 @@ def delta_prok_site(
                 "The rollup method is not recognized. Please choose from the following: median, mean, sum"
             )
 
-        metadata = pd.Series(
+        site_info = pd.Series(
             {
                 "Protein": row[site_protein_col],
                 "Pos": row[position_col],
             }
         )
 
-        df_rows.append(pd.concat([metadata, log_exposure_ratios], axis=0))
+        df_rows.append(pd.concat([site_info, log_exposure_ratios], axis=0))
 
     df_out = pd.DataFrame(df_rows)
     return df_out
