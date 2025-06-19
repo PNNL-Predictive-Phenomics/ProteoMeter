@@ -71,14 +71,14 @@ def volcano_plot(
         _, ax = plt.subplots()
     log2fc = cast("pd.Series[float]", df[f"{comparison}"])
     significance = cast("pd.Series[float]", df[f"{comparison}_{sig_type}"])
-    sig_mult = log2fc * (significance < sig_thresh)
+    sig_mult = log2fc * (significance < sig_thresh)  # type: ignore
 
     cscale = log2fc.abs().max() if max_color_value is None else max_color_value
 
     ax.scatter(
         log2fc,
         -np.log10(significance),
-        c=sig_mult,
+        c=sig_mult,  # type: ignore
         cmap="coolwarm",
         vmax=cscale,
         vmin=-cscale,
