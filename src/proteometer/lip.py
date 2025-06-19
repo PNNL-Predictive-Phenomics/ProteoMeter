@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING, Any, Callable, Literal, cast
 import numpy as np
 import pandas as pd
 
+from proteometer import fasta
+from proteometer.params import Params
 from proteometer.peptide import strip_peptide
 from proteometer.utils import expsum
 
@@ -430,8 +432,65 @@ def analyze_tryptic_pattern(
     return protein_any_tryptic
 
 
-# This function is to analyze the digestion site pattern of the peptides in LiP pept dataframe
 def rollup_to_lytic_site(
+    double_pept: pd.DataFrame,
+    prot_seqs: list[fasta.SeqRecord],
+    int_cols: Iterable[str],
+    par: Params,
+) -> pd.DataFrame:
+    """
+    Converts the double-peptide data frame to a site-level data frame.
+
+    Args:
+        double_pept (pd.DataFrame): The double-peptide data frame.
+        prot_seqs (list[fasta.SeqRecord]): The list of protein sequences.
+        int_cols (Iterable[str]): The names of columns to with intensity values.
+        anova_cols (list[str]): The columns for ANOVA.
+        pairwise_ttest_groups (Iterable[stats.TTestGroup]): The pairwise T-test groups.
+        metadata (pd.DataFrame): The metadata data frame.
+        par (Params): The parameters for limitied proteolysis analysis.
+
+    Returns:
+        pd.DataFrame: A data frame with the site-level data.
+    """
+    double_site: list[pd.DataFrame] = []
+    for uniprot_id in double_pept[par.uniprot_col].unique():
+        pept_df = cast(
+            "pd.DataFrame",
+            double_pept[double_pept[par.uniprot_col] == uniprot_id].copy(),
+        )
+        uniprot_seqs = [prot_seq for prot_seq in prot_seqs if uniprot_id in prot_seq.id]
+        if not uniprot_seqs:
+            Warning(
+                f"Protein {uniprot_id} not found in the fasta file. Skipping the protein."
+            )
+            continue
+        elif len(uniprot_seqs) > 1:
+            Warning(
+                f"Multiple proteins with the same ID {uniprot_id} found in the fasta file. Using the first one."
+            )
+        bio_seq = uniprot_seqs[0]
+        if bio_seq.seq is None:
+            raise ValueError(f"Protein sequence for {uniprot_id} is empty.")
+        prot_seq = str(bio_seq.seq)
+        prot_desc = bio_seq.description
+        pept_df_r = rollup_single_protein_to_lytic_site(
+            pept_df,
+            int_cols,
+            par.uniprot_col,
+            prot_seq,
+            residue_col=par.residue_col,
+            description=prot_desc,
+            tryptic_pattern="all",
+            peptide_col=par.peptide_col,
+            rollup_func="sum",
+        )
+        double_site.append(pept_df_r)
+    return pd.concat(double_site)
+
+
+# This function is to analyze the digestion site pattern of the peptides in LiP pept dataframe
+def rollup_single_protein_to_lytic_site(
     df: pd.DataFrame,
     int_cols: Iterable[str],
     uniprot_col: str,
@@ -658,3 +717,106 @@ def select_lytic_sites(
     """
     site_df_out = site_df[site_df[site_type_col] == site_type].copy()
     return site_df_out
+
+
+def delta_prok_site(
+    peptide_df: pd.DataFrame,
+    site_df: pd.DataFrame,
+    int_cols: list[str],
+    site_type_col: str = "Type",
+    site_protein_col: str = "Protein",
+    pept_protein_col: str = "Protein",
+    protein_length_col: str = "Protein length",
+    site_pept_col: str = "Peptide",
+    pept_pept_col: str = "Peptide",
+    position_col: str = "Pos",
+    pept_start_col: str = "pept_start",
+    pept_end_col: str = "pept_end",
+    rollup_method: Literal["median", "mean", "sum"] = "median",
+) -> pd.DataFrame:
+    """
+    Computes exposure values for each lytic (ProK) site.
+
+    This is computed as the average log intensity of peptides for which the site
+    is a lytic site minus the average log intensity peptides that contain the
+    site in their sequence. The average function is determined by the rollup_method parameter.
+
+    Args:
+        peptide_df (pd.DataFrame): DataFrame containing peptide data.
+        site_df (pd.DataFrame): DataFrame containing lytic site data.
+        int_cols (list[str]): List of columns to aggregate.
+        site_type_col (str, optional): Column name for lytic site types. Defaults to "Type".
+        site_protein_col (str, optional): Column name for protein IDs in the lytic site DataFrame. Defaults to "Protein".
+        pept_protein_col (str, optional): Column name for protein IDs in the peptide DataFrame. Defaults to "Protein".
+        protein_length_col (str, optional): Column name for protein lengths. Defaults to "Protein length".
+        site_pept_col (str, optional): Column name for peptides in the lytic site DataFrame. Defaults to "Peptide".
+        pept_pept_col (str, optional): Column name for peptides in the peptide DataFrame. Defaults to "Peptide".
+        position_col (str, optional): Column name for positions in the lytic site DataFrame. Defaults to "Pos".
+        pept_start_col (str, optional): Column name for start positions in the peptide DataFrame. Defaults to "pept_start".
+        pept_end_col (str, optional): Column name for end positions in the peptide DataFrame. Defaults to "pept_end".
+        rollup_method (Literal["median", "mean", "sum"], optional): Aggregation method to use. Defaults to "median". The "sum" is done in linear space.
+
+    Returns:
+        pd.DataFrame: DataFrame with delta values for each lytic site.
+    """
+    prok = site_df[site_df[site_type_col] == "ProK"]
+    pept_dfs = dict(list(peptide_df.groupby(pept_protein_col)))
+    df_rows = []
+    for _, row in prok.iterrows():  # type: ignore
+        pept_df = pept_dfs[
+            row[site_protein_col]
+        ]  # peptides for protein this site (row) is in
+        if row[protein_length_col] == row[position_col]:
+            continue
+        pepts_to_match = cast("list[str]", row[site_pept_col].split("; "))
+        pepts_cleaved_at_site = pept_df[pept_df[pept_pept_col].isin(pepts_to_match)]
+        if pepts_cleaved_at_site.shape[0] == 0:
+            raise ValueError(
+                "Unable to match a peptide to a lytic site. Please verify that the site dataframe is derived from the peptide dataframe."
+            )
+
+        pepts_with_site_inside = cast(
+            "pd.DataFrame",
+            pept_df[
+                (pept_df[pept_start_col] < row[position_col])
+                & (pept_df[pept_end_col] > row[position_col])
+            ],
+        )
+
+        if pepts_with_site_inside.shape[0] == 0:
+            continue
+
+        if rollup_method == "median":
+            log_exposure_ratios = cast(
+                "pd.Series[float]",
+                pepts_cleaved_at_site[int_cols].median(axis=0)
+                - pepts_with_site_inside[int_cols].median(axis=0),
+            )
+        elif rollup_method == "mean":
+            log_exposure_ratios = cast(
+                "pd.Series[float]",
+                pepts_cleaved_at_site[int_cols].mean(axis=0)
+                - pepts_with_site_inside[int_cols].mean(axis=0),
+            )
+        elif rollup_method == "sum":
+            log_exposure_ratios = cast(
+                "pd.Series[float]",
+                pepts_cleaved_at_site[int_cols].aggregate(expsum, axis=0)
+                - pepts_with_site_inside[int_cols].aggregate(expsum, axis=0),
+            )
+        else:
+            raise ValueError(
+                "The rollup method is not recognized. Please choose from the following: median, mean, sum"
+            )
+
+        site_info = pd.Series(
+            {
+                "Protein": row[site_protein_col],
+                "Pos": row[position_col],
+            }
+        )
+
+        df_rows.append(pd.concat([site_info, log_exposure_ratios], axis=0))
+
+    df_out = pd.DataFrame(df_rows)
+    return df_out
