@@ -1,0 +1,834 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>proteometer.lip &#8212; Proteometer  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../../_static/documentation_options.js?v=8a448e45"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../../_static/copybutton.js?v=ccdb6887"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'autoapi/proteometer/lip/index';</script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="proteometer.lip_analysis" href="../lip_analysis/index.html" />
+    <link rel="prev" title="proteometer.fasta" href="../fasta/index.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Proteometer  documentation</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../../index.html">
+    API Reference
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/PhenoMeters/proteometer" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../../index.html">
+    API Reference
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/PhenoMeters/proteometer" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../index.html">proteometer</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../abundance/index.html">proteometer.abundance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../alignment/index.html">proteometer.alignment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../barcode/index.html">proteometer.barcode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fasta/index.html">proteometer.fasta</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">proteometer.lip</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../lip_analysis/index.html">proteometer.lip_analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../normalization/index.html">proteometer.normalization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../params/index.html">proteometer.params</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../parse_metadata/index.html">proteometer.parse_metadata</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../peptide/index.html">proteometer.peptide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ptm/index.html">proteometer.ptm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ptm_analysis/index.html">proteometer.ptm_analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../quality_control_plots/index.html">proteometer.quality_control_plots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../residue/index.html">proteometer.residue</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../rollup/index.html">proteometer.rollup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../stats/index.html">proteometer.stats</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../utils/index.html">proteometer.utils</a></li>
+</ul>
+</details></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">API Reference</a></li>
+    
+    
+    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">proteometer</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">proteometer.lip</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="module-proteometer.lip">
+<span id="proteometer-lip"></span><h1>proteometer.lip<a class="headerlink" href="#module-proteometer.lip" title="Link to this heading">#</a></h1>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#proteometer.lip.AggDictFloat" title="proteometer.lip.AggDictFloat"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AggDictFloat</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#proteometer.lip.filter_contaminants_reverse_pept" title="proteometer.lip.filter_contaminants_reverse_pept"><code class="xref py py-obj docutils literal notranslate"><span class="pre">filter_contaminants_reverse_pept</span></code></a>(→ pandas.DataFrame)</p></td>
+<td><p>Filters out contaminants and reverse hits from a peptide DataFrame.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#proteometer.lip.filter_contaminants_reverse_prot" title="proteometer.lip.filter_contaminants_reverse_prot"><code class="xref py py-obj docutils literal notranslate"><span class="pre">filter_contaminants_reverse_prot</span></code></a>(→ pandas.DataFrame)</p></td>
+<td><p>Filters out contaminants and reverse hits from a protein DataFrame.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#proteometer.lip.filtering_protein_based_on_peptide_number" title="proteometer.lip.filtering_protein_based_on_peptide_number"><code class="xref py py-obj docutils literal notranslate"><span class="pre">filtering_protein_based_on_peptide_number</span></code></a>(...)</p></td>
+<td><p>Filters proteins based on the minimum number of peptides.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#proteometer.lip.get_clean_peptides" title="proteometer.lip.get_clean_peptides"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_clean_peptides</span></code></a>(→ pandas.DataFrame)</p></td>
+<td><p>Cleans peptide sequences by removing modifications and returns a DataFrame with cleaned peptides.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#proteometer.lip.get_tryptic_types" title="proteometer.lip.get_tryptic_types"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_tryptic_types</span></code></a>(→ pandas.DataFrame)</p></td>
+<td><p>Analyzes the tryptic pattern of peptides and classifies them as tryptic, semi-tryptic, or non-tryptic.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#proteometer.lip.select_tryptic_pattern" title="proteometer.lip.select_tryptic_pattern"><code class="xref py py-obj docutils literal notranslate"><span class="pre">select_tryptic_pattern</span></code></a>(→ pandas.DataFrame)</p></td>
+<td><p>Selects peptides based on their digestion pattern.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#proteometer.lip.analyze_tryptic_pattern" title="proteometer.lip.analyze_tryptic_pattern"><code class="xref py py-obj docutils literal notranslate"><span class="pre">analyze_tryptic_pattern</span></code></a>(→ pandas.DataFrame)</p></td>
+<td><p>Analyzes tryptic patterns and calculates statistics for peptides.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#proteometer.lip.rollup_to_lytic_site" title="proteometer.lip.rollup_to_lytic_site"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rollup_to_lytic_site</span></code></a>(→ pandas.DataFrame)</p></td>
+<td><p>Converts the double-peptide data frame to a site-level data frame.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#proteometer.lip.rollup_single_protein_to_lytic_site" title="proteometer.lip.rollup_single_protein_to_lytic_site"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rollup_single_protein_to_lytic_site</span></code></a>(→ pandas.DataFrame)</p></td>
+<td><p>Rolls up peptide-level limited proteolysis data to lytic sites.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#proteometer.lip.select_lytic_sites" title="proteometer.lip.select_lytic_sites"><code class="xref py py-obj docutils literal notranslate"><span class="pre">select_lytic_sites</span></code></a>(→ pandas.DataFrame)</p></td>
+<td><p>Selects lytic sites based on the specified site type.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#proteometer.lip.delta_prok_site" title="proteometer.lip.delta_prok_site"><code class="xref py py-obj docutils literal notranslate"><span class="pre">delta_prok_site</span></code></a>(→ pandas.DataFrame)</p></td>
+<td><p>Computes exposure values for each lytic (ProK) site.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">#</a></h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="proteometer.lip.AggDictFloat">
+<span class="sig-prename descclassname"><span class="pre">proteometer.lip.</span></span><span class="sig-name descname"><span class="pre">AggDictFloat</span></span><a class="reference external" href="https://github.com/PhenoMeters/proteometer/blob/main/proteometer/lip.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proteometer.lip.AggDictFloat" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="proteometer.lip.filter_contaminants_reverse_pept">
+<span class="sig-prename descclassname"><span class="pre">proteometer.lip.</span></span><span class="sig-name descname"><span class="pre">filter_contaminants_reverse_pept</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">search_tool</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'maxquant'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'msfragger'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'fragpipe'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protein_id_col_pept</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">uniprot_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="reference external" href="https://github.com/PhenoMeters/proteometer/blob/main/proteometer/lip.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proteometer.lip.filter_contaminants_reverse_pept" title="Link to this definition">#</a></dt>
+<dd><p>Filters out contaminants and reverse hits from a peptide DataFrame.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pd.DataFrame</em>) – Input DataFrame containing peptide data.</p></li>
+<li><p><strong>search_tool</strong> (<em>Literal</em><em>[</em><em>&quot;maxquant&quot;</em><em>, </em><em>&quot;msfragger&quot;</em><em>, </em><em>&quot;fragpipe&quot;</em><em>]</em>) – The search tool used for data generation.</p></li>
+<li><p><strong>protein_id_col_pept</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – Column name containing protein IDs in the peptide DataFrame.</p></li>
+<li><p><strong>uniprot_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – Column name to store UniProt IDs.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Filtered DataFrame with contaminants and reverse hits removed.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="proteometer.lip.filter_contaminants_reverse_prot">
+<span class="sig-prename descclassname"><span class="pre">proteometer.lip.</span></span><span class="sig-name descname"><span class="pre">filter_contaminants_reverse_prot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">search_tool</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'maxquant'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'msfragger'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'fragpipe'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protein_id_col_prot</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">uniprot_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="reference external" href="https://github.com/PhenoMeters/proteometer/blob/main/proteometer/lip.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proteometer.lip.filter_contaminants_reverse_prot" title="Link to this definition">#</a></dt>
+<dd><p>Filters out contaminants and reverse hits from a protein DataFrame.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pd.DataFrame</em>) – Input DataFrame containing protein data.</p></li>
+<li><p><strong>search_tool</strong> (<em>Literal</em><em>[</em><em>&quot;maxquant&quot;</em><em>, </em><em>&quot;msfragger&quot;</em><em>, </em><em>&quot;fragpipe&quot;</em><em>]</em>) – The search tool used for data generation.</p></li>
+<li><p><strong>protein_id_col_prot</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – Column name containing protein IDs in the protein DataFrame.</p></li>
+<li><p><strong>uniprot_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – Column name to store UniProt IDs.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Filtered DataFrame with contaminants and reverse hits removed.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="proteometer.lip.filtering_protein_based_on_peptide_number">
+<span class="sig-prename descclassname"><span class="pre">proteometer.lip.</span></span><span class="sig-name descname"><span class="pre">filtering_protein_based_on_peptide_number</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df2filter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">peptide_counts_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">search_tool</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'maxquant'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'msfragger'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'fragpipe'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_pept_count</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="reference external" href="https://github.com/PhenoMeters/proteometer/blob/main/proteometer/lip.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proteometer.lip.filtering_protein_based_on_peptide_number" title="Link to this definition">#</a></dt>
+<dd><p>Filters proteins based on the minimum number of peptides.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df2filter</strong> (<em>pd.DataFrame</em>) – Input DataFrame containing proteomics data.</p></li>
+<li><p><strong>peptide_counts_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – Column name containing peptide counts.</p></li>
+<li><p><strong>search_tool</strong> (<em>Literal</em><em>[</em><em>&quot;maxquant&quot;</em><em>, </em><em>&quot;msfragger&quot;</em><em>, </em><em>&quot;fragpipe&quot;</em><em>]</em>) – The search tool used for data generation.</p></li>
+<li><p><strong>min_pept_count</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>, </em><em>optional</em>) – Minimum number of peptides required. Defaults to 2.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Filtered DataFrame with proteins having at least <code class="code docutils literal notranslate"><span class="pre">min_pept_count</span></code> peptides.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="proteometer.lip.get_clean_peptides">
+<span class="sig-prename descclassname"><span class="pre">proteometer.lip.</span></span><span class="sig-name descname"><span class="pre">get_clean_peptides</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pept_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">peptide_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">clean_pept_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'clean_pept'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="reference external" href="https://github.com/PhenoMeters/proteometer/blob/main/proteometer/lip.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proteometer.lip.get_clean_peptides" title="Link to this definition">#</a></dt>
+<dd><p>Cleans peptide sequences by removing modifications and returns a DataFrame with cleaned peptides.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pept_df</strong> (<em>pd.DataFrame</em>) – Input DataFrame containing peptide data.</p></li>
+<li><p><strong>peptide_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – Column name containing peptide sequences.</p></li>
+<li><p><strong>clean_pept_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Column name to store cleaned peptide sequences. Defaults to “clean_pept”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame with an additional column for cleaned peptide sequences.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="proteometer.lip.get_tryptic_types">
+<span class="sig-prename descclassname"><span class="pre">proteometer.lip.</span></span><span class="sig-name descname"><span class="pre">get_tryptic_types</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pept_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prot_seq</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">peptide_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">clean_pept_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'clean_pept'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="reference external" href="https://github.com/PhenoMeters/proteometer/blob/main/proteometer/lip.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proteometer.lip.get_tryptic_types" title="Link to this definition">#</a></dt>
+<dd><p>Analyzes the tryptic pattern of peptides and classifies them as tryptic, semi-tryptic, or non-tryptic.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pept_df</strong> (<em>pd.DataFrame</em>) – Input DataFrame containing peptide data.</p></li>
+<li><p><strong>prot_seq</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – Protein sequence to analyze against.</p></li>
+<li><p><strong>peptide_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – Column name containing peptide sequences.</p></li>
+<li><p><strong>clean_pept_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Column name for cleaned peptide sequences. Defaults to “clean_pept”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame with additional columns for peptide start, end, and type.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="proteometer.lip.select_tryptic_pattern">
+<span class="sig-prename descclassname"><span class="pre">proteometer.lip.</span></span><span class="sig-name descname"><span class="pre">select_tryptic_pattern</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pept_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prot_seq</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">tryptic_pattern</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'all'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">peptide_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Sequence'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clean_pept_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'clean_pept'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="reference external" href="https://github.com/PhenoMeters/proteometer/blob/main/proteometer/lip.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proteometer.lip.select_tryptic_pattern" title="Link to this definition">#</a></dt>
+<dd><p>Selects peptides based on their digestion pattern.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pept_df</strong> (<em>pd.DataFrame</em>) – Input DataFrame containing peptide data.</p></li>
+<li><p><strong>prot_seq</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – Protein sequence to analyze against.</p></li>
+<li><p><strong>tryptic_pattern</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Digestion pattern to filter peptides. Defaults to “all”.
+must be one of: all, any-tryptic, tryptic, semi-tryptic, non-tryptic.</p></li>
+<li><p><strong>peptide_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Column name containing peptide sequences. Defaults to “Sequence”.</p></li>
+<li><p><strong>clean_pept_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Column name for cleaned peptide sequences. Defaults to “clean_pept”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Filtered DataFrame with peptides matching the specified digestion pattern.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="proteometer.lip.analyze_tryptic_pattern">
+<span class="sig-prename descclassname"><span class="pre">proteometer.lip.</span></span><span class="sig-name descname"><span class="pre">analyze_tryptic_pattern</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protein</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sequence</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">pairwise_ttest_groups</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Iterable" title="(in Python v3.13)"><span class="pre">collections.abc.Iterable</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../stats/index.html#proteometer.stats.TTestGroup" title="proteometer.stats.TTestGroup"><span class="pre">proteometer.stats.TTestGroup</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">peptide_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">anova_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'[Group]'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep_non_tryptic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_separator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'&#64;'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sig_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'pval'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sig_thr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.05</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="reference external" href="https://github.com/PhenoMeters/proteometer/blob/main/proteometer/lip.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proteometer.lip.analyze_tryptic_pattern" title="Link to this definition">#</a></dt>
+<dd><p>Analyzes tryptic patterns and calculates statistics for peptides.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>protein</strong> (<em>pd.DataFrame</em>) – Input DataFrame containing proteomics data.</p></li>
+<li><p><strong>sequence</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – Protein sequence to analyze against.</p></li>
+<li><p><strong>pairwise_ttest_groups</strong> (<em>Iterable</em><em>[</em><a class="reference internal" href="../stats/index.html#proteometer.stats.TTestGroup" title="proteometer.stats.TTestGroup"><em>TTestGroup</em></a><em>]</em>) – Groups for pairwise t-tests.</p></li>
+<li><p><strong>peptide_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – Column name containing peptide sequences.</p></li>
+<li><p><strong>description</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Protein description to add to data frame. Defaults to “”.</p></li>
+<li><p><strong>anova_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Type of ANOVA analysis. Defaults to “[Group]”.</p></li>
+<li><p><strong>keep_non_tryptic</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether to keep non-tryptic peptides. Defaults to True.</p></li>
+<li><p><strong>id_separator</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Separator for peptide IDs. Defaults to “&#64;”.</p></li>
+<li><p><strong>sig_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Significance type (e.g., “pval”). Defaults to “pval”.</p></li>
+<li><p><strong>sig_thr</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Significance threshold. Defaults to 0.05.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame with analyzed tryptic patterns and statistics.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="proteometer.lip.rollup_to_lytic_site">
+<span class="sig-prename descclassname"><span class="pre">proteometer.lip.</span></span><span class="sig-name descname"><span class="pre">rollup_to_lytic_site</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">double_pept</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prot_seqs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><span class="pre">proteometer.fasta.SeqRecord</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">int_cols</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Iterable" title="(in Python v3.13)"><span class="pre">collections.abc.Iterable</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">par</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../params/index.html#proteometer.params.Params" title="proteometer.params.Params"><span class="pre">proteometer.params.Params</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="reference external" href="https://github.com/PhenoMeters/proteometer/blob/main/proteometer/lip.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proteometer.lip.rollup_to_lytic_site" title="Link to this definition">#</a></dt>
+<dd><p>Converts the double-peptide data frame to a site-level data frame.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>double_pept</strong> (<em>pd.DataFrame</em>) – The double-peptide data frame.</p></li>
+<li><p><strong>prot_seqs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><em>fasta.SeqRecord</em><em>]</em>) – The list of protein sequences.</p></li>
+<li><p><strong>int_cols</strong> (<em>Iterable</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>]</em>) – The names of columns to with intensity values.</p></li>
+<li><p><strong>anova_cols</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>]</em>) – The columns for ANOVA.</p></li>
+<li><p><strong>pairwise_ttest_groups</strong> (<em>Iterable</em><em>[</em><a class="reference internal" href="../stats/index.html#proteometer.stats.TTestGroup" title="proteometer.stats.TTestGroup"><em>stats.TTestGroup</em></a><em>]</em>) – The pairwise T-test groups.</p></li>
+<li><p><strong>metadata</strong> (<em>pd.DataFrame</em>) – The metadata data frame.</p></li>
+<li><p><strong>par</strong> (<a class="reference internal" href="../params/index.html#proteometer.params.Params" title="proteometer.params.Params"><em>Params</em></a>) – The parameters for limitied proteolysis analysis.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A data frame with the site-level data.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="proteometer.lip.rollup_single_protein_to_lytic_site">
+<span class="sig-prename descclassname"><span class="pre">proteometer.lip.</span></span><span class="sig-name descname"><span class="pre">rollup_single_protein_to_lytic_site</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">int_cols</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Iterable" title="(in Python v3.13)"><span class="pre">collections.abc.Iterable</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uniprot_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">sequence</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">residue_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Residue'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tryptic_pattern</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'all'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">peptide_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Sequence'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clean_pept_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'clean_pept'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_separator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'&#64;'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'id'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pept_type_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'pept_type'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Site'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pos_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Pos'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multiply_rollup_counts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_NA</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alternative_protease</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'ProK'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rollup_func</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'median'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'mean'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'sum'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'sum'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="reference external" href="https://github.com/PhenoMeters/proteometer/blob/main/proteometer/lip.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proteometer.lip.rollup_single_protein_to_lytic_site" title="Link to this definition">#</a></dt>
+<dd><p>Rolls up peptide-level limited proteolysis data to lytic sites.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pd.DataFrame</em>) – Input DataFrame containing peptide data.</p></li>
+<li><p><strong>int_cols</strong> (<em>Iterable</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>]</em>) – Columns with intensity values to aggregate.</p></li>
+<li><p><strong>uniprot_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – Column name for UniProt IDs.</p></li>
+<li><p><strong>sequence</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – Protein sequence to analyze against.</p></li>
+<li><p><strong>residue_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Column name for lytic residues. Defaults to “Residue”.</p></li>
+<li><p><strong>description</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Protein description to add to data frame. Defaults to “”.</p></li>
+<li><p><strong>tryptic_pattern</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Digestion pattern to filter peptides. Defaults to “all”.</p></li>
+<li><p><strong>peptide_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Column name containing peptide sequences. Defaults to “Sequence”.</p></li>
+<li><p><strong>clean_pept_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Column name for cleaned peptide sequences. Defaults to “clean_pept”.</p></li>
+<li><p><strong>id_separator</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Separator for IDs. Defaults to “&#64;”.</p></li>
+<li><p><strong>id_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Column name for IDs. Defaults to “id”.</p></li>
+<li><p><strong>pept_type_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Column name for peptide types. Defaults to “pept_type”.</p></li>
+<li><p><strong>site_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Column name for lytic sites. Defaults to “Site”.</p></li>
+<li><p><strong>pos_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Column name for positions. Defaults to “Pos”.</p></li>
+<li><p><strong>multiply_rollup_counts</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether to multiply rollup counts. Defaults to True.</p></li>
+<li><p><strong>ignore_NA</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether to ignore NA values. Defaults to True.</p></li>
+<li><p><strong>alternative_protease</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Name of the alternative protease. Defaults to “ProK”.</p></li>
+<li><p><strong>rollup_func</strong> (<em>Literal</em><em>[</em><em>&quot;median&quot;</em><em>, </em><em>&quot;mean&quot;</em><em>, </em><em>&quot;sum&quot;</em><em>]</em><em>, </em><em>optional</em>) – Aggregation function. Defaults to “median”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame with rolled-up lytic site data and aggregated statistics.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="proteometer.lip.select_lytic_sites">
+<span class="sig-prename descclassname"><span class="pre">proteometer.lip.</span></span><span class="sig-name descname"><span class="pre">select_lytic_sites</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">site_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'prok'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site_type_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Lytic</span> <span class="pre">site</span> <span class="pre">type'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="reference external" href="https://github.com/PhenoMeters/proteometer/blob/main/proteometer/lip.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proteometer.lip.select_lytic_sites" title="Link to this definition">#</a></dt>
+<dd><p>Selects lytic sites based on the specified site type.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>site_df</strong> (<em>pd.DataFrame</em>) – Input DataFrame containing lytic site data.</p></li>
+<li><p><strong>site_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Type of lytic site to select. Defaults to “prok”.</p></li>
+<li><p><strong>site_type_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Column name for lytic site types. Defaults to “Lytic site type”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Filtered DataFrame with selected lytic sites.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="proteometer.lip.delta_prok_site">
+<span class="sig-prename descclassname"><span class="pre">proteometer.lip.</span></span><span class="sig-name descname"><span class="pre">delta_prok_site</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">peptide_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">int_cols</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site_type_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Type'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site_protein_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Protein'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pept_protein_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Protein'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protein_length_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Protein</span> <span class="pre">length'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site_pept_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Peptide'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pept_pept_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Peptide'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">position_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Pos'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pept_start_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'pept_start'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pept_end_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'pept_end'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rollup_method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'median'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'mean'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'sum'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'median'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="reference external" href="https://github.com/PhenoMeters/proteometer/blob/main/proteometer/lip.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proteometer.lip.delta_prok_site" title="Link to this definition">#</a></dt>
+<dd><p>Computes exposure values for each lytic (ProK) site.</p>
+<p>This is computed as the average log intensity of peptides for which the site
+is a lytic site minus the average log intensity peptides that contain the
+site in their sequence. The average function is determined by the rollup_method parameter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>peptide_df</strong> (<em>pd.DataFrame</em>) – DataFrame containing peptide data.</p></li>
+<li><p><strong>site_df</strong> (<em>pd.DataFrame</em>) – DataFrame containing lytic site data.</p></li>
+<li><p><strong>int_cols</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>]</em>) – List of columns to aggregate.</p></li>
+<li><p><strong>site_type_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Column name for lytic site types. Defaults to “Type”.</p></li>
+<li><p><strong>site_protein_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Column name for protein IDs in the lytic site DataFrame. Defaults to “Protein”.</p></li>
+<li><p><strong>pept_protein_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Column name for protein IDs in the peptide DataFrame. Defaults to “Protein”.</p></li>
+<li><p><strong>protein_length_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Column name for protein lengths. Defaults to “Protein length”.</p></li>
+<li><p><strong>site_pept_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Column name for peptides in the lytic site DataFrame. Defaults to “Peptide”.</p></li>
+<li><p><strong>pept_pept_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Column name for peptides in the peptide DataFrame. Defaults to “Peptide”.</p></li>
+<li><p><strong>position_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Column name for positions in the lytic site DataFrame. Defaults to “Pos”.</p></li>
+<li><p><strong>pept_start_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Column name for start positions in the peptide DataFrame. Defaults to “pept_start”.</p></li>
+<li><p><strong>pept_end_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Column name for end positions in the peptide DataFrame. Defaults to “pept_end”.</p></li>
+<li><p><strong>rollup_method</strong> (<em>Literal</em><em>[</em><em>&quot;median&quot;</em><em>, </em><em>&quot;mean&quot;</em><em>, </em><em>&quot;sum&quot;</em><em>]</em><em>, </em><em>optional</em>) – Aggregation method to use. Defaults to “median”. The “sum” is done in linear space.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame with delta values for each lytic site.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../fasta/index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">proteometer.fasta</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../lip_analysis/index.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">proteometer.lip_analysis</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#attributes">Attributes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#proteometer.lip.AggDictFloat"><code class="docutils literal notranslate"><span class="pre">AggDictFloat</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#proteometer.lip.filter_contaminants_reverse_pept"><code class="docutils literal notranslate"><span class="pre">filter_contaminants_reverse_pept()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#proteometer.lip.filter_contaminants_reverse_prot"><code class="docutils literal notranslate"><span class="pre">filter_contaminants_reverse_prot()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#proteometer.lip.filtering_protein_based_on_peptide_number"><code class="docutils literal notranslate"><span class="pre">filtering_protein_based_on_peptide_number()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#proteometer.lip.get_clean_peptides"><code class="docutils literal notranslate"><span class="pre">get_clean_peptides()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#proteometer.lip.get_tryptic_types"><code class="docutils literal notranslate"><span class="pre">get_tryptic_types()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#proteometer.lip.select_tryptic_pattern"><code class="docutils literal notranslate"><span class="pre">select_tryptic_pattern()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#proteometer.lip.analyze_tryptic_pattern"><code class="docutils literal notranslate"><span class="pre">analyze_tryptic_pattern()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#proteometer.lip.rollup_to_lytic_site"><code class="docutils literal notranslate"><span class="pre">rollup_to_lytic_site()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#proteometer.lip.rollup_single_protein_to_lytic_site"><code class="docutils literal notranslate"><span class="pre">rollup_single_protein_to_lytic_site()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#proteometer.lip.select_lytic_sites"><code class="docutils literal notranslate"><span class="pre">select_lytic_sites()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#proteometer.lip.delta_prok_site"><code class="docutils literal notranslate"><span class="pre">delta_prok_site()</span></code></a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../../_sources/autoapi/proteometer/lip/index.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2025, PNNL.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

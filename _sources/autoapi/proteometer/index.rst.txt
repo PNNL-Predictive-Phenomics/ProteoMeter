@@ -1,0 +1,31 @@
+proteometer
+===========
+
+.. py:module:: proteometer
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/proteometer/abundance/index
+   /autoapi/proteometer/alignment/index
+   /autoapi/proteometer/barcode/index
+   /autoapi/proteometer/fasta/index
+   /autoapi/proteometer/lip/index
+   /autoapi/proteometer/lip_analysis/index
+   /autoapi/proteometer/normalization/index
+   /autoapi/proteometer/params/index
+   /autoapi/proteometer/parse_metadata/index
+   /autoapi/proteometer/peptide/index
+   /autoapi/proteometer/ptm/index
+   /autoapi/proteometer/ptm_analysis/index
+   /autoapi/proteometer/quality_control_plots/index
+   /autoapi/proteometer/residue/index
+   /autoapi/proteometer/rollup/index
+   /autoapi/proteometer/stats/index
+   /autoapi/proteometer/utils/index
+
+

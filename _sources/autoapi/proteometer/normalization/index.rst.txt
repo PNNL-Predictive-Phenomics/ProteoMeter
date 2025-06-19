@@ -1,0 +1,156 @@
+proteometer.normalization
+=========================
+
+.. py:module:: proteometer.normalization
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   proteometer.normalization.peptide_normalization
+   proteometer.normalization.peptide_batch_correction
+   proteometer.normalization.peptide_normalization_and_correction
+   proteometer.normalization.tmt_normalization
+   proteometer.normalization.median_normalize_columns
+   proteometer.normalization.median_normalization
+   proteometer.normalization.batch_correction
+
+
+Module Contents
+---------------
+
+.. py:function:: peptide_normalization(global_pept: pandas.DataFrame, mod_pept: pandas.DataFrame, int_cols: list[str], par: proteometer.params.Params) -> pandas.DataFrame
+
+   Normalizes and applies batch correction to peptide data.
+
+   :param global_pept: Global peptide data.
+   :type global_pept: pd.DataFrame
+   :param mod_pept: Modified peptide data.
+   :type mod_pept: pd.DataFrame
+   :param int_cols: List of intensity column names.
+   :type int_cols: list[str]
+   :param metadata: Metadata for batch correction.
+   :type metadata: pd.DataFrame
+   :param par: Parameters object containing experiment settings.
+   :type par: Params
+
+   :returns: Normalized and batch-corrected peptide data.
+   :rtype: pd.DataFrame
+
+
+.. py:function:: peptide_batch_correction(mod_pept: pandas.DataFrame, metadata: pandas.DataFrame, par: proteometer.params.Params) -> pandas.DataFrame
+
+   Normalizes and applies batch correction to peptide data.
+
+   :param global_pept: Global peptide data.
+   :type global_pept: pd.DataFrame
+   :param mod_pept: Modified peptide data.
+   :type mod_pept: pd.DataFrame
+   :param int_cols: List of intensity column names.
+   :type int_cols: list[str]
+   :param metadata: Metadata for batch correction.
+   :type metadata: pd.DataFrame
+   :param par: Parameters object containing experiment settings.
+   :type par: Params
+
+   :returns: Normalized and batch-corrected peptide data.
+   :rtype: pd.DataFrame
+
+
+.. py:function:: peptide_normalization_and_correction(global_pept: pandas.DataFrame, mod_pept: pandas.DataFrame, int_cols: list[str], metadata: pandas.DataFrame, par: proteometer.params.Params) -> pandas.DataFrame
+
+   Normalizes and applies batch correction to peptide data.
+
+   :param global_pept: Global peptide data.
+   :type global_pept: pd.DataFrame
+   :param mod_pept: Modified peptide data.
+   :type mod_pept: pd.DataFrame
+   :param int_cols: List of intensity column names.
+   :type int_cols: list[str]
+   :param metadata: Metadata for batch correction.
+   :type metadata: pd.DataFrame
+   :param par: Parameters object containing experiment settings.
+   :type par: Params
+
+   :returns: Normalized and batch-corrected peptide data.
+   :rtype: pd.DataFrame
+
+
+.. py:function:: tmt_normalization(df2transform: pandas.DataFrame, global_pept: pandas.DataFrame, int_cols: list[str]) -> pandas.DataFrame
+
+   Performs TMT normalization on peptide data.
+
+   :param df2transform: DataFrame to transform.
+   :type df2transform: pd.DataFrame
+   :param global_pept: Global peptide data for reference.
+   :type global_pept: pd.DataFrame
+   :param int_cols: List of intensity column names.
+   :type int_cols: list[str]
+
+   :returns: TMT-normalized DataFrame.
+   :rtype: pd.DataFrame
+
+
+.. py:function:: median_normalize_columns(df: pandas.DataFrame, cols: list[str], skipna: bool = True, zero_center: bool = False) -> pandas.DataFrame
+
+   Performs median normalization on columns of a DataFrame.
+
+   :param df: DataFrame to transform.
+   :type df: pd.DataFrame
+   :param cols: List of column names to normalize.
+   :type cols: list[str]
+   :param skipna: Whether to skip NaN values. Defaults to True.
+   :type skipna: bool, optional
+   :param zero_center: Whether to zero-center the data. Defaults to False.
+   :type zero_center: bool, optional
+
+   :returns: Median-normalized DataFrame.
+   :rtype: pd.DataFrame
+
+
+.. py:function:: median_normalization(df: pandas.DataFrame, int_cols: list[str], metadata: pandas.DataFrame | None = None, batch_correct_samples: collections.abc.Iterable[str] | pandas.Series[str] | None = None, batch_col: str | None = None, sample_col: str = 'Sample', skipna: bool = True, zero_center: bool = False) -> pandas.DataFrame
+
+   Performs median normalization on peptide data.
+
+   :param df: DataFrame to transform.
+   :type df: pd.DataFrame
+   :param int_cols: List of intensity column names.
+   :type int_cols: list[str]
+   :param metadata_ori: Metadata for batch correction. Defaults to None.
+   :type metadata_ori: pd.DataFrame | None, optional
+   :param batch_correct_samples: Samples to correct. Defaults to None.
+   :type batch_correct_samples: Iterable[str] | pd.Series[str] | None, optional
+   :param batch_col: Batch column name. Defaults to None.
+   :type batch_col: str | None, optional
+   :param sample_col: Sample column name. Defaults to "Sample".
+   :type sample_col: str, optional
+   :param skipna: Whether to skip NaN values. Defaults to True.
+   :type skipna: bool, optional
+   :param zero_center: Whether to zero-center the data. Defaults to False.
+   :type zero_center: bool, optional
+
+   :returns: Median-normalized DataFrame.
+   :rtype: pd.DataFrame
+
+
+.. py:function:: batch_correction(df4batcor: pandas.DataFrame, metadata: pandas.DataFrame, batch_correct_samples: collections.abc.Iterable[str] | pandas.Series[str] | None = None, batch_col: str = 'Batch', sample_col: str = 'Sample') -> pandas.DataFrame
+
+   Applies batch correction to peptide data using row-mean centering.
+
+   :param df4batcor: DataFrame to correct.
+   :type df4batcor: pd.DataFrame
+   :param metadata: Metadata for batch correction.
+   :type metadata: pd.DataFrame
+   :param batch_correct_samples: Samples (column names) to correct. Defaults to None, in which case it is all samples as defined in metadata.
+   :type batch_correct_samples: Iterable[str] | pd.Series[str] | None, optional
+   :param batch_col: Batch column name. Defaults to "Batch".
+   :type batch_col: str, optional
+   :param sample_col: Sample column name. Defaults to "Sample".
+   :type sample_col: str, optional
+
+   :returns: Batch-corrected DataFrame.
+   :rtype: pd.DataFrame
+
+

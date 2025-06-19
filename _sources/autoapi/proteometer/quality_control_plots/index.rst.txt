@@ -1,0 +1,52 @@
+proteometer.quality_control_plots
+=================================
+
+.. py:module:: proteometer.quality_control_plots
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   proteometer.quality_control_plots.biplot
+   proteometer.quality_control_plots.correlation_plot
+
+
+Module Contents
+---------------
+
+.. py:function:: biplot(df: pandas.DataFrame, int_cols: list[str], group_cols: list[list[str]], ax: matplotlib.axes.Axes | None = None) -> matplotlib.axes.Axes
+
+   Plots a biplot of the data.
+
+   :param df: DataFrame containing the data.
+   :type df: pd.DataFrame
+   :param int_cols: List of columns to plot.
+   :type int_cols: list[str]
+   :param group_cols: List of lists of columns to group by.
+   :type group_cols: list[list[str]]
+   :param ax: Matplotlib Axes object to draw the biplot on.
+              If `None`, a new Axes object is created. Defaults to `None`.
+   :type ax: Axes | None, optional
+
+   :returns: The matplotlib Axes object with the plotted biplot.
+   :rtype: Axes
+
+
+.. py:function:: correlation_plot(df: pandas.DataFrame, int_cols: list[str], ax: matplotlib.axes.Axes | None = None) -> matplotlib.axes.Axes
+
+   Plots a correlation heatmap of the data.
+
+   :param df: DataFrame containing the data.
+   :type df: pd.DataFrame
+   :param int_cols: List of columns to plot.
+   :type int_cols: list[str]
+   :param ax: Matplotlib Axes object to draw the correlation heatmap on.
+              If `None`, a new Axes object is created. Defaults to `None`.
+   :type ax: Axes | None, optional
+
+   :returns: The matplotlib Axes object with the plotted correlation heatmap.
+   :rtype: Axes
+
+
