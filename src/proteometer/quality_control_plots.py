@@ -50,6 +50,7 @@ def volcano_plot(
     ax: Axes | None = None,
     sig_type: str = "adj-p",
     sig_thresh: float = 0.1,
+    max_color_value: float | None = None,
 ) -> Axes:
     """Plots a volcano plot of the data.
 
@@ -60,6 +61,8 @@ def volcano_plot(
             If `None`, a new Axes object is created. Defaults to `None`.
         sig_type (str, optional): The type of significance to use. Defaults to "adj-p".
         sig_thresh (float, optional): The significance threshold to use. Defaults to 0.1.
+        max_color_value (float | None, optional): Value at which the color scale should stop (symmetrical about zero).
+            If None, the maximum absolute value in the data is used.
 
     Returns:
         Axes: The matplotlib Axes object with the plotted volcano plot.
@@ -70,13 +73,15 @@ def volcano_plot(
     significance = cast("pd.Series[float]", df[f"{comparison}_{sig_type}"])
     sig_mult = log2fc * (significance < sig_thresh)
 
+    cscale = log2fc.abs().max() if max_color_value is None else max_color_value
+
     ax.scatter(
         log2fc,
         -np.log10(significance),
         c=sig_mult,
         cmap="coolwarm",
-        vmax=1,
-        vmin=-1,
+        vmax=cscale,
+        vmin=-cscale,
         s=10,
     )
     xscale = log2fc.abs().max() * 1.1
