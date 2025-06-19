@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 import matplotlib.pyplot as plt
+import numpy as np
 import numpy.typing as npt
 import pandas as pd
 import seaborn as sns
@@ -13,6 +14,83 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from matplotlib.markers import MarkerStyle
     from numpy import float64
+
+
+# fig, axs = plt.subplots(1, 3, figsize=(12, 4))
+# xscale = lip_prok[comparisons].abs().max(axis=None) * 1.1
+# yscale = -np.log10(lip_prok[[c + sig_type for c in comparisons]].min().min()) * 1.1
+
+# for ax, comparison in zip(axs, comparisons):
+#     sig_mult = lip_prok[f"{comparison}"] * (
+#         lip_prok[f"{comparison}{sig_type}"] < sig_thresh
+#     )
+
+#     p = ax.scatter(
+#         lip_prok[f"{comparison}"],
+#         -np.log10(lip_prok[f"{comparison}{sig_type}"]),
+#         c=sig_mult,
+#         cmap="coolwarm",
+#         vmax=xscale / 2,
+#         vmin=-xscale / 2,
+#         s=10,
+#     )
+#     ax.axhline(-np.log10(sig_thresh), color="black", linestyle="--", alpha=0.5)
+#     ax.set_xlim(-xscale, xscale)
+#     ax.set_ylim(0, yscale)
+#     ax.grid()
+#     ax.set_xlabel(f"Log2FC {comparison}")
+#     ax.set_ylabel("-Log10 adj-p-Value")
+# fig.suptitle("ProK Sites", fontsize=16, y=1.01)
+# plt.show()
+
+
+def volcano_plot(
+    df: pd.DataFrame,
+    comparison: str,
+    ax: Axes | None = None,
+    sig_type: str = "adj-p",
+    sig_thresh: float = 0.1,
+) -> Axes:
+    """Plots a volcano plot of the data.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing the data.
+        comparison (str): The comparison to plot.
+        ax (Axes | None, optional): Matplotlib Axes object to draw the volcano plot on.
+            If `None`, a new Axes object is created. Defaults to `None`.
+        sig_type (str, optional): The type of significance to use. Defaults to "adj-p".
+        sig_thresh (float, optional): The significance threshold to use. Defaults to 0.1.
+
+    Returns:
+        Axes: The matplotlib Axes object with the plotted volcano plot.
+    """
+    if ax is None:
+        _, ax = plt.subplots()
+    log2fc = cast("pd.Series[float]", df[f"{comparison}"])
+    significance = cast("pd.Series[float]", df[f"{comparison}_{sig_type}"])
+    sig_mult = log2fc * (significance < sig_thresh)
+
+    ax.scatter(
+        log2fc,
+        -np.log10(significance),
+        c=sig_mult,
+        cmap="coolwarm",
+        vmax=1,
+        vmin=-1,
+        s=10,
+    )
+    xscale = log2fc.abs().max() * 1.1
+    yscale = -np.log10(significance.min()) * 1.1
+
+    ax.set_xlim(-xscale, xscale)
+    ax.set_ylim(0, yscale)
+
+    ax.axhline(-np.log10(sig_thresh), color="black", linestyle="--", alpha=0.5)
+    ax.grid()
+    ax.set_xlabel(f"Log2FC {comparison}")
+    ax.set_ylabel("-Log10 adj-p-Value")
+
+    return ax
 
 
 def biplot(
