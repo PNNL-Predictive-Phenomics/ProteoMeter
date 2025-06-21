@@ -93,7 +93,7 @@ def volcano_plot(
     ax.axhline(-np.log10(sig_thresh), color="black", linestyle="--", alpha=0.5)
     ax.grid()
     ax.set_xlabel(f"Log2FC {comparison}")
-    ax.set_ylabel("-Log10 adj-p-Value")
+    ax.set_ylabel(f"-Log10 {sig_type}")
 
     return ax
 
