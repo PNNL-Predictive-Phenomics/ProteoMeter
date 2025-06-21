@@ -16,13 +16,17 @@ from proteometer.params import Params
 from proteometer.utils import filter_missingness, generate_index
 
 
-def lip_analysis(par: Params) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+def lip_analysis(
+    par: Params, drop_samples: list[str] | None = None
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
     Performs statistical analysis on the provided limited proteolysis data.
 
     Args:
         par (Params): Parameters for the limited proteolysis analysis, including
             file paths and settings.
+        drop_samples (list[str], optional): List of samples to drop from the
+            analysis. Defaults to None.
 
     Returns:
         tuple[pd.DataFrame,pd.DataFrame,pd.DataFrame]: The resulting limited
@@ -31,11 +35,17 @@ def lip_analysis(par: Params) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]
             peptide data to the single site, and the processed global protein
             data frame (in that order).
     """
+    if drop_samples is None:
+        drop_samples = []
+
     prot_seqs = fasta.get_sequences_from_fasta(par.fasta_file)
+
     metadata = pd.read_csv(par.metadata_file, sep="\t")
-    global_prot = pd.read_csv(par.global_prot_file, sep="\t")
-    global_pept = pd.read_csv(par.global_pept_file, sep="\t")
-    double_pept = pd.read_csv(par.double_pept_file, sep="\t")
+    metadata = metadata[~metadata[par.metadata_sample_col].isin(drop_samples)]
+
+    global_prot = pd.read_csv(par.global_prot_file, sep="\t").drop(columns=drop_samples)
+    global_pept = pd.read_csv(par.global_pept_file, sep="\t").drop(columns=drop_samples)
+    double_pept = pd.read_csv(par.double_pept_file, sep="\t").drop(columns=drop_samples)
 
     int_cols = parse_metadata.int_columns(metadata, par)
     anova_cols = parse_metadata.anova_columns(metadata, par)

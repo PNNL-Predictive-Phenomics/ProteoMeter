@@ -12,7 +12,9 @@ from proteometer.params import Params
 from proteometer.utils import filter_missingness, generate_index
 
 
-def ptm_analysis(par: Params) -> tuple[pd.DataFrame, pd.DataFrame]:
+def ptm_analysis(
+    par: Params, drop_samples: list[str] | None = None
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Runs the PTM proteomics processing and statistical analysis pipeline.
 
     This function reads in data from proteomics files specified in the `par`
@@ -21,15 +23,21 @@ def ptm_analysis(par: Params) -> tuple[pd.DataFrame, pd.DataFrame]:
     data, including the statistical results.
 
     Args:
-        par: A Params object that contains all the parameters for the analysis.
+        par (Params): A Params object that contains all the parameters for the analysis.
+        drop_samples (list[str], optional): A list of samples to be dropped from the analysis. Default is None.
 
     Returns:
         tuple[pd.DataFrame,pd.DataFrame]: Two pandas DataFrames that contains the result of the PTM analysis.
             The first is the processed PTM data, and the second is the global proteomics data.
     """
+    if drop_samples is None:
+        drop_samples = []
+
     metadata = pd.read_csv(par.metadata_file, sep="\t")
-    global_prot = pd.read_csv(par.global_prot_file, sep="\t")
-    global_pept = pd.read_csv(par.global_pept_file, sep="\t")
+    metadata = metadata[~metadata[par.metadata_sample_col].isin(drop_samples)]
+
+    global_prot = pd.read_csv(par.global_prot_file, sep="\t").drop(columns=drop_samples)
+    global_pept = pd.read_csv(par.global_pept_file, sep="\t").drop(columns=drop_samples)
     ptm_pept = [pd.read_csv(f, sep="\t") for f in par.ptm_pept_files]
 
     int_cols = parse_metadata.int_columns(metadata, par)
