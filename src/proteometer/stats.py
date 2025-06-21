@@ -62,8 +62,9 @@ def log2_transformation(
     Returns:
         pd.DataFrame: DataFrame with log2-transformed intensity columns.
     """
-    df2transform[int_cols] = np.log2(df2transform[int_cols].replace(0, np.nan))
-    return df2transform
+    ret = df2transform.copy()
+    ret[int_cols] = np.log2(ret[int_cols].replace(0, np.nan))
+    return ret
 
 
 def anova(
@@ -108,7 +109,9 @@ def anova(
         try:
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=Warning)
-                aov_f = pg.anova(data=df_f, dv=df_id, between=anova_factors, detailed=True)  # type: ignore
+                aov_f = pg.anova(  # type: ignore
+                    data=df_f, dv=df_id, between=anova_factors, detailed=True
+                )
             if not isinstance(aov_f, pd.DataFrame):
                 raise TypeError
             if "p-unc" in aov_f.columns:
