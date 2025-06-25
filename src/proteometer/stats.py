@@ -49,6 +49,26 @@ def recalculate_adj_pval(df: pd.DataFrame, comparisons: list[str]):
     return df
 
 
+def recalculate_adj_pval_proteinwise(
+    df: pd.DataFrame, comparisons: list[str], protein_col: str = "Protein"
+):
+    for comparison in comparisons:
+        pcol = f"{comparison}_pval"
+        apcol = f"{comparison}_adj-p"
+        ind = ~df[pcol].isna()
+        for protein in df[protein_col].unique():
+            ind_prot = ind & (df[protein_col] == protein)
+            df.loc[ind_prot, apcol] = sp.stats.false_discovery_control(
+                df[ind_prot][pcol].astype(float)  # type: ignore
+            )
+        df.loc[
+            df[pcol].isna(),
+            apcol,
+        ] = np.nan
+
+    return df
+
+
 def log2_transformation(
     df2transform: pd.DataFrame, int_cols: Sequence[str]
 ) -> pd.DataFrame:
