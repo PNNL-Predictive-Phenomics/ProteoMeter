@@ -1,0 +1,91 @@
+[paths]
+data_dir = "./scratch.data/LiP"
+results_dir = "./scratch.data/LiP"
+fasta_file = "reference_proteome.fasta"
+metadata_file = "metadata.tsv"
+global_prot_file = "trypsin_prot.tsv"
+global_pept_file = "trypsin_pept.tsv"
+
+
+[paths.lip]
+double_pept_file = "double_pept.tsv"
+
+[paths.ptm]
+ptm_pept_files = []
+
+[experiment]
+experiment_name = "Test"
+experiment_type = "Label-free" # TMT or Label-free
+
+[experiment.lip]
+search_tool = "FragPipe"
+
+[statistics]
+anova_factors = []
+ttest_pairs = [
+    [
+        "Mock_8h",
+        "Infected_8h",
+    ],
+    [
+        "Mock_16h",
+        "Infected_16h",
+    ],
+    [
+        "Mock_24h",
+        "Infected_24h",
+    ],
+    [
+        "Infected_8h",
+        "Infected_16h",
+    ],
+    [
+        "Infected_8h",
+        "Infected_24h",
+    ],
+    [
+        "Infected_16h",
+        "Infected_24h",
+    ],
+]
+
+[corrections]
+abundance_correction = true
+abundance_correction_paired_samples = true
+abundance_unpaired_sig_thr = 0.05
+batch_correction = false
+batch_correct_samples = []
+pooled_chanel_condition = "Total"
+sig_thr = 0.05
+sig_type = "pval"                          # pval or adj-p
+missing_thr = 1
+min_replicates_qc = 2
+min_pept_count = 2
+log2_scale = false
+
+[metadata]
+metadata_batch_col = "Batch"
+metadata_sample_col = "Sample"
+metadata_group_col = "Group"
+metadata_condition_col = "Condition"
+metadata_control_condition = "Control"
+metadata_treatment_condition = "Treatment"
+
+[data_columns]
+id_col = "id"
+uniprot_col = "UniProt"
+protein_col = "Protein"
+peptide_col = "Peptide"
+site_col = "Site"
+residue_col = "Residue"
+type_col = "Type"
+experiment_col = "Experiment"
+site_number_col = "site_number"
+
+[symbols]
+id_separator = "@"
+
+[symbols.ptm]
+ptm_names = []
+ptm_symbols = []
+ptm_abbreviations = []
