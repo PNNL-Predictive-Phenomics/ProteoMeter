@@ -52,6 +52,22 @@ def recalculate_adj_pval(df: pd.DataFrame, comparisons: list[str]):
 def recalculate_adj_pval_proteinwise(
     df: pd.DataFrame, comparisons: list[str], protein_col: str = "Protein"
 ):
+    """
+    Recalculates adjusted p-values for specified comparisons, computed protein-wise.
+
+    See:
+    - Schopper et al. Nature Protocols, 12(11):2391-2410, October 2017.
+    - Nagel et al. Cellular Proteomics, 24(4):100934, April 2025.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing p-values and adjusted p-values.
+        comparisons (list[str]): List of comparison names. Each comparison
+            should have a p-value and adjusted p-value indicated by a "_pval" and
+            "_adj-p" suffix, respectively.
+
+    Returns:
+        pd.DataFrame: DataFrame with recalculated adjusted p-values.
+    """
     for comparison in comparisons:
         pcol = f"{comparison}_pval"
         apcol = f"{comparison}_adj-p"
