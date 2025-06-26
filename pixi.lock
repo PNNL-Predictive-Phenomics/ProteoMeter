@@ -4465,8 +4465,8 @@ packages:
   requires_python: '>=3.9'
 - pypi: .\
   name: proteometer
-  version: 0.2.1
-  sha256: 3e45e705f93655ce7c2fbf69ab257ef71c66dc66508a9098fe86a44b46afb8cc
+  version: 0.3.0
+  sha256: ff2f754926abcf6cb91fa684f81c19f7c1200f458fb394e7efc17711b44da6e9
   requires_dist:
   - numpy>=2.2.1,<3
   - pandas>=2.2.3,<3
