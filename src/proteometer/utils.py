@@ -71,7 +71,7 @@ def filter_missingness(
     groups: Sequence[str],
     group_cols: Sequence[Sequence[str]],
     min_replicates_qc: int = 2,
-    method: Literal["all", "any"] = "all",
+    method: Literal["all", "any"] = "any",
 ) -> pd.DataFrame:
     """
     Filter rows in a DataFrame based on missingness thresholds for specified groups.

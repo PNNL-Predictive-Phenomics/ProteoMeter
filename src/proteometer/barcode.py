@@ -113,33 +113,36 @@ def plot_pept_barcode(
     pept_df: pd.DataFrame,
     pairwise_ttest_name: str,
     sequence: str,
-    output_file_name: str | None = None,
-    uniprot_id: str = "Protein ID (provided by user)",
     max_vis_fc: float = 3.0,
     color_levels: int = 20,
-    sig_type: str = "pval",
+    sig_type: str = "adj-p",
     sig_thr: float = 0.05,
-) -> Figure:
+    ax: Axes | None = None,
+) -> Axes:
     """
-    Plot the barcode of a protein with fold changes at single site level.
+    Plot the barcode of a protein with fold changes at tryptic peptide level.
+
+    When peptides overlap, the one with the largest effect size (fold change over significance value) is shown.
 
     Args:
         pept_df (pd.DataFrame): DataFrame with peptide-level data.
         pairwise_ttest_name (str): Name of the column with pairwise t-test p-values.
         sequence (str): The sequence of the protein.
         output_file_name (str | None, optional): If not None, save the figure to the given file. Defaults to None.
-        uniprot_id (str, optional): The UniProt ID of the protein. Defaults to "Protein ID (provided by user)".
+
         max_vis_fc (float, optional): The maximum fold change value to visualize. Defaults to 3.0.
         color_levels (int, optional): The number of colors in the palette. Defaults to 20.
         sig_type (str, optional): The type of significance test. Defaults to "pval".
         sig_thr (float, optional): The significance threshold. Defaults to 0.05.
+        ax (Axes | None, optional): Matplotlib Axes object to draw the barcode on. If None, a new Axes is created. Defaults to None.
 
     Returns:
-        Figure: The matplotlib Figure object with the plotted barcode.
+        Axes: The matplotlib Axes object with the plotted barcode.
     """
     seq_len = len(sequence)
     tryptic = pept_df[pept_df["pept_type"] == "Tryptic"].copy()
     semi = pept_df[pept_df["pept_type"] == "Semi-tryptic"].copy()
+    protein_id = str(pept_df["Protein"].iloc[0])  # type: ignore
     if not (semi.shape[0] > 0 or tryptic.shape[0] > 0):
         raise ValueError(
             "The peptide dataframe is empty with either tryptic or semi-tryptic peptides. Please check the input dataframe."
@@ -153,130 +156,44 @@ def plot_pept_barcode(
     fc_diff_names = [aa + str(i + 1) for i, aa in enumerate(list(sequence))]
     fc_diff_max = cast("float", pept_df[pairwise_ttest_name].abs().max())
     tryptic_bar_code: list[ColorType] = [(1.0, 1.0, 1.0)] * len(fc_diff_names)
-    semi_bar_code: list[ColorType] = [(1.0, 1.0, 1.0)] * len(fc_diff_names)
-    if tryptic.shape[0] > 0:
-        tryptic_fc_diff = tryptic[
-            [
-                "Site",
-                "Pos",
-                pairwise_ttest_name,
-                f"{pairwise_ttest_name}_{sig_type}",
-            ]
-        ].copy()
-        tryptic_fc_diff.index = tryptic_fc_diff["Site"].to_list()  # type: ignore
-        for i in range(tryptic_fc_diff.shape[0]):
-            tfd1 = int(cast("int", tryptic_fc_diff.iloc[i, 1]))
-            tfd2 = cast("float", tryptic_fc_diff.iloc[i, 2])
-            tfd3 = cast("float", tryptic_fc_diff.iloc[i, 3])
+    tryptic["effect"] = (
+        tryptic[pairwise_ttest_name].abs()
+        / tryptic[f"{pairwise_ttest_name}_{sig_type}"]
+    )
 
-            if tfd2 > 0:
-                if tfd3 < sig_thr:
-                    tryptic_bar_code[tfd1 - 1] = cast(
-                        "ColorType",
-                        up_pal_vals[
-                            np.ceil(
-                                min(abs(tfd2), max_vis_fc + 0.1)
-                                / fc_diff_max
-                                * color_levels
-                            ).astype("int")
-                            - 1
-                        ],
-                    )
-                else:
-                    tryptic_bar_code[tfd1 - 1] = insig_pal_vals[
-                        np.ceil(
-                            min(
-                                abs(tfd2),
-                                max_vis_fc + 0.1,
-                            )
-                            / fc_diff_max
-                            * color_levels
-                        ).astype("int")
-                        - 1
-                    ]
-            else:
-                if tfd3 < sig_thr:
-                    tryptic_bar_code[tfd1 - 1] = down_pal_vals[
-                        np.ceil(
-                            min(
-                                abs(tfd2),
-                                max_vis_fc + 0.1,
-                            )
-                            / fc_diff_max
-                            * color_levels
-                        ).astype("int")
-                        - 1
-                    ]
-                else:
-                    tryptic_bar_code[tfd1 - 1] = insig_pal_vals[
-                        np.ceil(
-                            min(
-                                abs(tfd2),
-                                max_vis_fc + 0.1,
-                            )
-                            / fc_diff_max
-                            * color_levels
-                        ).astype("int")
-                        - 1
-                    ]
-    if semi.shape[0] > 0:
-        semi_fc_diff = semi[
-            [
-                "Site",
-                "Pos",
-                pairwise_ttest_name,
-                f"{pairwise_ttest_name}_{sig_type}",
-            ]
-        ].copy()
-        semi_fc_diff.index = semi_fc_diff["Site"].to_list()  # type: ignore
-        for i in range(semi_fc_diff.shape[0]):
-            sfd1 = int(cast("int", semi_fc_diff.iloc[i, 1]))
-            sfd2 = cast("float", semi_fc_diff.iloc[i, 2])
-            sfd3 = cast("float", semi_fc_diff.iloc[i, 3])
-            if sfd2 > 0:
-                if sfd3 < sig_thr:
-                    semi_bar_code[sfd1 - 1] = up_pal_vals[
-                        np.ceil(
-                            min(abs(sfd2), max_vis_fc + 0.1)
-                            / fc_diff_max
-                            * color_levels
-                        ).astype("int")
-                        - 1
-                    ]
-                else:
-                    semi_bar_code[sfd1 - 1] = insig_pal_vals[
-                        np.ceil(
-                            min(abs(sfd2), max_vis_fc + 0.1)
-                            / fc_diff_max
-                            * color_levels
-                        ).astype("int")
-                        - 1
-                    ]
-            else:
-                if sfd3 < sig_thr:
-                    semi_bar_code[sfd1 - 1] = down_pal_vals[
-                        np.ceil(
-                            min(abs(sfd2), max_vis_fc + 0.1)
-                            / fc_diff_max
-                            * color_levels
-                        ).astype("int")
-                        - 1
-                    ]
-                else:
-                    semi_bar_code[sfd1 - 1] = insig_pal_vals[
-                        np.ceil(
-                            min(abs(sfd2), max_vis_fc + 0.1)
-                            / fc_diff_max
-                            * color_levels
-                        ).astype("int")
-                        - 1
-                    ]
+    for _, row in tryptic.sort_values("effect", ascending=True).iterrows():  # type: ignore
+        fc = cast("float", row[pairwise_ttest_name])
+        if np.isnan(fc):
+            continue
+        sig = cast("float", row[f"{pairwise_ttest_name}_{sig_type}"])
+        start = cast("int", row["pept_start"])
+        end = cast("int", row["pept_end"])
+        disc = (
+            np.ceil(
+                min(
+                    abs(fc),
+                    max_vis_fc + 0.1,
+                )
+                / fc_diff_max
+                * color_levels
+            ).astype("int")
+            - 1
+        )
+        if sig < sig_thr and fc > 0:
+            for i in range(start - 1, end - 1):
+                tryptic_bar_code[i] = up_pal_vals[disc]
+        elif sig < sig_thr and fc < 0:
+            for i in range(start - 1, end - 1):
+                tryptic_bar_code[i] = down_pal_vals[disc]
+        else:
+            for i in range(start - 1, end - 1):
+                tryptic_bar_code[i] = insig_pal_vals[disc]
 
-    fig = plt.figure(figsize=(10, 5))
-    ax = fig.add_subplot(2, 1, 1)
+    if ax is None:
+        _, ax = plt.subplots(1, 1, figsize=(10, 2))
     plot_barcode(
         tryptic_bar_code,
-        barcode_name=uniprot_id + "_tryptic",
+        barcode_name=protein_id,
         ticklabel=[
             fc_diff_names[j]
             for j in cast(
@@ -286,24 +203,7 @@ def plot_pept_barcode(
         ],
         ax=ax,
     )
-    ax = fig.add_subplot(2, 1, 2)
-    plot_barcode(
-        semi_bar_code,
-        barcode_name=uniprot_id + "_semi-tryptic",
-        ticklabel=[
-            fc_diff_names[j]
-            for j in cast(
-                "Iterable[int]",
-                np.arange(0, seq_len, np.ceil(seq_len / 10).astype("int")),
-            )
-        ],
-        ax=ax,
-    )
-    fig.tight_layout()
-    if output_file_name is not None:
-        fig.savefig(f"{output_file_name}_{uniprot_id}_any_tryptic_barcodes.pdf")
-
-    return fig
+    return ax
 
 
 # This function is to plot the barcode of a protein with fold changes at lytic site level
@@ -315,7 +215,7 @@ def plot_site_barcode(
     uniprot_id: str = "Protein ID (provided by user)",
     max_vis_fc: float = 3.0,
     color_levels: int = 20,
-    site_type_col: str = "Lytic site type",
+    site_type_col: str = "Type",
     sig_type: str = "pval",
     sig_thr: float = 0.05,
 ) -> Figure:
@@ -341,8 +241,9 @@ def plot_site_barcode(
         ValueError: If there is no trypsin or prok data.
     """
     seq_len = len(sequence)
-    trypsin = select_lytic_sites(site_df, "trypsin", site_type_col)
-    prok = select_lytic_sites(site_df, "prok", site_type_col)
+    trypsin = select_lytic_sites(site_df, "Tryp", site_type_col)
+    prok = select_lytic_sites(site_df, "ProK", site_type_col)
+
     if not (prok.shape[0] > 0 or trypsin.shape[0] > 0):
         raise ValueError(
             "The digestion site dataframe is empty with either trypsin or prok sites. Please check the input dataframe."
@@ -367,9 +268,11 @@ def plot_site_barcode(
         ].copy()
         trypsin_fc_diff.index = trypsin_fc_diff["Site"].to_list()  # type: ignore
         for i in range(trypsin_fc_diff.shape[0]):
-            tfd1 = int(cast("int", trypsin_fc_diff.iloc[i, 1]))
-            tfd2 = cast("float", trypsin_fc_diff.iloc[i, 2])
-            tfd3 = cast("float", trypsin_fc_diff.iloc[i, 3])
+            tfd1 = int(cast("int", trypsin_fc_diff.iloc[i, 1]))  # pos
+            tfd2 = cast("float", trypsin_fc_diff.iloc[i, 2])  # fc
+            tfd3 = cast("float", trypsin_fc_diff.iloc[i, 3])  # (adj) pval
+            if np.isnan(tfd2) or np.isnan(tfd3):
+                continue
             if tfd2 > 0:
                 if tfd3 < sig_thr:
                     trypsin_bar_code[tfd1 - 1] = up_pal_vals[
@@ -431,6 +334,8 @@ def plot_site_barcode(
             pfd1 = int(cast("int", prok_fc_diff.iloc[i, 1]))
             pfd2 = cast("float", prok_fc_diff.iloc[i, 2])
             pfd3 = cast("float", prok_fc_diff.iloc[i, 3])
+            if np.isnan(pfd2) or np.isnan(pfd3):
+                continue
             if pfd2 > 0:
                 if pfd3 < sig_thr:
                     prok_bar_code[pfd1 - 1] = up_pal_vals[

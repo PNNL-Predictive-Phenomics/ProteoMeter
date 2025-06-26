@@ -49,6 +49,42 @@ def recalculate_adj_pval(df: pd.DataFrame, comparisons: list[str]):
     return df
 
 
+def recalculate_adj_pval_proteinwise(
+    df: pd.DataFrame, comparisons: list[str], protein_col: str = "Protein"
+):
+    """
+    Recalculates adjusted p-values for specified comparisons, computed protein-wise.
+
+    See:
+    - Schopper et al. Nature Protocols, 12(11):2391-2410, October 2017.
+    - Nagel et al. Cellular Proteomics, 24(4):100934, April 2025.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing p-values and adjusted p-values.
+        comparisons (list[str]): List of comparison names. Each comparison
+            should have a p-value and adjusted p-value indicated by a "_pval" and
+            "_adj-p" suffix, respectively.
+
+    Returns:
+        pd.DataFrame: DataFrame with recalculated adjusted p-values.
+    """
+    for comparison in comparisons:
+        pcol = f"{comparison}_pval"
+        apcol = f"{comparison}_adj-p"
+        ind = ~df[pcol].isna()
+        for protein in df[protein_col].unique():
+            ind_prot = ind & (df[protein_col] == protein)
+            df.loc[ind_prot, apcol] = sp.stats.false_discovery_control(
+                df[ind_prot][pcol].astype(float)  # type: ignore
+            )
+        df.loc[
+            df[pcol].isna(),
+            apcol,
+        ] = np.nan
+
+    return df
+
+
 def log2_transformation(
     df2transform: pd.DataFrame, int_cols: Sequence[str]
 ) -> pd.DataFrame:
@@ -62,8 +98,9 @@ def log2_transformation(
     Returns:
         pd.DataFrame: DataFrame with log2-transformed intensity columns.
     """
-    df2transform[int_cols] = np.log2(df2transform[int_cols].replace(0, np.nan))
-    return df2transform
+    ret = df2transform.copy()
+    ret[int_cols] = np.log2(ret[int_cols].replace(0, np.nan))
+    return ret
 
 
 def anova(
@@ -108,7 +145,9 @@ def anova(
         try:
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=Warning)
-                aov_f = pg.anova(data=df_f, dv=df_id, between=anova_factors, detailed=True)  # type: ignore
+                aov_f = pg.anova(  # type: ignore
+                    data=df_f, dv=df_id, between=anova_factors, detailed=True
+                )
             if not isinstance(aov_f, pd.DataFrame):
                 raise TypeError
             if "p-unc" in aov_f.columns:
