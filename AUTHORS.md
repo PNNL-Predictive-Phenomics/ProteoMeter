@@ -1,9 +1,7 @@
 # Credits
 
-## Development Lead
+## Core Development
 
-* ProteoMeter <song.feng@outlook.com>
+* <song.feng@pnnl.gov>
+* <jordan.rozum@pnnl.gov>
 
-## Contributors
-
-None yet. Why not be the first?

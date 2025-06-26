@@ -22,7 +22,7 @@ ProteoMeter: A Comprehensive Python Library for Proteomic Data Analysis
 
 
 * Free software: BSD 2-Clause License
-* Documentation: <https://PhenoMeters.github.io/proteometer/>
+* Documentation: <https://pnnl-predictive-phenomics.github.io/ProteoMeter/>
 
 
 Description:
@@ -49,9 +49,5 @@ Academic research in proteomics, molecular biology, and biochemistry.
 Pharmaceutical and biotech industries for drug discovery and protein analysis.
 Clinical research for biomarker discovery and disease profiling.
 ProteoMeter is not just a tool but a stepping stone towards a more integrated and comprehensive understanding of proteomic data, aiming to accelerate research and discovery in the field of protein science.
-
-## Features
-
-* TODO
 
 
