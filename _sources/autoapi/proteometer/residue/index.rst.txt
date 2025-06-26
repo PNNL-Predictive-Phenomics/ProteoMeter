@@ -1,0 +1,86 @@
+proteometer.residue
+===================
+
+.. py:module:: proteometer.residue
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   proteometer.residue.get_res_names
+   proteometer.residue.get_res_pos
+   proteometer.residue.count_site_number
+   proteometer.residue.count_site_number_with_global_proteomics
+
+
+Module Contents
+---------------
+
+.. py:function:: get_res_names(residues: collections.abc.Iterable[str]) -> list[list[str]]
+
+   Extracts residue names from an iterable of residue strings.
+
+   :param residues: An iterable of residue strings, each containing
+                    an uppercase letter followed by digits and optional lowercase letters or hyphens.
+   :type residues: Iterable[str]
+
+   :returns:
+
+             A list of lists, where each inner list contains the extracted
+                 residue names from the corresponding input string.
+   :rtype: list[list[str]]
+
+
+.. py:function:: get_res_pos(residues: collections.abc.Iterable[str]) -> list[list[int]]
+
+   Extracts residue positions from an iterable of residue strings.
+
+   :param residues: An iterable of residue strings, each containing
+                    an uppercase letter followed by digits and optional lowercase letters or hyphens.
+   :type residues: Iterable[str]
+
+   :returns:
+
+             A list of lists, where each inner list contains the extracted
+                 residue positions from the corresponding input string.
+   :rtype: list[list[int]]
+
+
+.. py:function:: count_site_number(df: pandas.DataFrame, uniprot_col: str, site_number_col: str = 'site_number') -> pandas.DataFrame
+
+   Counts the number of sites per protein in a given DataFrame.
+
+   :param df: DataFrame containing protein and site information.
+   :type df: pd.DataFrame
+   :param uniprot_col: Column name of the protein identifier.
+   :type uniprot_col: str
+   :param site_number_col: Name of the column to store the site number.
+                           Defaults to 'site_number'.
+   :type site_number_col: str, optional
+
+   :returns: DataFrame with the site number added.
+   :rtype: pd.DataFrame
+
+
+.. py:function:: count_site_number_with_global_proteomics(df: pandas.DataFrame, uniprot_col: str, id_col: str, site_number_col: str = 'site_number') -> pandas.DataFrame
+
+   Counts the number of sites per protein in a given DataFrame, with the global proteomics
+   data used as the reference.
+
+   :param df: DataFrame containing protein and site information. The index of
+              this DataFrame must match `id_col`.
+   :type df: pd.DataFrame
+   :param uniprot_col: Column name of the protein identifier.
+   :type uniprot_col: str
+   :param id_col: Column name of the identifier that matches the index of the DataFrame.
+   :type id_col: str
+   :param site_number_col: Name of the column to store the site number.
+                           Defaults to 'site_number'.
+   :type site_number_col: str, optional
+
+   :returns: DataFrame with the site number added.
+   :rtype: pd.DataFrame
+
+

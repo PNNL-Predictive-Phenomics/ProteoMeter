@@ -1,0 +1,165 @@
+proteometer.stats
+=================
+
+.. py:module:: proteometer.stats
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   proteometer.stats.TTestGroup
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   proteometer.stats.recalculate_adj_pval
+   proteometer.stats.recalculate_adj_pval_proteinwise
+   proteometer.stats.log2_transformation
+   proteometer.stats.anova
+   proteometer.stats.pairwise_ttest
+   proteometer.stats.calculate_pairwise_scalars
+   proteometer.stats.calculate_all_pairwise_scalars
+
+
+Module Contents
+---------------
+
+.. py:class:: TTestGroup
+
+   .. py:attribute:: treat_group
+      :type:  str
+
+
+   .. py:attribute:: control_group
+      :type:  str
+
+
+   .. py:attribute:: treat_samples
+      :type:  collections.abc.Sequence[str]
+
+
+   .. py:attribute:: control_samples
+      :type:  collections.abc.Sequence[str]
+
+
+   .. py:method:: label()
+
+
+.. py:function:: recalculate_adj_pval(df: pandas.DataFrame, comparisons: list[str])
+
+   Recalculates adjusted p-values for specified comparisons.
+
+   :param df: DataFrame containing p-values and adjusted p-values.
+   :type df: pd.DataFrame
+   :param comparisons: List of comparison names. Each comparison
+                       should have a p-value and adjusted p-value indicated by a "_pval" and
+                       "_adj-p" suffix, respectively.
+   :type comparisons: list[str]
+
+   :returns: DataFrame with recalculated adjusted p-values.
+   :rtype: pd.DataFrame
+
+
+.. py:function:: recalculate_adj_pval_proteinwise(df: pandas.DataFrame, comparisons: list[str], protein_col: str = 'Protein')
+
+   Recalculates adjusted p-values for specified comparisons, computed protein-wise.
+
+   See:
+   - Schopper et al. Nature Protocols, 12(11):2391-2410, October 2017.
+   - Nagel et al. Cellular Proteomics, 24(4):100934, April 2025.
+
+   :param df: DataFrame containing p-values and adjusted p-values.
+   :type df: pd.DataFrame
+   :param comparisons: List of comparison names. Each comparison
+                       should have a p-value and adjusted p-value indicated by a "_pval" and
+                       "_adj-p" suffix, respectively.
+   :type comparisons: list[str]
+
+   :returns: DataFrame with recalculated adjusted p-values.
+   :rtype: pd.DataFrame
+
+
+.. py:function:: log2_transformation(df2transform: pandas.DataFrame, int_cols: collections.abc.Sequence[str]) -> pandas.DataFrame
+
+   Applies log2 transformation to specified intensity columns in a DataFrame.
+
+   :param df2transform: DataFrame containing the data to transform.
+   :type df2transform: pd.DataFrame
+   :param int_cols: List of intensity column names to apply the transformation.
+   :type int_cols: Sequence[str]
+
+   :returns: DataFrame with log2-transformed intensity columns.
+   :rtype: pd.DataFrame
+
+
+.. py:function:: anova(df: pandas.DataFrame, anova_cols: list[str], metadata: pandas.DataFrame, anova_factors: collections.abc.Sequence[str], sample_col: str) -> pandas.DataFrame
+
+   Performs ANOVA on specified columns of a DataFrame.
+
+   :param df: DataFrame containing the data for analysis.
+   :type df: pd.DataFrame
+   :param anova_cols: List of column names to analyze.
+   :type anova_cols: list[str]
+   :param metadata: Metadata containing sample information.
+   :type metadata: pd.DataFrame
+   :param anova_factors: Factors for ANOVA analysis.
+   :type anova_factors: Sequence[str], optional
+   :param sample_col: Column name for sample identifiers.
+   :type sample_col: str, optional
+
+   :returns: DataFrame with ANOVA p-values and adjusted p-values.
+   :rtype: pd.DataFrame
+
+
+.. py:function:: pairwise_ttest(df: pandas.DataFrame, pairwise_ttest_groups: collections.abc.Iterable[TTestGroup]) -> pandas.DataFrame
+
+   Performs pairwise t-tests for specified treatment and control groups.
+
+   :param df: DataFrame containing the data for analysis.
+   :type df: pd.DataFrame
+   :param pairwise_ttest_groups: Iterable of TTestGroup objects defining the groups.
+   :type pairwise_ttest_groups: Iterable[TTestGroup]
+
+   :returns: DataFrame with t-test results, including p-values and adjusted p-values.
+   :rtype: pd.DataFrame
+
+
+.. py:function:: calculate_pairwise_scalars(prot: pandas.DataFrame, pairwise_ttest_name: str | None = None, sig_type: str = 'pval', sig_thr: float = 0.05) -> pandas.DataFrame
+
+   Calculates pairwise scalars based on significance thresholds.
+
+   :param prot: DataFrame containing pairwise t-test results.
+   :type prot: pd.DataFrame
+   :param pairwise_ttest_name: Name of the pairwise t-test column. Defaults to None.
+   :type pairwise_ttest_name: str | None, optional
+   :param sig_type: Type of significance metric (e.g., "pval"). Defaults to "pval".
+   :type sig_type: str, optional
+   :param sig_thr: Significance threshold. Defaults to 0.05.
+   :type sig_thr: float, optional
+
+   :returns: DataFrame with calculated scalars.
+   :rtype: pd.DataFrame
+
+
+.. py:function:: calculate_all_pairwise_scalars(prot: pandas.DataFrame, pairwise_ttest_groups: collections.abc.Iterable[TTestGroup], sig_type: str = 'pval', sig_thr: float = 0.05) -> pandas.DataFrame
+
+   Calculates pairwise scalars for all specified t-test groups.
+
+   :param prot: DataFrame containing pairwise t-test results.
+   :type prot: pd.DataFrame
+   :param pairwise_ttest_groups: Iterable of TTestGroup objects defining the groups.
+   :type pairwise_ttest_groups: Iterable[TTestGroup]
+   :param sig_type: Type of significance metric (e.g., "pval"). Defaults to "pval".
+   :type sig_type: str, optional
+   :param sig_thr: Significance threshold. Defaults to 0.05.
+   :type sig_thr: float, optional
+
+   :returns: DataFrame with calculated scalars for all groups.
+   :rtype: pd.DataFrame
+
+

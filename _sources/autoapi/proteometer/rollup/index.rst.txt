@@ -1,0 +1,60 @@
+proteometer.rollup
+==================
+
+.. py:module:: proteometer.rollup
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   proteometer.rollup.AggDictFloat
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   proteometer.rollup.rollup_to_site
+
+
+Module Contents
+---------------
+
+.. py:data:: AggDictFloat
+
+.. py:function:: rollup_to_site(df_ori: pandas.DataFrame, int_cols: list[str], uniprot_col: str, peptide_col: str, residue_col: str, residue_sep: str = ';', id_col: str = 'id', id_separator: str = '@', site_col: str = 'Site', multiply_rollup_counts: bool = True, ignore_NA: bool = True, rollup_func: Literal['median', 'mean', 'sum'] = 'sum') -> pandas.DataFrame
+
+   Roll up peptide-level data to site-level data.
+
+   :param df_ori: Original DataFrame containing peptide data.
+   :type df_ori: pd.DataFrame
+   :param int_cols: List of column names with intensity values to roll up.
+   :type int_cols: list[str]
+   :param uniprot_col: Column name for UniProt identifiers.
+   :type uniprot_col: str
+   :param peptide_col: Column name for peptides.
+   :type peptide_col: str
+   :param residue_col: Column name for residues.
+   :type residue_col: str
+   :param residue_sep: Separator for residues in the residue column. Defaults to ";".
+   :type residue_sep: str, optional
+   :param id_col: Column name for generated IDs. Defaults to "id".
+   :type id_col: str, optional
+   :param id_separator: Separator for ID components. Defaults to "@".
+   :type id_separator: str, optional
+   :param site_col: Column name for site information. Defaults to "Site".
+   :type site_col: str, optional
+   :param multiply_rollup_counts: Whether to multiply rollup counts by the number of observations. Defaults to True.
+   :type multiply_rollup_counts: bool, optional
+   :param ignore_NA: Whether to ignore NA values during rollup. Defaults to True.
+   :type ignore_NA: bool, optional
+   :param rollup_func: Aggregation function to use. Defaults to "sum".
+   :type rollup_func: Literal["median", "mean", "sum"], optional
+
+   :returns: DataFrame with rolled-up site-level data.
+   :rtype: pd.DataFrame
+
+

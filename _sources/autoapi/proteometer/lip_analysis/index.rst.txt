@@ -1,0 +1,38 @@
+proteometer.lip_analysis
+========================
+
+.. py:module:: proteometer.lip_analysis
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   proteometer.lip_analysis.lip_analysis
+
+
+Module Contents
+---------------
+
+.. py:function:: lip_analysis(par: proteometer.params.Params, drop_samples: list[str] | None = None) -> tuple[pandas.DataFrame, pandas.DataFrame, pandas.DataFrame]
+
+   Performs statistical analysis on the provided limited proteolysis data.
+
+   :param par: Parameters for the limited proteolysis analysis, including
+               file paths and settings.
+   :type par: Params
+   :param drop_samples: List of samples to drop from the
+                        analysis. Defaults to None.
+   :type drop_samples: list[str], optional
+
+   :returns:
+
+             The resulting limited
+                 proteolysis data frames after analysis.
+                 These are the double-digested peptide data frame, the rollup of the
+                 peptide data to the single site, and the processed global protein
+                 data frame (in that order).
+   :rtype: tuple[pd.DataFrame,pd.DataFrame,pd.DataFrame]
+
+

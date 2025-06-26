@@ -1,0 +1,70 @@
+proteometer.alignment
+=====================
+
+.. py:module:: proteometer.alignment
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   proteometer.alignment.get_df_for_pept_alignment_plot
+   proteometer.alignment.plot_pept_alignment
+
+
+Module Contents
+---------------
+
+.. py:function:: get_df_for_pept_alignment_plot(pept_df: pandas.DataFrame, prot_seq: str, pairwise_ttest_name: str, tryptic_pattern: str = 'all', peptide_col: str = 'Sequence', clean_pept_col: str = 'clean_pept', max_vis_fc: float = 3.0, id_separator: str = '@') -> pandas.DataFrame
+
+   Generates a DataFrame for visualizing peptide alignment with fold changes.
+
+   :param pept_df: Input DataFrame containing peptide information.
+   :type pept_df: pd.DataFrame
+   :param prot_seq: Protein sequence to align peptides against.
+   :type prot_seq: str
+   :param pairwise_ttest_name: Column name in `pept_df` containing fold change values.
+   :type pairwise_ttest_name: str
+   :param tryptic_pattern: Tryptic pattern to filter peptides. Defaults to "all".
+   :type tryptic_pattern: str, optional
+   :param peptide_col: Column name for peptide sequences in `pept_df`. Defaults to "Sequence".
+   :type peptide_col: str, optional
+   :param clean_pept_col: Column name for cleaned peptide sequences in `pept_df`. Defaults to "clean_pept".
+   :type clean_pept_col: str, optional
+   :param max_vis_fc: Maximum fold change value for visualization. Defaults to 3.0.
+   :type max_vis_fc: float, optional
+   :param id_separator: Separator for peptide ID formatting. Defaults to "@".
+   :type id_separator: str, optional
+
+   :returns: A DataFrame with fold changes aligned to the protein sequence.
+   :rtype: pd.DataFrame
+
+
+.. py:function:: plot_pept_alignment(pept_df: pandas.DataFrame, prot_seq: str, pairwise_ttest_name: str, save2file: str | None = None, tryptic_pattern: str = 'all', peptide_col: str = 'Sequence', clean_pept_col: str = 'clean_pept', max_vis_fc: float = 3.0, color_map: str | list[matplotlib.typing.ColorType] | matplotlib.colors.Colormap | None = 'coolwarm') -> matplotlib.figure.Figure
+
+   Plots a heatmap of peptide alignment with fold changes.
+
+   :param pept_df: Input DataFrame containing peptide information.
+   :type pept_df: pd.DataFrame
+   :param prot_seq: Protein sequence to align peptides against.
+   :type prot_seq: str
+   :param pairwise_ttest_name: Column name in `pept_df` containing fold change values.
+   :type pairwise_ttest_name: str
+   :param save2file: File path to save the plot. If None, the plot is displayed. Defaults to None.
+   :type save2file: str | None, optional
+   :param tryptic_pattern: Tryptic pattern to filter peptides. Defaults to "all".
+   :type tryptic_pattern: str, optional
+   :param peptide_col: Column name for peptide sequences in `pept_df`. Defaults to "Sequence".
+   :type peptide_col: str, optional
+   :param clean_pept_col: Column name for cleaned peptide sequences in `pept_df`. Defaults to "clean_pept".
+   :type clean_pept_col: str, optional
+   :param max_vis_fc: Maximum fold change value for visualization. Defaults to 3.0.
+   :type max_vis_fc: float, optional
+   :param color_map: Colormap for the heatmap. Defaults to "coolwarm".
+   :type color_map: str | list[ColorType] | Colormap | None, optional
+
+   :returns: The plot object.
+   :rtype: Figure
+
+

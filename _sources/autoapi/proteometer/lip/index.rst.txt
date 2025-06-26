@@ -1,0 +1,291 @@
+proteometer.lip
+===============
+
+.. py:module:: proteometer.lip
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   proteometer.lip.AggDictFloat
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   proteometer.lip.filter_contaminants_reverse_pept
+   proteometer.lip.filter_contaminants_reverse_prot
+   proteometer.lip.filtering_protein_based_on_peptide_number
+   proteometer.lip.get_clean_peptides
+   proteometer.lip.get_tryptic_types
+   proteometer.lip.select_tryptic_pattern
+   proteometer.lip.analyze_tryptic_pattern
+   proteometer.lip.rollup_to_lytic_site
+   proteometer.lip.rollup_single_protein_to_lytic_site
+   proteometer.lip.select_lytic_sites
+   proteometer.lip.delta_prok_site
+
+
+Module Contents
+---------------
+
+.. py:data:: AggDictFloat
+
+.. py:function:: filter_contaminants_reverse_pept(df: pandas.DataFrame, search_tool: Literal['maxquant', 'msfragger', 'fragpipe'], protein_id_col_pept: str, uniprot_col: str) -> pandas.DataFrame
+
+   Filters out contaminants and reverse hits from a peptide DataFrame.
+
+   :param df: Input DataFrame containing peptide data.
+   :type df: pd.DataFrame
+   :param search_tool: The search tool used for data generation.
+   :type search_tool: Literal["maxquant", "msfragger", "fragpipe"]
+   :param protein_id_col_pept: Column name containing protein IDs in the peptide DataFrame.
+   :type protein_id_col_pept: str
+   :param uniprot_col: Column name to store UniProt IDs.
+   :type uniprot_col: str
+
+   :returns: Filtered DataFrame with contaminants and reverse hits removed.
+   :rtype: pd.DataFrame
+
+
+.. py:function:: filter_contaminants_reverse_prot(df: pandas.DataFrame, search_tool: Literal['maxquant', 'msfragger', 'fragpipe'], protein_id_col_prot: str, uniprot_col: str) -> pandas.DataFrame
+
+   Filters out contaminants and reverse hits from a protein DataFrame.
+
+   :param df: Input DataFrame containing protein data.
+   :type df: pd.DataFrame
+   :param search_tool: The search tool used for data generation.
+   :type search_tool: Literal["maxquant", "msfragger", "fragpipe"]
+   :param protein_id_col_prot: Column name containing protein IDs in the protein DataFrame.
+   :type protein_id_col_prot: str
+   :param uniprot_col: Column name to store UniProt IDs.
+   :type uniprot_col: str
+
+   :returns: Filtered DataFrame with contaminants and reverse hits removed.
+   :rtype: pd.DataFrame
+
+
+.. py:function:: filtering_protein_based_on_peptide_number(df2filter: pandas.DataFrame, peptide_counts_col: str, search_tool: Literal['maxquant', 'msfragger', 'fragpipe'], min_pept_count: int = 2) -> pandas.DataFrame
+
+   Filters proteins based on the minimum number of peptides.
+
+   :param df2filter: Input DataFrame containing proteomics data.
+   :type df2filter: pd.DataFrame
+   :param peptide_counts_col: Column name containing peptide counts.
+   :type peptide_counts_col: str
+   :param search_tool: The search tool used for data generation.
+   :type search_tool: Literal["maxquant", "msfragger", "fragpipe"]
+   :param min_pept_count: Minimum number of peptides required. Defaults to 2.
+   :type min_pept_count: int, optional
+
+   :returns: Filtered DataFrame with proteins having at least `min_pept_count` peptides.
+   :rtype: pd.DataFrame
+
+
+.. py:function:: get_clean_peptides(pept_df: pandas.DataFrame, peptide_col: str, clean_pept_col: str = 'clean_pept') -> pandas.DataFrame
+
+   Cleans peptide sequences by removing modifications and returns a DataFrame with cleaned peptides.
+
+   :param pept_df: Input DataFrame containing peptide data.
+   :type pept_df: pd.DataFrame
+   :param peptide_col: Column name containing peptide sequences.
+   :type peptide_col: str
+   :param clean_pept_col: Column name to store cleaned peptide sequences. Defaults to "clean_pept".
+   :type clean_pept_col: str, optional
+
+   :returns: DataFrame with an additional column for cleaned peptide sequences.
+   :rtype: pd.DataFrame
+
+
+.. py:function:: get_tryptic_types(pept_df: pandas.DataFrame, prot_seq: str, peptide_col: str, clean_pept_col: str = 'clean_pept') -> pandas.DataFrame
+
+   Analyzes the tryptic pattern of peptides and classifies them as tryptic, semi-tryptic, or non-tryptic.
+
+   :param pept_df: Input DataFrame containing peptide data.
+   :type pept_df: pd.DataFrame
+   :param prot_seq: Protein sequence to analyze against.
+   :type prot_seq: str
+   :param peptide_col: Column name containing peptide sequences.
+   :type peptide_col: str
+   :param clean_pept_col: Column name for cleaned peptide sequences. Defaults to "clean_pept".
+   :type clean_pept_col: str, optional
+
+   :returns: DataFrame with additional columns for peptide start, end, and type.
+   :rtype: pd.DataFrame
+
+
+.. py:function:: select_tryptic_pattern(pept_df: pandas.DataFrame, prot_seq: str, tryptic_pattern: str = 'all', peptide_col: str = 'Sequence', clean_pept_col: str = 'clean_pept') -> pandas.DataFrame
+
+   Selects peptides based on their digestion pattern.
+
+   :param pept_df: Input DataFrame containing peptide data.
+   :type pept_df: pd.DataFrame
+   :param prot_seq: Protein sequence to analyze against.
+   :type prot_seq: str
+   :param tryptic_pattern: Digestion pattern to filter peptides. Defaults to "all".
+                           must be one of: all, any-tryptic, tryptic, semi-tryptic, non-tryptic.
+   :type tryptic_pattern: str, optional
+   :param peptide_col: Column name containing peptide sequences. Defaults to "Sequence".
+   :type peptide_col: str, optional
+   :param clean_pept_col: Column name for cleaned peptide sequences. Defaults to "clean_pept".
+   :type clean_pept_col: str, optional
+
+   :returns: Filtered DataFrame with peptides matching the specified digestion pattern.
+   :rtype: pd.DataFrame
+
+
+.. py:function:: analyze_tryptic_pattern(protein: pandas.DataFrame, sequence: str, pairwise_ttest_groups: collections.abc.Iterable[proteometer.stats.TTestGroup], peptide_col: str, description: str = '', anova_type: str = '[Group]', keep_non_tryptic: bool = True, id_separator: str = '@', sig_type: str = 'pval', sig_thr: float = 0.05) -> pandas.DataFrame
+
+   Analyzes tryptic patterns and calculates statistics for peptides.
+
+   :param protein: Input DataFrame containing proteomics data.
+   :type protein: pd.DataFrame
+   :param sequence: Protein sequence to analyze against.
+   :type sequence: str
+   :param pairwise_ttest_groups: Groups for pairwise t-tests.
+   :type pairwise_ttest_groups: Iterable[TTestGroup]
+   :param peptide_col: Column name containing peptide sequences.
+   :type peptide_col: str
+   :param description: Protein description to add to data frame. Defaults to "".
+   :type description: str, optional
+   :param anova_type: Type of ANOVA analysis. Defaults to "[Group]".
+   :type anova_type: str, optional
+   :param keep_non_tryptic: Whether to keep non-tryptic peptides. Defaults to True.
+   :type keep_non_tryptic: bool, optional
+   :param id_separator: Separator for peptide IDs. Defaults to "@".
+   :type id_separator: str, optional
+   :param sig_type: Significance type (e.g., "pval"). Defaults to "pval".
+   :type sig_type: str, optional
+   :param sig_thr: Significance threshold. Defaults to 0.05.
+   :type sig_thr: float, optional
+
+   :returns: DataFrame with analyzed tryptic patterns and statistics.
+   :rtype: pd.DataFrame
+
+
+.. py:function:: rollup_to_lytic_site(double_pept: pandas.DataFrame, prot_seqs: list[proteometer.fasta.SeqRecord], int_cols: collections.abc.Iterable[str], par: proteometer.params.Params) -> pandas.DataFrame
+
+   Converts the double-peptide data frame to a site-level data frame.
+
+   :param double_pept: The double-peptide data frame.
+   :type double_pept: pd.DataFrame
+   :param prot_seqs: The list of protein sequences.
+   :type prot_seqs: list[fasta.SeqRecord]
+   :param int_cols: The names of columns to with intensity values.
+   :type int_cols: Iterable[str]
+   :param anova_cols: The columns for ANOVA.
+   :type anova_cols: list[str]
+   :param pairwise_ttest_groups: The pairwise T-test groups.
+   :type pairwise_ttest_groups: Iterable[stats.TTestGroup]
+   :param metadata: The metadata data frame.
+   :type metadata: pd.DataFrame
+   :param par: The parameters for limitied proteolysis analysis.
+   :type par: Params
+
+   :returns: A data frame with the site-level data.
+   :rtype: pd.DataFrame
+
+
+.. py:function:: rollup_single_protein_to_lytic_site(df: pandas.DataFrame, int_cols: collections.abc.Iterable[str], uniprot_col: str, sequence: str, residue_col: str = 'Residue', description: str = '', tryptic_pattern: str = 'all', peptide_col: str = 'Sequence', clean_pept_col: str = 'clean_pept', id_separator: str = '@', id_col: str = 'id', pept_type_col: str = 'pept_type', site_col: str = 'Site', pos_col: str = 'Pos', multiply_rollup_counts: bool = True, ignore_NA: bool = True, alternative_protease: str = 'ProK', rollup_func: Literal['median', 'mean', 'sum'] = 'sum') -> pandas.DataFrame
+
+   Rolls up peptide-level limited proteolysis data to lytic sites.
+
+   :param df: Input DataFrame containing peptide data.
+   :type df: pd.DataFrame
+   :param int_cols: Columns with intensity values to aggregate.
+   :type int_cols: Iterable[str]
+   :param uniprot_col: Column name for UniProt IDs.
+   :type uniprot_col: str
+   :param sequence: Protein sequence to analyze against.
+   :type sequence: str
+   :param residue_col: Column name for lytic residues. Defaults to "Residue".
+   :type residue_col: str, optional
+   :param description: Protein description to add to data frame. Defaults to "".
+   :type description: str, optional
+   :param tryptic_pattern: Digestion pattern to filter peptides. Defaults to "all".
+   :type tryptic_pattern: str, optional
+   :param peptide_col: Column name containing peptide sequences. Defaults to "Sequence".
+   :type peptide_col: str, optional
+   :param clean_pept_col: Column name for cleaned peptide sequences. Defaults to "clean_pept".
+   :type clean_pept_col: str, optional
+   :param id_separator: Separator for IDs. Defaults to "@".
+   :type id_separator: str, optional
+   :param id_col: Column name for IDs. Defaults to "id".
+   :type id_col: str, optional
+   :param pept_type_col: Column name for peptide types. Defaults to "pept_type".
+   :type pept_type_col: str, optional
+   :param site_col: Column name for lytic sites. Defaults to "Site".
+   :type site_col: str, optional
+   :param pos_col: Column name for positions. Defaults to "Pos".
+   :type pos_col: str, optional
+   :param multiply_rollup_counts: Whether to multiply rollup counts. Defaults to True.
+   :type multiply_rollup_counts: bool, optional
+   :param ignore_NA: Whether to ignore NA values. Defaults to True.
+   :type ignore_NA: bool, optional
+   :param alternative_protease: Name of the alternative protease. Defaults to "ProK".
+   :type alternative_protease: str, optional
+   :param rollup_func: Aggregation function. Defaults to "median".
+   :type rollup_func: Literal["median", "mean", "sum"], optional
+
+   :returns: DataFrame with rolled-up lytic site data and aggregated statistics.
+   :rtype: pd.DataFrame
+
+
+.. py:function:: select_lytic_sites(site_df: pandas.DataFrame, site_type: str = 'prok', site_type_col: str = 'Lytic site type') -> pandas.DataFrame
+
+   Selects lytic sites based on the specified site type.
+
+   :param site_df: Input DataFrame containing lytic site data.
+   :type site_df: pd.DataFrame
+   :param site_type: Type of lytic site to select. Defaults to "prok".
+   :type site_type: str, optional
+   :param site_type_col: Column name for lytic site types. Defaults to "Lytic site type".
+   :type site_type_col: str, optional
+
+   :returns: Filtered DataFrame with selected lytic sites.
+   :rtype: pd.DataFrame
+
+
+.. py:function:: delta_prok_site(peptide_df: pandas.DataFrame, site_df: pandas.DataFrame, int_cols: list[str], site_type_col: str = 'Type', site_protein_col: str = 'Protein', pept_protein_col: str = 'Protein', protein_length_col: str = 'Protein length', site_pept_col: str = 'Peptide', pept_pept_col: str = 'Peptide', position_col: str = 'Pos', pept_start_col: str = 'pept_start', pept_end_col: str = 'pept_end', rollup_method: Literal['median', 'mean', 'sum'] = 'median') -> pandas.DataFrame
+
+   Computes exposure values for each lytic (ProK) site.
+
+   This is computed as the average log intensity of peptides for which the site
+   is a lytic site minus the average log intensity peptides that contain the
+   site in their sequence. The average function is determined by the rollup_method parameter.
+
+   :param peptide_df: DataFrame containing peptide data.
+   :type peptide_df: pd.DataFrame
+   :param site_df: DataFrame containing lytic site data.
+   :type site_df: pd.DataFrame
+   :param int_cols: List of columns to aggregate.
+   :type int_cols: list[str]
+   :param site_type_col: Column name for lytic site types. Defaults to "Type".
+   :type site_type_col: str, optional
+   :param site_protein_col: Column name for protein IDs in the lytic site DataFrame. Defaults to "Protein".
+   :type site_protein_col: str, optional
+   :param pept_protein_col: Column name for protein IDs in the peptide DataFrame. Defaults to "Protein".
+   :type pept_protein_col: str, optional
+   :param protein_length_col: Column name for protein lengths. Defaults to "Protein length".
+   :type protein_length_col: str, optional
+   :param site_pept_col: Column name for peptides in the lytic site DataFrame. Defaults to "Peptide".
+   :type site_pept_col: str, optional
+   :param pept_pept_col: Column name for peptides in the peptide DataFrame. Defaults to "Peptide".
+   :type pept_pept_col: str, optional
+   :param position_col: Column name for positions in the lytic site DataFrame. Defaults to "Pos".
+   :type position_col: str, optional
+   :param pept_start_col: Column name for start positions in the peptide DataFrame. Defaults to "pept_start".
+   :type pept_start_col: str, optional
+   :param pept_end_col: Column name for end positions in the peptide DataFrame. Defaults to "pept_end".
+   :type pept_end_col: str, optional
+   :param rollup_method: Aggregation method to use. Defaults to "median". The "sum" is done in linear space.
+   :type rollup_method: Literal["median", "mean", "sum"], optional
+
+   :returns: DataFrame with delta values for each lytic site.
+   :rtype: pd.DataFrame
+
+

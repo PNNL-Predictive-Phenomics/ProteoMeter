@@ -1,0 +1,203 @@
+proteometer.params
+==================
+
+.. py:module:: proteometer.params
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   proteometer.params.Params
+
+
+Module Contents
+---------------
+
+.. py:class:: Params(toml_file_path: str)
+
+   .. py:attribute:: data_dir
+      :value: "b'.'"
+
+
+
+   .. py:attribute:: result_dir
+      :value: "b'.'"
+
+
+
+   .. py:attribute:: fasta_file
+      :value: "b'.'/Uninferable"
+
+
+
+   .. py:attribute:: metadata_file
+      :value: "b'.'/Uninferable"
+
+
+
+   .. py:attribute:: global_prot_file
+      :value: "b'.'/Uninferable"
+
+
+
+   .. py:attribute:: global_pept_file
+      :value: "b'.'/Uninferable"
+
+
+
+   .. py:attribute:: double_pept_file
+      :value: "b'.'/Uninferable"
+
+
+
+   .. py:attribute:: id_separator
+      :value: ''
+
+
+
+   .. py:attribute:: ptm_names
+
+
+   .. py:attribute:: ptm_pept_files
+
+
+   .. py:attribute:: ptm_symbols
+
+
+   .. py:attribute:: ptm_abbreviations
+
+
+   .. py:attribute:: experiment_name
+      :value: ''
+
+
+
+   .. py:attribute:: search_tool
+      :type:  Literal['maxquant', 'msfragger', 'fragpipe', '']
+      :value: ''
+
+
+
+   .. py:attribute:: experiment_type
+      :type:  Literal['TMT', 'Label-free']
+
+
+   .. py:attribute:: anova_factors
+
+
+   .. py:attribute:: ttest_pairs
+
+
+   .. py:attribute:: abundance_correction
+
+
+   .. py:attribute:: abundance_correction_paired_samples
+
+
+   .. py:attribute:: abudnance_unpaired_sig_thr
+
+
+   .. py:attribute:: batch_correct_samples
+
+
+   .. py:attribute:: log2_scale
+
+
+   .. py:attribute:: batch_correction
+
+
+   .. py:attribute:: pooled_chanel_condition
+      :value: ''
+
+
+
+   .. py:attribute:: sig_thr
+
+
+   .. py:attribute:: sig_type
+      :type:  Literal['pval', 'adj-p']
+
+
+   .. py:attribute:: min_replicates_qc
+
+
+   .. py:attribute:: min_pept_count
+
+
+   .. py:attribute:: metadata_batch_col
+      :value: ''
+
+
+
+   .. py:attribute:: metadata_sample_col
+      :value: ''
+
+
+
+   .. py:attribute:: metadata_group_col
+      :value: ''
+
+
+
+   .. py:attribute:: metadata_condition_col
+      :value: ''
+
+
+
+   .. py:attribute:: metadata_control_condition
+      :value: ''
+
+
+
+   .. py:attribute:: metadata_treatment_condition
+      :value: ''
+
+
+
+   .. py:attribute:: id_col
+      :value: ''
+
+
+
+   .. py:attribute:: uniprot_col
+      :value: ''
+
+
+
+   .. py:attribute:: protein_col
+      :value: ''
+
+
+
+   .. py:attribute:: peptide_col
+      :value: ''
+
+
+
+   .. py:attribute:: site_col
+      :value: ''
+
+
+
+   .. py:attribute:: residue_col
+      :value: ''
+
+
+
+   .. py:attribute:: type_col
+      :value: ''
+
+
+
+   .. py:attribute:: experiment_col
+      :value: ''
+
+
+
+   .. py:attribute:: site_number_col
+      :value: ''
+
+
+

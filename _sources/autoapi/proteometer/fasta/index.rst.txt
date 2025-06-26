@@ -1,0 +1,28 @@
+proteometer.fasta
+=================
+
+.. py:module:: proteometer.fasta
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   proteometer.fasta.get_sequences_from_fasta
+
+
+Module Contents
+---------------
+
+.. py:function:: get_sequences_from_fasta(fasta_file: str) -> list[Bio.SeqRecord.SeqRecord]
+
+   Parses a FASTA file and returns a list of sequence records.
+
+   :param fasta_file: Path to the FASTA file containing the sequences.
+   :type fasta_file: str
+
+   :returns: A list of SeqRecord objects representing the parsed sequences.
+   :rtype: list[SeqRecord]
+
+

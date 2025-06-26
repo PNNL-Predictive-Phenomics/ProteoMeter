@@ -1,0 +1,114 @@
+proteometer.barcode
+===================
+
+.. py:module:: proteometer.barcode
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   proteometer.barcode.plot_barcode
+   proteometer.barcode.get_barcode
+   proteometer.barcode.plot_pept_barcode
+   proteometer.barcode.plot_site_barcode
+
+
+Module Contents
+---------------
+
+.. py:function:: plot_barcode(pal: collections.abc.Collection[matplotlib.typing.ColorType], ticklabel: list[str] | None = None, barcode_name: str | None = None, ax: matplotlib.axes.Axes | None = None, size: tuple[int, int] = (10, 2)) -> matplotlib.axes.Axes
+
+   Plot a color-coded barcode.
+
+   :param pal: A collection of colors for the barcode.
+   :type pal: Collection[ColorType]
+   :param ticklabel: Labels for the ticks on the x-axis. Defaults to None.
+   :type ticklabel: list[str] | None, optional
+   :param barcode_name: Name label for the barcode on the y-axis. Defaults to None.
+   :type barcode_name: str | None, optional
+   :param ax: Matplotlib Axes object to draw the barcode on. If None, a new Axes is created. Defaults to None.
+   :type ax: Axes | None, optional
+   :param size: Size of the figure (width, height). Defaults to (10, 2).
+   :type size: tuple[int, int], optional
+
+   :returns: The matplotlib Axes object with the plotted barcode.
+   :rtype: Axes
+
+
+.. py:function:: get_barcode(fc_bar: pandas.DataFrame, color_levels: int = 20, fc_bar_max: float | None = None) -> list[matplotlib.typing.ColorType]
+
+   Get a color-coded barcode for a given DataFrame of fold changes.
+
+   :param fc_bar: DataFrame with columns "FC_DIFF", "FC_TYPE", and "Res".
+   :type fc_bar: pd.DataFrame
+   :param color_levels: Number of colors in the palette. Defaults to 20.
+   :type color_levels: int, optional
+   :param fc_bar_max: Maximum fold change value. Defaults to None.
+   :type fc_bar_max: float | None, optional
+
+   :returns: A list of colors for the barcode.
+   :rtype: list[ColorType]
+
+
+.. py:function:: plot_pept_barcode(pept_df: pandas.DataFrame, pairwise_ttest_name: str, sequence: str, max_vis_fc: float = 3.0, color_levels: int = 20, sig_type: str = 'adj-p', sig_thr: float = 0.05, ax: matplotlib.axes.Axes | None = None) -> matplotlib.axes.Axes
+
+   Plot the barcode of a protein with fold changes at tryptic peptide level.
+
+   When peptides overlap, the one with the largest effect size (fold change over significance value) is shown.
+
+   :param pept_df: DataFrame with peptide-level data.
+   :type pept_df: pd.DataFrame
+   :param pairwise_ttest_name: Name of the column with pairwise t-test p-values.
+   :type pairwise_ttest_name: str
+   :param sequence: The sequence of the protein.
+   :type sequence: str
+   :param output_file_name: If not None, save the figure to the given file. Defaults to None.
+   :type output_file_name: str | None, optional
+   :param max_vis_fc: The maximum fold change value to visualize. Defaults to 3.0.
+   :type max_vis_fc: float, optional
+   :param color_levels: The number of colors in the palette. Defaults to 20.
+   :type color_levels: int, optional
+   :param sig_type: The type of significance test. Defaults to "pval".
+   :type sig_type: str, optional
+   :param sig_thr: The significance threshold. Defaults to 0.05.
+   :type sig_thr: float, optional
+   :param ax: Matplotlib Axes object to draw the barcode on. If None, a new Axes is created. Defaults to None.
+   :type ax: Axes | None, optional
+
+   :returns: The matplotlib Axes object with the plotted barcode.
+   :rtype: Axes
+
+
+.. py:function:: plot_site_barcode(site_df: pandas.DataFrame, pairwise_ttest_name: str, sequence: str, output_file_name: str | None = None, uniprot_id: str = 'Protein ID (provided by user)', max_vis_fc: float = 3.0, color_levels: int = 20, site_type_col: str = 'Type', sig_type: str = 'pval', sig_thr: float = 0.05) -> matplotlib.figure.Figure
+
+   Plot the barcode of a protein with fold changes at lytic site level.
+
+   :param site_df: DataFrame with site-level data.
+   :type site_df: pd.DataFrame
+   :param sequence: The sequence of the protein.
+   :type sequence: str
+   :param pairwise_ttest_name: Name of the column with pairwise t-test p-values.
+   :type pairwise_ttest_name: str
+   :param output_file_name: If not None, save the figure to the given file. Defaults to None.
+   :type output_file_name: str | None, optional
+   :param uniprot_id: The UniProt ID of the protein. Defaults to "Protein ID (provided by user)".
+   :type uniprot_id: str, optional
+   :param max_vis_fc: The maximum fold change value to visualize. Defaults to 3.0.
+   :type max_vis_fc: float, optional
+   :param color_levels: The number of colors in the palette. Defaults to 20.
+   :type color_levels: int, optional
+   :param site_type_col: The column name for site type. Defaults to "Lytic site type".
+   :type site_type_col: str, optional
+   :param sig_type: The type of significance test. Defaults to "pval".
+   :type sig_type: str, optional
+   :param sig_thr: The significance threshold. Defaults to 0.05.
+   :type sig_thr: float, optional
+
+   :returns: The matplotlib Figure object with the plotted barcode.
+   :rtype: Figure
+
+   :raises ValueError: If there is no trypsin or prok data.
+
+
