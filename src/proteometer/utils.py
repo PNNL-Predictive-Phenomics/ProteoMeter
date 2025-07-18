@@ -6,10 +6,12 @@ import numpy as np
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+    from typing import List, Any
 
     import pandas as pd
 
-def flatten(S: list[object]) -> list[object]:
+
+def flatten(S: List[Any]) -> List[Any]: 
     """
     Flattens a nested list into a single list.
     Args:
