@@ -9,6 +9,20 @@ if TYPE_CHECKING:
 
     import pandas as pd
 
+def flatten(S: list[object]) -> list[object]:
+    """
+    Flattens a nested list into a single list.
+    Args:
+        S (list[object]): The list to flatten, which can contain nested lists.
+    Returns:
+        list[object]: A flattened list containing all elements from the input list.
+    """
+    if S == []:
+        return S
+    if isinstance(S[0], list):
+        return flatten(S[0]) + flatten(S[1:])
+    return S[:1] + flatten(S[1:])
+
 
 def generate_index(
     df: pd.DataFrame,

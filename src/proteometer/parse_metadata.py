@@ -9,6 +9,7 @@ import pandas as pd
 from proteometer.params import Params
 from proteometer.stats import TTestGroup
 
+from proteometer.utils import flatten
 
 def group_columns(
     metadata: pd.DataFrame, par: Params
@@ -99,7 +100,7 @@ def anova_columns(metadata: pd.DataFrame, par: Params) -> list[str]:
     anova_cols = [
         sample
         for sample in cast(Iterable[str], metadata[par.metadata_sample_col].values)
-        if sample not in np.ravel(tt_group_cols)
+        if sample not in flatten(tt_group_cols)
     ]
     return anova_cols
 
