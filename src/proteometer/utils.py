@@ -15,9 +15,9 @@ def flatten(S: List[Any]) -> List[Any]:
     """
     Flattens a nested list into a single list.
     Args:
-        S (list[object]): The list to flatten, which can contain nested lists.
+        S (List[Any]): A list that may contain nested lists.
     Returns:
-        list[object]: A flattened list containing all elements from the input list.
+        List[Any]: A flattened list containing all elements from the input list.
     """
     if S == []:
         return S
