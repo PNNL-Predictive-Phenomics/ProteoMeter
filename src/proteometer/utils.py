@@ -6,8 +6,24 @@ import numpy as np
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+    from typing import List, Any
 
     import pandas as pd
+
+
+def flatten(S: List[Any]) -> List[Any]: 
+    """
+    Flattens a nested list into a single list.
+    Args:
+        S (List[Any]): A list that may contain nested lists.
+    Returns:
+        List[Any]: A flattened list containing all elements from the input list.
+    """
+    if S == []:
+        return S
+    if isinstance(S[0], list):
+        return flatten(S[0]) + flatten(S[1:])  # type: ignore
+    return S[:1] + flatten(S[1:])
 
 
 def generate_index(
