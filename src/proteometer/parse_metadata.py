@@ -3,7 +3,6 @@ from __future__ import annotations
 from collections.abc import Iterable
 from typing import cast
 
-import numpy as np
 import pandas as pd
 
 from proteometer.params import Params
