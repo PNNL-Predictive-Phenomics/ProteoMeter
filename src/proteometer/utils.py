@@ -22,7 +22,7 @@ def flatten(S: List[Any]) -> List[Any]:
     if S == []:
         return S
     if isinstance(S[0], list):
-        return flatten(S[0]) + flatten(S[1:])
+        return flatten(S[0]) + flatten(S[1:])  # type: ignore
     return S[:1] + flatten(S[1:])
 
 
