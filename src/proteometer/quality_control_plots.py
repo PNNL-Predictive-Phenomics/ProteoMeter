@@ -151,11 +151,14 @@ def biplot(
                 [ptx],
                 [pty],
                 c=color,
-                marker=cast("MarkerStyle", rf"${i}$"),
+                marker=cast("MarkerStyle", "."),
                 s=100,
-                label=f"{df[int_cols].columns[i]}",
             )
-            ax.scatter([ptx], [pty], c="k", marker=cast("MarkerStyle", "."), s=10)
+            ax.annotate(f"{int_cols[i]}",
+                        (ptx, pty),
+                        fontsize=12,
+                        ha="center",
+                        va="center")
     ax.set_xlim(-1, 1)
     ax.set_ylim(-1, 1)
     ax.set_xlabel(f"PC1 ({v1:.2%})")
