@@ -165,8 +165,10 @@ def ptm_analysis_return_all(par: Params) -> tuple[pd.DataFrame, pd.DataFrame, pd
         par: A Params object that contains all the parameters for the analysis.
 
     Returns:
-        tuple[pd.DataFrame,pd.DataFrame]: Two pandas DataFrames that contains the result of the PTM analysis.
-            The first is the processed PTM data, and the second is the global proteomics data.
+        tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]: Three pandas DataFrames containing the results of the PTM analysis.
+            The first is the processed PTM data, which includes statistical results.
+            The second is the global proteomics data, normalized and batch-corrected.
+            The third is the uncorrected PTM data, which contains raw site-level data before normalization or correction.
     """
     metadata = pd.read_csv(par.metadata_file, sep="\t")
     global_prot = pd.read_csv(par.global_prot_file, sep="\t")
