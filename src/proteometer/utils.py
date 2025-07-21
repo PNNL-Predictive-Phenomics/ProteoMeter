@@ -6,12 +6,12 @@ import numpy as np
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
-    from typing import List, Any
+    from typing import Any, List
 
     import pandas as pd
 
 
-def flatten(s: List[Any]) -> List[Any]: 
+def flatten(s: List[Any]) -> List[Any]:
     """
     Flattens a nested list into a single list.
     Args:
@@ -23,11 +23,11 @@ def flatten(s: List[Any]) -> List[Any]:
     stack = [s]
     while stack:
         current = stack.pop()
-        if isinstance(current, list):
+        if isinstance(current, list):  # type: ignore
             stack.extend(reversed(current))  # Reverse to maintain order
         else:
             result.append(current)
-    return result
+    return result  # type: ignore
 
 
 def generate_index(
