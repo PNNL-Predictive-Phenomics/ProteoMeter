@@ -11,16 +11,16 @@ if TYPE_CHECKING:
     import pandas as pd
 
 
-def flatten(S: List[Any]) -> List[Any]: 
+def flatten(s: List[Any]) -> List[Any]: 
     """
     Flattens a nested list into a single list.
     Args:
-        S (List[Any]): A list that may contain nested lists.
+        s (List[Any]): A list that may contain nested lists.
     Returns:
         List[Any]: A flattened list containing all elements from the input list.
     """
     result = []
-    stack = [S]
+    stack = [s]
     while stack:
         current = stack.pop()
         if isinstance(current, list):
