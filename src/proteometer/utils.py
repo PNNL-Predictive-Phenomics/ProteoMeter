@@ -19,11 +19,15 @@ def flatten(S: List[Any]) -> List[Any]:
     Returns:
         List[Any]: A flattened list containing all elements from the input list.
     """
-    if S == []:
-        return S
-    if isinstance(S[0], list):
-        return flatten(S[0]) + flatten(S[1:])  # type: ignore
-    return S[:1] + flatten(S[1:])
+    result = []
+    stack = [S]
+    while stack:
+        current = stack.pop()
+        if isinstance(current, list):
+            stack.extend(reversed(current))  # Reverse to maintain order
+        else:
+            result.append(current)
+    return result
 
 
 def generate_index(
