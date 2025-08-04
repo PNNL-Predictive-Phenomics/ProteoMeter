@@ -189,6 +189,20 @@ def ptm_analysis_return_all(par: Params) -> tuple[pd.DataFrame, pd.DataFrame, pd
     global_pept = pd.read_csv(par.global_pept_file, sep="\t")
     ptm_pept = [pd.read_csv(f, sep="\t") for f in par.ptm_pept_files]
 
+    global_prot[par.protein_col] = global_prot[par.protein_col].astype(str)
+    global_pept[par.protein_col] = global_pept[par.protein_col].astype(str)
+    ptm_pept = [
+        pept.assign(**{par.protein_col: pept[par.protein_col].astype(str)})
+        for pept in ptm_pept
+    ]
+
+    global_prot[par.uniprot_col] = global_prot[par.uniprot_col].astype(str)
+    global_pept[par.uniprot_col] = global_pept[par.uniprot_col].astype(str)
+    ptm_pept = [
+        pept.assign(**{par.uniprot_col: pept[par.uniprot_col].astype(str)})
+        for pept in ptm_pept
+    ]
+
     int_cols = parse_metadata.int_columns(metadata, par)
     anova_cols = parse_metadata.anova_columns(metadata, par)
     group_cols, groups = parse_metadata.group_columns(metadata, par)
