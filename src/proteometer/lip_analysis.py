@@ -47,6 +47,14 @@ def lip_analysis(
     global_pept = pd.read_csv(par.global_pept_file, sep="\t").drop(columns=drop_samples)
     double_pept = pd.read_csv(par.double_pept_file, sep="\t").drop(columns=drop_samples)
 
+    global_prot[par.protein_col] = global_prot[par.protein_col].astype(str)
+    global_pept[par.protein_col] = global_pept[par.protein_col].astype(str)
+    double_pept[par.protein_col] = double_pept[par.protein_col].astype(str)
+
+    global_prot[par.uniprot_col] = global_prot[par.uniprot_col].astype(str)
+    global_pept[par.uniprot_col] = global_pept[par.uniprot_col].astype(str)
+    double_pept[par.uniprot_col] = double_pept[par.uniprot_col].astype(str)
+
     int_cols = parse_metadata.int_columns(metadata, par)
     anova_cols = parse_metadata.anova_columns(metadata, par)
     group_cols, groups = parse_metadata.group_columns(metadata, par)
