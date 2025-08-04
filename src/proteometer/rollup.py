@@ -54,7 +54,7 @@ def rollup_to_site(
 
     df[residue_col] = df[residue_col].str.split(residue_sep)
     df = df.explode(residue_col)
-    df[id_col] = df[uniprot_col] + id_separator + df[residue_col]
+    df[id_col] = df[uniprot_col].astype(str) + id_separator + df[residue_col].astype(str)
 
     info_cols_wo_peptide_col = [col for col in info_cols if col != peptide_col]
     agg_methods_0: AggDictStr = {peptide_col: lambda x: "; ".join(x)}

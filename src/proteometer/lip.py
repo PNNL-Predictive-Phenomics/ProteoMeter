@@ -47,10 +47,10 @@ def filter_contaminants_reverse_pept(
             & (~df[protein_id_col_pept].str.contains("(?i)REV__"))
             & (~df[protein_id_col_pept].str.contains("(?i)CON__"))
         ].copy()
-        df[uniprot_col] = df[protein_id_col_pept]
+        df[uniprot_col] = df[protein_id_col_pept].astype(str)
     elif search_tool.lower() == "msfragger" or search_tool.lower() == "fragpipe":
         df = df[(~df[protein_id_col_pept].str.contains("(?i)contam_"))].copy()
-        df[uniprot_col] = df[protein_id_col_pept]
+        df[uniprot_col] = df[protein_id_col_pept].astype(str)
     else:
         print(
             "The search tool is not specified or not supported yet. "
@@ -93,7 +93,7 @@ def filter_contaminants_reverse_prot(
         ]
     elif search_tool.lower() == "msfragger" or search_tool.lower() == "fragpipe":
         df = df[(~df[protein_id_col_prot].str.contains("(?i)contam_"))].copy()
-        df[uniprot_col] = df[protein_id_col_prot]
+        df[uniprot_col] = df[protein_id_col_prot].astype(str)
     else:
         print(
             "The search tool is not specified or not supported yet. "
