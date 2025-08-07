@@ -423,16 +423,16 @@ def analyze_tryptic_pattern(
 
 
 def rollup_to_lytic_site(
-    double_pept: pd.DataFrame,
+    lip_pept: pd.DataFrame,
     prot_seqs: list[fasta.SeqRecord],
     int_cols: Iterable[str],
     par: Params,
 ) -> pd.DataFrame:
     """
-    Converts the double-peptide data frame to a site-level data frame.
+    Converts the limited proteolysis peptide data frame to a site-level data frame.
 
     Args:
-        double_pept (pd.DataFrame): The double-peptide data frame.
+        lip_pept (pd.DataFrame): The limited proteolysis peptide data frame.
         prot_seqs (list[fasta.SeqRecord]): The list of protein sequences.
         int_cols (Iterable[str]): The names of columns to with intensity values.
         anova_cols (list[str]): The columns for ANOVA.
@@ -443,11 +443,11 @@ def rollup_to_lytic_site(
     Returns:
         pd.DataFrame: A data frame with the site-level data.
     """
-    double_site: list[pd.DataFrame] = []
-    for uniprot_id in double_pept[par.uniprot_col].unique():
+    lip_site: list[pd.DataFrame] = []
+    for uniprot_id in lip_pept[par.uniprot_col].unique():
         pept_df = cast(
             "pd.DataFrame",
-            double_pept[double_pept[par.uniprot_col] == uniprot_id].copy(),
+            lip_pept[lip_pept[par.uniprot_col] == uniprot_id].copy(),
         )
         uniprot_seqs = [prot_seq for prot_seq in prot_seqs if uniprot_id in prot_seq.id]
         if not uniprot_seqs:
@@ -475,8 +475,8 @@ def rollup_to_lytic_site(
             peptide_col=par.peptide_col,
             rollup_func="sum",
         )
-        double_site.append(pept_df_r)
-    return pd.concat(double_site)
+        lip_site.append(pept_df_r)
+    return pd.concat(lip_site)
 
 
 # This function is to analyze the digestion site pattern of the peptides in LiP pept dataframe

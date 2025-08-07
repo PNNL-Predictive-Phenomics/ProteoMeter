@@ -85,7 +85,7 @@ def ptm_analysis(
     # must correct protein abundance, before we can use it to correct peptide
     # data; depending on normalization scheme, we may need to test significance
     # of deviations also, so statistics must be calculated for `global_prot`
-    # before `global_pept` and `double_pept`
+    # before `global_pept` and `lip_pept`
     global_prot = abundance.global_prot_normalization_and_stats(
         global_prot=global_prot,
         int_cols=int_cols,
@@ -234,7 +234,7 @@ def ptm_analysis_return_all(par: Params) -> tuple[pd.DataFrame, pd.DataFrame, pd
     # must correct protein abundance, before we can use it to correct peptide
     # data; depending on normalization scheme, we may need to test significance
     # of deviations also, so statistics must be calculated for `global_prot`
-    # before `global_pept` and `double_pept`
+    # before `global_pept` and `lip_pept`
     global_prot = abundance.global_prot_normalization_and_stats(
         global_prot=global_prot,
         int_cols=int_cols,

@@ -20,8 +20,8 @@ class Params:
         self.global_prot_file = f"{self.data_dir}/{cfg['paths']['global_prot_file']}"
         self.global_pept_file = f"{self.data_dir}/{cfg['paths']['global_pept_file']}"
 
-        self.double_pept_file = (
-            f"{self.data_dir}/{cfg['paths']['lip']['double_pept_file']}"
+        self.lip_pept_file = (
+            f"{self.data_dir}/{cfg['paths']['lip']['lip_pept_file']}"
         )
 
         self.id_separator = str(cfg["symbols"]["id_separator"])
@@ -100,7 +100,7 @@ class Params:
             cfg["corrections"]["abundance_correction_paired_samples"]
         )
         self.abudnance_unpaired_sig_thr = float(
-            cfg["corrections"]["abundance_unpaired_sig_thr"]
+            cfg["corrections"]["abundance_correction_unpaired_sig_thr"]
         )
 
         # normaly the batch correction only for TMT data

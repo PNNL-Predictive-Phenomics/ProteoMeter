@@ -45,15 +45,15 @@ def lip_analysis(
 
     global_prot = pd.read_csv(par.global_prot_file, sep="\t").drop(columns=drop_samples)
     global_pept = pd.read_csv(par.global_pept_file, sep="\t").drop(columns=drop_samples)
-    double_pept = pd.read_csv(par.double_pept_file, sep="\t").drop(columns=drop_samples)
+    lip_pept = pd.read_csv(par.lip_pept_file, sep="\t").drop(columns=drop_samples)
 
     global_prot[par.protein_col] = global_prot[par.protein_col].astype(str)
     global_pept[par.protein_col] = global_pept[par.protein_col].astype(str)
-    double_pept[par.protein_col] = double_pept[par.protein_col].astype(str)
+    lip_pept[par.protein_col] = lip_pept[par.protein_col].astype(str)
 
     global_prot[par.uniprot_col] = global_prot[par.uniprot_col].astype(str)
     global_pept[par.uniprot_col] = global_pept[par.uniprot_col].astype(str)
-    double_pept[par.uniprot_col] = double_pept[par.uniprot_col].astype(str)
+    lip_pept[par.uniprot_col] = lip_pept[par.uniprot_col].astype(str)
 
     int_cols = parse_metadata.int_columns(metadata, par)
     anova_cols = parse_metadata.anova_columns(metadata, par)
@@ -66,8 +66,8 @@ def lip_analysis(
             "Currently supported tools: MaxQuant, MSFragger, FragPipe."
         )
 
-    double_pept = lip.filter_contaminants_reverse_pept(
-        double_pept, par.search_tool, par.protein_col
+    lip_pept = lip.filter_contaminants_reverse_pept(
+        lip_pept, par.search_tool, par.protein_col
     )
     global_pept = lip.filter_contaminants_reverse_pept(
         global_pept, par.search_tool, par.protein_col
@@ -76,8 +76,8 @@ def lip_analysis(
         global_prot, par.search_tool, par.protein_col
     )
 
-    double_pept = generate_index(
-        double_pept, par.uniprot_col, par.peptide_col, par.id_separator
+    lip_pept = generate_index(
+        lip_pept, par.uniprot_col, par.peptide_col, par.id_separator
     )
     global_pept = generate_index(
         global_pept, par.uniprot_col, par.peptide_col, par.id_separator
@@ -85,12 +85,12 @@ def lip_analysis(
     global_prot = generate_index(global_prot, par.uniprot_col)
 
     if not par.log2_scale:  # if not already in log2, transform it
-        double_pept = stats.log2_transformation(double_pept, int_cols)
+        lip_pept = stats.log2_transformation(lip_pept, int_cols)
         global_pept = stats.log2_transformation(global_pept, int_cols)
         global_prot = stats.log2_transformation(global_prot, int_cols)
 
-    double_pept = filter_missingness(
-        double_pept, groups, group_cols, par.min_replicates_qc
+    lip_pept = filter_missingness(
+        lip_pept, groups, group_cols, par.min_replicates_qc
     )
     global_pept = filter_missingness(
         global_pept, groups, group_cols, par.min_replicates_qc
@@ -102,7 +102,7 @@ def lip_analysis(
     # must correct protein abundance, before we can use it to correct peptide
     # data; depending on normalization scheme, we may need to test significance
     # of deviations also, so statistics must be calculated for `global_prot`
-    # before `global_pept` and `double_pept`
+    # before `global_pept` and `lip_pept`
     global_prot = abundance.global_prot_normalization_and_stats(
         global_prot=global_prot,
         int_cols=int_cols,
@@ -112,15 +112,15 @@ def lip_analysis(
         par=par,
     )
 
-    double_pept = normalization.peptide_normalization(
+    lip_pept = normalization.peptide_normalization(
         global_pept=global_pept,
-        mod_pept=double_pept,
+        mod_pept=lip_pept,
         int_cols=int_cols,
         par=par,
     )
 
-    double_site = lip.rollup_to_lytic_site(
-        double_pept,
+    lip_site = lip.rollup_to_lytic_site(
+        lip_pept,
         prot_seqs,
         int_cols,
         par,
@@ -128,14 +128,14 @@ def lip_analysis(
 
     if par.batch_correction:
         normalization.batch_correction(
-            double_pept,
+            lip_pept,
             metadata,
             par.batch_correct_samples,
             batch_col=par.metadata_batch_col,
             sample_col=par.metadata_sample_col,
         )
         normalization.batch_correction(
-            double_site,
+            lip_site,
             metadata,
             par.batch_correct_samples,
             batch_col=par.metadata_batch_col,
@@ -143,23 +143,23 @@ def lip_analysis(
         )
 
     if par.abundance_correction:
-        double_pept = abundance.prot_abund_correction(
-            double_pept,
+        lip_pept = abundance.prot_abund_correction(
+            lip_pept,
             global_prot,
             par,
             columns_to_correct=int_cols,
             pairwise_ttest_groups=pairwise_ttest_groups,
         )
-        double_site = abundance.prot_abund_correction(
-            double_site,
+        lip_site = abundance.prot_abund_correction(
+            lip_site,
             global_prot,
             par,
             columns_to_correct=int_cols,
             pairwise_ttest_groups=pairwise_ttest_groups,
         )
 
-    double_pept = _double_pept_statistics(
-        double_pept,
+    lip_pept = lip_pept_statistics(
+        lip_pept,
         prot_seqs,
         anova_cols,
         pairwise_ttest_groups,
@@ -167,8 +167,8 @@ def lip_analysis(
         par,
     )
 
-    double_site = _double_site_statistics(
-        double_site,
+    lip_site = lip_site_statistics(
+        lip_site,
         anova_cols,
         pairwise_ttest_groups,
         metadata,
@@ -176,13 +176,13 @@ def lip_analysis(
     )
 
     global_prot = _annotate_global_prot(global_prot, par)
-    double_site = _annotate_double_site(double_site, par)
+    lip_site = _lip_site(lip_site, par)
 
-    return double_pept, double_site, global_prot
+    return lip_pept, lip_site, global_prot
 
 
-def _double_pept_statistics(
-    double_pept: pd.DataFrame,
+def lip_pept_statistics(
+    lip_pept: pd.DataFrame,
     prot_seqs: list[fasta.SeqRecord],
     anova_cols: list[str],
     pairwise_ttest_groups: Iterable[stats.TTestGroup],
@@ -191,18 +191,18 @@ def _double_pept_statistics(
 ) -> pd.DataFrame:
     pept_list: list[pd.DataFrame] = []
     if anova_cols:
-        double_pept = stats.anova(
-            double_pept,
+        lip_pept = stats.anova(
+            lip_pept,
             anova_cols,
             metadata,
             par.anova_factors,
             par.metadata_sample_col,
         )
-    double_pept = stats.pairwise_ttest(double_pept, pairwise_ttest_groups)
-    for uniprot_id in double_pept[par.uniprot_col].unique():
+    lip_pept = stats.pairwise_ttest(lip_pept, pairwise_ttest_groups)
+    for uniprot_id in lip_pept[par.uniprot_col].unique():
         pept_df = cast(
             "pd.DataFrame",
-            double_pept[double_pept[par.uniprot_col] == uniprot_id].copy(),
+            lip_pept[lip_pept[par.uniprot_col] == uniprot_id].copy(),
         )
         uniprot_seqs = [prot_seq for prot_seq in prot_seqs if uniprot_id in prot_seq.id]
         if not uniprot_seqs:
@@ -247,8 +247,8 @@ def _double_pept_statistics(
     return pd.concat(pept_list)
 
 
-def _double_site_statistics(
-    double_site: pd.DataFrame,
+def lip_site_statistics(
+    lip_site: pd.DataFrame,
     anova_cols: list[str],
     pairwise_ttest_groups: Iterable[stats.TTestGroup],
     metadata: pd.DataFrame,
@@ -258,7 +258,7 @@ def _double_site_statistics(
     Converts the double-peptide data frame to a site-level data frame.
 
     Args:
-        double_pept (pd.DataFrame): The double-peptide data frame.
+        lip_pept (pd.DataFrame): The double-peptide data frame.
         prot_seqs (list[fasta.SeqRecord]): The list of protein sequences.
         int_cols (Iterable[str]): The names of columns to with intensity values.
         anova_cols (list[str]): The columns for ANOVA.
@@ -270,17 +270,17 @@ def _double_site_statistics(
         pd.DataFrame: A data frame with the site-level data.
     """
     if anova_cols:
-        double_site = stats.anova(
-            double_site,
+        lip_site = stats.anova(
+            lip_site,
             anova_cols,
             metadata,
             par.anova_factors,
             par.metadata_sample_col,
         )
 
-    double_site = stats.pairwise_ttest(double_site, pairwise_ttest_groups)
+    lip_site = stats.pairwise_ttest(lip_site, pairwise_ttest_groups)
 
-    return double_site
+    return lip_site
 
 
 def _annotate_global_prot(global_prot: pd.DataFrame, par: Params) -> pd.DataFrame:
@@ -310,22 +310,22 @@ def _annotate_global_prot(global_prot: pd.DataFrame, par: Params) -> pd.DataFram
     return global_prot
 
 
-def _annotate_double_site(double_site: pd.DataFrame, par: Params) -> pd.DataFrame:
-    double_site[par.type_col] = [
+def _lip_site(lip_site: pd.DataFrame, par: Params) -> pd.DataFrame:
+    lip_site[par.type_col] = [
         "Tryp"
         if (
             i.split(par.id_separator)[1][0] == "K"
             or i.split(par.id_separator)[1][0] == "R"
         )
         else "ProK"
-        for i in cast(Iterable[str], double_site.index)
+        for i in cast(Iterable[str], lip_site.index)
     ]
-    double_site[par.experiment_col] = "LiP"
-    double_site[par.residue_col] = double_site[par.site_col]
-    double_site[par.site_col] = (
-        double_site[par.uniprot_col] + par.id_separator + double_site[par.site_col]
+    lip_site[par.experiment_col] = "LiP"
+    lip_site[par.residue_col] = lip_site[par.site_col]
+    lip_site[par.site_col] = (
+        lip_site[par.uniprot_col] + par.id_separator + lip_site[par.site_col]
     )
-    double_site[par.protein_col] = double_site[par.protein_col].map(
+    lip_site[par.protein_col] = lip_site[par.protein_col].map(
         lambda x: x.split("|")[-1]  # type: ignore
     )
-    return double_site
+    return lip_site

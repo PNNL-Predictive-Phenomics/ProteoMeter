@@ -7,7 +7,7 @@ global_prot_file = "global_prot.tsv"
 global_pept_file = "global_pept.tsv"
 
 [paths.lip]
-double_pept_file = ""
+lip_pept_file = ""
 
 [paths.ptm]
 ptm_pept_files = ["acetyl_pept.tsv", "phospho_pept.tsv", "redox_pept.tsv"]
@@ -26,7 +26,7 @@ anova_factors = ["Treatment", "Time"]
 [corrections]
 abundance_correction = true
 abundance_correction_paired_samples = true
-abundance_unpaired_sig_thr = 0.0
+abundance_correction_unpaired_sig_thr = 0.0
 batch_correction = true
 batch_correct_samples = []
 pooled_chanel_condition = "Total"
