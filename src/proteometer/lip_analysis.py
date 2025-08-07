@@ -67,13 +67,13 @@ def lip_analysis(
         )
 
     double_pept = lip.filter_contaminants_reverse_pept(
-        double_pept, par.search_tool, par.protein_col, par.uniprot_col
+        double_pept, par.search_tool, par.protein_col
     )
     global_pept = lip.filter_contaminants_reverse_pept(
-        global_pept, par.search_tool, par.protein_col, par.uniprot_col
+        global_pept, par.search_tool, par.protein_col
     )
     global_prot = lip.filter_contaminants_reverse_prot(
-        global_prot, par.search_tool, par.protein_col, par.uniprot_col
+        global_prot, par.search_tool, par.protein_col
     )
 
     double_pept = generate_index(

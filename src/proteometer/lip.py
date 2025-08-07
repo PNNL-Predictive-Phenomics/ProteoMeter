@@ -61,7 +61,6 @@ def filter_contaminants_reverse_prot(
     df: pd.DataFrame,
     search_tool: Literal["maxquant", "msfragger", "fragpipe"],
     protein_id_col_prot: str,
-    uniprot_col: str,
 ) -> pd.DataFrame:
     """
     Filters out contaminants and reverse hits from a protein DataFrame.
@@ -70,7 +69,6 @@ def filter_contaminants_reverse_prot(
         df (pd.DataFrame): Input DataFrame containing protein data.
         search_tool (Literal["maxquant", "msfragger", "fragpipe"]): The search tool used for data generation.
         protein_id_col_prot (str): Column name containing protein IDs in the protein DataFrame.
-        uniprot_col (str): Column name to store UniProt IDs.
 
     Returns:
         pd.DataFrame: Filtered DataFrame with contaminants and reverse hits removed.
@@ -84,12 +82,8 @@ def filter_contaminants_reverse_prot(
             & (~df[protein_id_col_prot].str.contains("(?i)REV__"))
             & (~df[protein_id_col_prot].str.contains("CON__"))
         ].copy()
-        df[uniprot_col] = [
-            ids.split(";")[0] for ids in cast("pd.Series[str]", df[protein_id_col_prot])
-        ]
     elif search_tool.lower() == "msfragger" or search_tool.lower() == "fragpipe":
         df = df[(~df[protein_id_col_prot].str.contains("(?i)contam_"))].copy()
-        df[uniprot_col] = df[protein_id_col_prot].astype(str)
     else:
         print(
             "The search tool is not specified or not supported yet. "
