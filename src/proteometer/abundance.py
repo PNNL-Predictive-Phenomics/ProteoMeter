@@ -375,6 +375,7 @@ def calculate_ibaq(
     max_pep_len: int = 30,
     missed_cleavages: int = 2,
     id_matching: str = "exact",
+    log2scale_input: bool = False,
 ) -> pd.DataFrame:
     """
     Calculate iBAQ (intensity-based absolute quantification) values.
@@ -397,6 +398,7 @@ def calculate_ibaq(
         missed_cleavages (int, optional): The number of missed cleavages to allow. Defaults to 2.
         id_matching (str, optional): The method for matching protein IDs. Defaults to "exact".
             Other option would be "contain(s)" or "startswith".
+        log2scale_input (bool, optional): Whether the input intensity values are already log2-transformed. Defaults to False.
 
     Returns:
         pd.DataFrame: A new DataFrame with iBAQ values for each sample. The original
@@ -441,7 +443,11 @@ def calculate_ibaq(
 
     # Calculate iBAQ for each intensity column
     for col in intensity_cols:
+        if log2scale_input:
+            ibaq_df[col] = ibaq_df[col].apply(lambda x: 2 ** x if pd.notna(x) else x)  # type: ignore
         ibaq_df[col] = ibaq_df[col] / theoretical_peptides
+        if log2scale_input:
+            ibaq_df[col] = ibaq_df[col].apply(lambda x: np.log2(x) if pd.notna(x) else x)  # type: ignore
 
     return ibaq_df
 
@@ -455,6 +461,7 @@ def calculate_ibaq_from_fasta(
     max_pep_len: int = 30,
     missed_cleavages: int = 2,
     id_matching: str = "exact",
+    log2scale_input: bool = False,
 ) -> pd.DataFrame:
     """
     Calculate iBAQ (intensity-based absolute quantification) values from a FASTA file.
@@ -468,9 +475,10 @@ def calculate_ibaq_from_fasta(
         max_pep_len (int, optional): Maximum length of peptides to consider. Defaults to 30.
         missed_cleavages (int, optional): The number of missed cleavages to allow. Defaults to 2.
         id_matching (str, optional): The method for matching protein IDs. Defaults to "exact". Other options include "contains" and "startswith".
+        log2scale_input (bool, optional): Whether the input intensity values are already log2-transformed. Defaults to False.
 
     Returns:
         pd.DataFrame: A DataFrame with iBAQ values for each sample.
     """
     sequences = fasta_to_sequence_map(fasta_file)
-    return calculate_ibaq(prot_df, intensity_cols, sequences, prot_id_col=prot_id_col, min_pep_len=min_pep_len, max_pep_len=max_pep_len, missed_cleavages=missed_cleavages, id_matching=id_matching)
+    return calculate_ibaq(prot_df, intensity_cols, sequences, prot_id_col=prot_id_col, min_pep_len=min_pep_len, max_pep_len=max_pep_len, missed_cleavages=missed_cleavages, id_matching=id_matching, log2scale_input=log2scale_input)
