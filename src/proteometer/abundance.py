@@ -354,7 +354,6 @@ def count_theoretical_peptides(
     cleavage_sites.add(len(sequence))
 
     sites = sorted(list(cleavage_sites))
-    print(sites)
     count = 0
 
     for i in range(len(sites) - 1):
