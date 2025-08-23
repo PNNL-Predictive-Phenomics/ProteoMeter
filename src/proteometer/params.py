@@ -91,6 +91,10 @@ class Params:
         # about the source of the change.
         self.abundance_correction = bool(cfg["corrections"]["abundance_correction"])
 
+        # Calculating iBAQ (Intensity-Based Absolute Quantification)
+        self.ibaq = bool(cfg["corrections"]["ibaq"])
+        self.fasta_id_matching = str(cfg["corrections"]["fasta_id_matching"])
+
         # When global proteomics data and PTM/LiP data are drawn from the same
         # samples (i.e., they are paired), we can use this pairing to correct
         # for abundance changes. Otherwise, we must rely on a statistical test

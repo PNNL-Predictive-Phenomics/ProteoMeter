@@ -312,10 +312,11 @@ def fasta_to_sequence_map(fasta_path: str) -> dict[str, str]:
                         and values are the corresponding amino acid sequences.
     """
     sequences: dict[str, str] = {}
-    for record in cast(Iterable[SeqRecord], SeqIO.parse(fasta_path, "fasta")):
-        seq_id = cast(str, record.id)
-        seq_str = str(cast(Seq, record.seq))
-        sequences[seq_id] = seq_str
+    with open(fasta_path, 'r') as fasta_data:
+        for record in cast(Iterable[SeqRecord], SeqIO.parse(fasta_data, "fasta")):
+            seq_id = cast(str, record.id)
+            seq_str = str(cast(Seq, record.seq))
+            sequences[seq_id] = seq_str
     return sequences
 
 

@@ -27,7 +27,9 @@ class DummyParams:
         self.batch_correct_samples = ["Sample1", "Sample2"]
         self.metadata_batch_col = "Batch"
         self.abundance_correction = True
-        
+        self.ibaq = False
+        self.fasta_id_matching = "contains"
+
 
 tmp_path = Path('data')  # Temporary path for dummy files
 

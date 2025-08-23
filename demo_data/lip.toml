@@ -62,6 +62,8 @@ missing_thr = 1
 min_replicates_qc = 2
 min_pept_count = 2
 log2_scale = false
+ibaq = true
+fasta_id_matching = "contains"
 
 [metadata]
 metadata_batch_col = "Batch"

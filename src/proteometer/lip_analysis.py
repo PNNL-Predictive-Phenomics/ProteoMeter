@@ -178,6 +178,9 @@ def lip_analysis(
     global_prot = _annotate_global_prot(global_prot, par)
     lip_site = _lip_site(lip_site, par)
 
+    if par.ibaq:
+        global_prot = abundance.calculate_ibaq_from_fasta(global_prot, par.fasta_file, int_cols, par.uniprot_col, id_matching=par.fasta_id_matching)
+
     return lip_pept, lip_site, global_prot
 
 

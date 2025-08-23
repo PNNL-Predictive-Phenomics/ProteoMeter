@@ -164,6 +164,9 @@ def ptm_analysis(
         global_prot, groups, group_cols, par.min_replicates_qc
     )
 
+    if par.ibaq:
+        global_prot = abundance.calculate_ibaq_from_fasta(global_prot, par.fasta_file, int_cols, par.uniprot_col, id_matching=par.fasta_id_matching)
+
     return all_ptms, global_prot
 
 
@@ -327,6 +330,9 @@ def ptm_analysis_return_all(par: Params) -> tuple[pd.DataFrame, pd.DataFrame, pd
     all_ptms_uncorrected = filter_missingness(
         all_ptms_uncorrected, groups, group_cols, par.min_replicates_qc
     )
+
+    if par.ibaq:
+        global_prot = abundance.calculate_ibaq_from_fasta(global_prot, par.fasta_file, int_cols, par.uniprot_col, id_matching=par.fasta_id_matching)
 
     return all_ptms, global_prot, all_ptms_uncorrected
 
