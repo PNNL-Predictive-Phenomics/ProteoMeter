@@ -247,14 +247,14 @@ SINGLESEQUENCE
     ],
 )
 def test_count_theoretical_peptides(
-    sequence, min_len, max_len, missed_cleavages, expected_count
+    sequence, min_len, max_len, missed_cleavages, expected_count  # type: ignore
 ):
     """Test the counting of theoretical peptides under various conditions."""
     count = _count_theoretical_peptides(
-        sequence,
-        min_len=min_len,
-        max_len=max_len,
-        missed_cleavages=missed_cleavages,
+        sequence, # type: ignore
+        min_len=min_len, # type: ignore
+        max_len=max_len, # type: ignore
+        missed_cleavages=missed_cleavages, # type: ignore
     )
     assert count == expected_count
 
@@ -303,7 +303,7 @@ def test_calculate_ibaq_exact_match(sample_data_for_ibaq: tuple[pd.DataFrame, di
         intensity_cols=["Intensity1", "Intensity2"],
         sequences=sequences,
         prot_id_col="UniProt",
-        id_matching="exact",
+        id_matching="exact"
     )
 
     assert result_df.loc[0, "Intensity1"] == 100.0 / 3
@@ -367,7 +367,7 @@ def test_calculate_ibaq_custom_params(sample_data_for_ibaq: tuple[pd.DataFrame, 
 
 def test_calculate_ibaq_no_matching_protein(sample_data_for_ibaq: tuple[pd.DataFrame, dict[str, str]]):
     """Test that proteins not in the sequence map result in NaN iBAQ."""
-    prot_df, sequences = sample_data_for_ibaq
+    prot_df, sequences = sample_data_for_ibaq # type: ignore
     prot_df_no_match = pd.DataFrame({"UniProt": ["P99"], "Intensity1": [1000.0]})
 
     result_df = calculate_ibaq(
