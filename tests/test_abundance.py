@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 from proteometer.abundance import fasta_to_sequence_map
 from Bio import SeqIO
-from proteometer.abundance import _count_theoretical_peptides
+from proteometer.abundance import count_theoretical_peptides
 from proteometer.abundance import calculate_ibaq
 
 
@@ -178,7 +178,7 @@ VWXYZ
 
     result = fasta_to_sequence_map(str(fasta_file))
 
-    records = list(SeqIO.parse(str(fasta_file), "fasta"))
+    records = list(SeqIO.parse(str(fasta_file), "fasta")) # type: ignore
     expected_from_biopython = {rec.id: str(rec.seq) for rec in records}
 
     assert result == expected_from_biopython
@@ -250,7 +250,7 @@ def test_count_theoretical_peptides(
     sequence, min_len, max_len, missed_cleavages, expected_count  # type: ignore
 ):
     """Test the counting of theoretical peptides under various conditions."""
-    count = _count_theoretical_peptides(
+    count = count_theoretical_peptides(
         sequence, # type: ignore
         min_len=min_len, # type: ignore
         max_len=max_len, # type: ignore
@@ -262,7 +262,7 @@ def test_count_theoretical_peptides(
 def test_count_theoretical_peptides_unsupported_protease():
     """Test that an unsupported protease raises a ValueError."""
     with pytest.raises(ValueError, match="Unsupported protease: chymotrypsin"):
-        _count_theoretical_peptides("ABCDEFG", protease="chymotrypsin")
+        count_theoretical_peptides("ABCDEFG", protease="chymotrypsin")
 
 
 @pytest.fixture

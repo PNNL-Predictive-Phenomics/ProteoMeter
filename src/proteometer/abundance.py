@@ -321,7 +321,7 @@ def fasta_to_sequence_map(fasta_path: str) -> dict[str, str]:
 
 
 # Implementation of iBAQ calculation
-def _count_theoretical_peptides(
+def count_theoretical_peptides(
     sequence: str,
     min_len: int = 6,
     max_len: int = 30,
@@ -422,7 +422,7 @@ def calculate_ibaq(
     elif id_matching.lower() == "startswith":
         protein_sequences: pd.Series[str | None] = ibaq_df[prot_id_col].apply(  # type: ignore
             lambda prot_id: next(  # pyright: ignore[reportUnknownLambdaType]
-                (seq for header, seq in sequences.items() if header.startswith(prot_id)), None
+                (seq for header, seq in sequences.items() if header.startswith(prot_id)), None # type: ignore
             )
         )
     else:
@@ -430,7 +430,7 @@ def calculate_ibaq(
 
     # Calculate the number of theoretical peptides for each protein
     theoretical_peptides: pd.Series[float] = protein_sequences.apply( # type: ignore
-            lambda seq: _count_theoretical_peptides(  # pyright: ignore[reportUnknownLambdaType]
+            lambda seq: count_theoretical_peptides(  # pyright: ignore[reportUnknownLambdaType]
                 str(seq), min_pep_len, max_pep_len, missed_cleavages  # pyright: ignore[reportUnknownArgumentType]
             )
             if pd.notna(seq)  # pyright: ignore[reportUnknownArgumentType]
