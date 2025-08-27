@@ -163,8 +163,7 @@ def prot_abund_correction_sig_only(
         pept[pairwise_ttest_group.treat_samples] = pept[
             pairwise_ttest_group.treat_samples
         ].subtract(
-            cast("pd.Series[float]",
-                 pept[f"{pairwise_ttest_group.label()}_scalar"]),
+            cast("pd.Series[float]", pept[f"{pairwise_ttest_group.label()}_scalar"]),
             axis=0,
         )
     return pept
