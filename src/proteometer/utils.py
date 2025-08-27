@@ -51,9 +51,11 @@ def generate_index(
         pd.DataFrame: DataFrame with the generated index.
     """
     if level_col is None:
-        df[id_col] = df[prot_col]
+        df[id_col] = df[prot_col].astype(str)
+    elif level_col not in df.columns:
+        raise ValueError(f"Column '{level_col}' not found in DataFrame.")
     else:
-        df[id_col] = df[prot_col] + id_separator + df[level_col]
+        df[id_col] = df[prot_col].astype(str) + id_separator + df[level_col].astype(str)
 
     # proper way to do this is
     # df.set_index(id_col, inplace=True)

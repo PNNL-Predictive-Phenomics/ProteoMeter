@@ -20,8 +20,8 @@ class Params:
         self.global_prot_file = f"{self.data_dir}/{cfg['paths']['global_prot_file']}"
         self.global_pept_file = f"{self.data_dir}/{cfg['paths']['global_pept_file']}"
 
-        self.double_pept_file = (
-            f"{self.data_dir}/{cfg['paths']['lip']['double_pept_file']}"
+        self.lip_pept_file = (
+            f"{self.data_dir}/{cfg['paths']['lip']['lip_pept_file']}"
         )
 
         self.id_separator = str(cfg["symbols"]["id_separator"])
@@ -91,6 +91,10 @@ class Params:
         # about the source of the change.
         self.abundance_correction = bool(cfg["corrections"]["abundance_correction"])
 
+        # Calculating iBAQ (Intensity-Based Absolute Quantification)
+        self.ibaq = bool(cfg["corrections"]["ibaq"])
+        self.fasta_id_matching = str(cfg["corrections"]["fasta_id_matching"])
+
         # When global proteomics data and PTM/LiP data are drawn from the same
         # samples (i.e., they are paired), we can use this pairing to correct
         # for abundance changes. Otherwise, we must rely on a statistical test
@@ -100,7 +104,7 @@ class Params:
             cfg["corrections"]["abundance_correction_paired_samples"]
         )
         self.abudnance_unpaired_sig_thr = float(
-            cfg["corrections"]["abundance_unpaired_sig_thr"]
+            cfg["corrections"]["abundance_correction_unpaired_sig_thr"]
         )
 
         # normaly the batch correction only for TMT data

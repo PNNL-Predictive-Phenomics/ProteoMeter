@@ -7,7 +7,7 @@ global_prot_file = "global_prot.tsv"
 global_pept_file = "global_pept.tsv"
 
 [paths.lip]
-double_pept_file = ""
+lip_pept_file = ""
 
 [paths.ptm]
 ptm_pept_files = ["acetyl_pept.tsv", "phospho_pept.tsv", "redox_pept.tsv"]
@@ -50,7 +50,7 @@ ttest_pairs = [
 [corrections]
 abundance_correction = true
 abundance_correction_paired_samples = true
-abundance_unpaired_sig_thr = 0.05
+abundance_correction_unpaired_sig_thr = 0.05
 batch_correction = true
 batch_correct_samples = [
     "Mock_8h_1",
@@ -85,6 +85,8 @@ missing_thr = 1
 min_replicates_qc = 2
 min_pept_count = 2
 log2_scale = true
+ibaq = true
+fasta_id_matching = "contains"
 
 [metadata]
 metadata_batch_col = "Batch"
