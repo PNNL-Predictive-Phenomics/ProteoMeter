@@ -1,27 +1,34 @@
 [paths]
-data_dir = "./scratch.data/PTM"
-results_dir = "./scratch.data/PTM"
-fasta_file = "reference_proteome.fasta"
-metadata_file = "metadata.tsv"
-global_prot_file = "global_prot.tsv"
-global_pept_file = "global_pept.tsv"
+data_dir = "./demo_data/PTM" # Directory containing LiP or PTM data
+results_dir = "./demo_data/" # Directory to store results
+fasta_file = "reference_proteome.fasta" # Fasta file name in data directory
+metadata_file = "metadata.tsv" # Metadata file name in data directory
 
-[paths.lip]
-double_pept_file = ""
+# Data files in data directory that correspond to global quantification of
+# proteins and peptides. For PTM data, these are used for abundance correction.
+# For LiP data, these correspond to the trypsin digestion step of the LiP
+# protocol (which also serves as a global abundance correction).
+global_prot_file = "global_prot.tsv" # protein-level quantification file in data directory
+global_pept_file = "global_pept.tsv" # peptide-level quantification file in data directory
 
-[paths.ptm]
-ptm_pept_files = ["acetyl_pept.tsv", "phospho_pept.tsv", "redox_pept.tsv"]
+[paths.lip] # Not used for PTM data
+double_pept_file = "" # Double digestion peptide-level quantification file in data directory
+
+[paths.ptm] # Not used for LiP data
+ptm_pept_files = ["acetyl_pept.tsv", "phospho_pept.tsv", "redox_pept.tsv"] # File names for PTM peptide-level quantification
 
 [experiment]
 experiment_name = "Test"
 experiment_type = "TMT"  # TMT or Label-free
 
-[experiment.lip]
+[experiment.lip] # Not used for PTM data
+# Search tool used for data quantification; maxquant, msfragger, fragpipe. Used
+# to determine how to parse tables. (Not case sensitive)
 search_tool = ""
 
 [statistics]
-anova_factors = []
-ttest_pairs = [
+anova_factors = [] # Additional ANOVA factors to consider beyond those defined by ttest_pairs below
+ttest_pairs = [ # Test groups to compare
     [
         "Mock_8h",
         "Infected_8h",
@@ -48,11 +55,26 @@ ttest_pairs = [
     ],
 ]
 [corrections]
-abundance_correction = true
+# Abundance correction is generally recommended to help decompose effects of
+# changing protein abundance from changes in the fraction of protein in a
+# modified state and to reduce noise. However, sometimes only the total
+# concentration of one protein form (e.g., its active form) is of interest, and
+# so we may wish to skip this step when we don't care about the source of the
+# change.
+abundance_correction = true # Adjust quantification of peptides by protein abundance
+
+# When global proteomics data and PTM/LiP data are drawn from the same samples
+# (i.e., they are paired), we can use this pairing to correct for abundance
+# changes. Otherwise, we must rely on a statistical test of the population
+# averages (with threshhold given by `abudnance_unpaired_sig_thr`)
 abundance_correction_paired_samples = true
 abundance_unpaired_sig_thr = 0.05
-batch_correction = true
-batch_correct_samples = [
+
+# Normaly the batch correction is only for TMT data. If this is a TMT
+# experiment, then batch correction is likely needed. User must provide a list
+# of column names of samples are used for batch correction.
+batch_correction = true # Whether to correct for batch effects
+batch_correct_samples = [ # Samples to include in batch correction (batches are defined in data_dir/metadata_file)
     "Mock_8h_1",
     "Mock_8h_2",
     "Infected_8h_1",
@@ -78,15 +100,18 @@ batch_correct_samples = [
     "Infected_24h_3",
     "Infected_24h_4",
 ]
-pooled_chanel_condition = "Total"
-sig_thr = 0.05
+pooled_chanel_condition = "Total" # Column name for pooled channel condition (unique to TMT data; otherwise unused)
+sig_thr = 0.05 # Significance threshold
 sig_type = "pval" # pval or adj-p
-missing_thr = 1
-min_replicates_qc = 2
+
+missing_thr = 1 # minimum number of missing replicates beyond which a peptide is considered missing in a condition
+min_replicates_qc = 2 # minimum number of replicates in a condition
 min_pept_count = 2
-log2_scale = true
+
+log2_scale = true # Whether quantification is provided in log2 scale (true) or linear scale (false)
 
 [metadata]
+# Defines column names in metadata file.
 metadata_batch_col = "Batch"
 metadata_sample_col = "Sample"
 metadata_group_col = "Group"
@@ -95,6 +120,7 @@ metadata_control_condition = "Control"
 metadata_treatment_condition = "Treatment"
 
 [data_columns]
+# These are the column names that will be used in the output data files.
 id_col = "id"
 uniprot_col = "UniProt"
 protein_col = "Protein"
@@ -106,9 +132,9 @@ experiment_col = "Experiment"
 site_number_col = "site_number"
 
 [symbols]
-id_separator = "@"
+id_separator = "@" # Character that separates UniProt ID from site number
 
-[symbols.ptm]
-ptm_names = ["acetyl", "phospho", "redox"]
-ptm_symbols = ["@", "#", "@"]
-ptm_abbreviations = ["Ac", "Ph", "Ox"]
+[symbols.ptm] # Not used for LiP data
+ptm_names = ["acetyl", "phospho", "redox"] # Names of PTMs to consider
+ptm_symbols = ["@", "#", "@"] # Symbols used to indicate modified residues in peptide sequence (same order as above)
+ptm_abbreviations = ["Ac", "Ph", "Ox"] # Abbreviations to use for PTMs (same order as above)
