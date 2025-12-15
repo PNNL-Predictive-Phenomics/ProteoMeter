@@ -109,6 +109,8 @@ min_replicates_qc = 2 # minimum number of replicates in a condition
 min_pept_count = 2
 
 log2_scale = true # Whether quantification is provided in log2 scale (true) or linear scale (false)
+ibaq = true
+fasta_id_matching = "contains"
 
 [metadata]
 # Defines column names in metadata file.
