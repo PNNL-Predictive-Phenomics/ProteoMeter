@@ -40,6 +40,20 @@ def ptm_analysis(
     global_pept = pd.read_csv(par.global_pept_file, sep="\t").drop(columns=drop_samples)
     ptm_pept = [pd.read_csv(f, sep="\t") for f in par.ptm_pept_files]
 
+    global_prot[par.protein_col] = global_prot[par.protein_col].astype(str)
+    global_pept[par.protein_col] = global_pept[par.protein_col].astype(str)
+    ptm_pept = [
+        pept.assign(**{par.protein_col: pept[par.protein_col].astype(str)})
+        for pept in ptm_pept
+    ]
+
+    global_prot[par.uniprot_col] = global_prot[par.uniprot_col].astype(str)
+    global_pept[par.uniprot_col] = global_pept[par.uniprot_col].astype(str)
+    ptm_pept = [
+        pept.assign(**{par.uniprot_col: pept[par.uniprot_col].astype(str)})
+        for pept in ptm_pept
+    ]
+
     int_cols = parse_metadata.int_columns(metadata, par)
     anova_cols = parse_metadata.anova_columns(metadata, par)
     group_cols, groups = parse_metadata.group_columns(metadata, par)
@@ -71,7 +85,7 @@ def ptm_analysis(
     # must correct protein abundance, before we can use it to correct peptide
     # data; depending on normalization scheme, we may need to test significance
     # of deviations also, so statistics must be calculated for `global_prot`
-    # before `global_pept` and `double_pept`
+    # before `global_pept` and `lip_pept`
     global_prot = abundance.global_prot_normalization_and_stats(
         global_prot=global_prot,
         int_cols=int_cols,
@@ -150,6 +164,9 @@ def ptm_analysis(
         global_prot, groups, group_cols, par.min_replicates_qc
     )
 
+    if par.ibaq:
+        global_prot = abundance.calculate_ibaq_from_fasta(global_prot, par.fasta_file, int_cols, par.uniprot_col, id_matching=par.fasta_id_matching, log2scale_input=True)
+
     return all_ptms, global_prot
 
 
@@ -174,6 +191,20 @@ def ptm_analysis_return_all(par: Params) -> tuple[pd.DataFrame, pd.DataFrame, pd
     global_prot = pd.read_csv(par.global_prot_file, sep="\t")
     global_pept = pd.read_csv(par.global_pept_file, sep="\t")
     ptm_pept = [pd.read_csv(f, sep="\t") for f in par.ptm_pept_files]
+
+    global_prot[par.protein_col] = global_prot[par.protein_col].astype(str)
+    global_pept[par.protein_col] = global_pept[par.protein_col].astype(str)
+    ptm_pept = [
+        pept.assign(**{par.protein_col: pept[par.protein_col].astype(str)})
+        for pept in ptm_pept
+    ]
+
+    global_prot[par.uniprot_col] = global_prot[par.uniprot_col].astype(str)
+    global_pept[par.uniprot_col] = global_pept[par.uniprot_col].astype(str)
+    ptm_pept = [
+        pept.assign(**{par.uniprot_col: pept[par.uniprot_col].astype(str)})
+        for pept in ptm_pept
+    ]
 
     int_cols = parse_metadata.int_columns(metadata, par)
     anova_cols = parse_metadata.anova_columns(metadata, par)
@@ -206,7 +237,7 @@ def ptm_analysis_return_all(par: Params) -> tuple[pd.DataFrame, pd.DataFrame, pd
     # must correct protein abundance, before we can use it to correct peptide
     # data; depending on normalization scheme, we may need to test significance
     # of deviations also, so statistics must be calculated for `global_prot`
-    # before `global_pept` and `double_pept`
+    # before `global_pept` and `lip_pept`
     global_prot = abundance.global_prot_normalization_and_stats(
         global_prot=global_prot,
         int_cols=int_cols,
@@ -299,6 +330,9 @@ def ptm_analysis_return_all(par: Params) -> tuple[pd.DataFrame, pd.DataFrame, pd
     all_ptms_uncorrected = filter_missingness(
         all_ptms_uncorrected, groups, group_cols, par.min_replicates_qc
     )
+
+    if par.ibaq:
+        global_prot = abundance.calculate_ibaq_from_fasta(global_prot, par.fasta_file, int_cols, par.uniprot_col, id_matching=par.fasta_id_matching, log2scale_input=True)
 
     return all_ptms, global_prot, all_ptms_uncorrected
 

@@ -11,7 +11,8 @@ class DummyParams:
         self.global_prot_file = "dummy_global_prot.tsv"
         self.global_pept_file = "dummy_global_pept.tsv"
         self.ptm_pept_files = ["dummy_ptm_pept1.tsv", "dummy_ptm_pept2.tsv"]
-        self.uniprot_col = "Protein"
+        self.uniprot_col = "UniProt"
+        self.protein_col = "Protein"
         self.peptide_col = "Peptide"
         self.residue_col = "Residue"
         self.id_col = "ID"
@@ -26,7 +27,9 @@ class DummyParams:
         self.batch_correct_samples = ["Sample1", "Sample2"]
         self.metadata_batch_col = "Batch"
         self.abundance_correction = True
-        
+        self.ibaq = False
+        self.fasta_id_matching = "contains"
+
 
 tmp_path = Path('data')  # Temporary path for dummy files
 
@@ -40,17 +43,20 @@ def dummy_params(tmp_path: Path):
         "Batch": ["B1", "B2"]
     })
     global_prot = pd.DataFrame({
+        "UniProt": ["P1", "P2"],
         "Protein": ["P1", "P2"],
         "S1": [1.0, 2.0],
         "S2": [3.0, 4.0]
     })
     global_pept = pd.DataFrame({
+        "UniProt": ["P1", "P2"],
         "Protein": ["P1", "P2"],
         "Peptide": ["pepa", "pepb"],
         "S1": [1.1, 2.1],
         "S2": [3.1, 4.1]
     })
     ptm_pept1 = pd.DataFrame({
+        "UniProt": ["P1"],
         "Protein": ["P1"],
         "Peptide": ["pepa"],
         "Residue": ["R1"],
@@ -58,6 +64,7 @@ def dummy_params(tmp_path: Path):
         "S2": [3.2]
     })
     ptm_pept2 = pd.DataFrame({
+        "UniProt": ["P2"],
         "Protein": ["P2"],
         "Peptide": ["pepb"],
         "Residue": ["R2"],

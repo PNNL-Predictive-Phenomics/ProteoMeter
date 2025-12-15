@@ -12,6 +12,9 @@ global_prot_file = "trypsin_prot.tsv" # protein-level quantification file in dat
 global_pept_file = "trypsin_pept.tsv" # peptide-level quantification file in data directory
 
 
+[paths.lip]
+lip_pept_file = "lip_pept.tsv"
+
 [paths.lip] # Not used for PTM data
 lip_pept_file = "lip_pept.tsv" # ProK+Trypsin digestion peptide-level quantification file in data directory
 
@@ -87,6 +90,8 @@ min_replicates_qc = 2 # minimum number of replicates in a condition
 min_pept_count = 2
 
 log2_scale = false # Whether quantification is provided in log2 scale (true) or linear scale (false)
+ibaq=false # not used
+fasta_id_matching = "contains"
 
 [metadata]
 # Defines column names in metadata file.
