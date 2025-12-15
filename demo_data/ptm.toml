@@ -12,7 +12,7 @@ global_prot_file = "global_prot.tsv" # protein-level quantification file in data
 global_pept_file = "global_pept.tsv" # peptide-level quantification file in data directory
 
 [paths.lip] # Not used for PTM data
-double_pept_file = "" # Double digestion peptide-level quantification file in data directory
+lip_pept_file = "" # ProK+Trypsin digestion peptide-level quantification file in data directory
 
 [paths.ptm] # Not used for LiP data
 ptm_pept_files = ["acetyl_pept.tsv", "phospho_pept.tsv", "redox_pept.tsv"] # File names for PTM peptide-level quantification
