@@ -71,14 +71,14 @@ def volcano_plot(
         _, ax = plt.subplots()
     log2fc = cast("pd.Series[float]", df[f"{comparison}"])
     significance = cast("pd.Series[float]", df[f"{comparison}_{sig_type}"])
-    sig_mult = log2fc * (significance < sig_thresh)  # type: ignore
+    sig_mult = log2fc * (significance < sig_thresh)
 
     cscale = log2fc.abs().max() if max_color_value is None else max_color_value
 
     ax.scatter(
         log2fc,
         -np.log10(significance),
-        c=sig_mult,  # type: ignore
+        c=sig_mult,
         cmap="coolwarm",
         vmax=cscale,
         vmin=-cscale,
@@ -126,11 +126,11 @@ def biplot(
     scaler.fit(mat)
     mat_scaled = cast("npt.NDArray[float64]", scaler.transform(mat))
     pca = PCA()
-    x = pca.fit_transform(mat_scaled)  # type: ignore
+    x = pca.fit_transform(mat_scaled)
     v1, v2, *_ = pca.explained_variance_ratio_
-    score = x[:, 0:2]  # type: ignore
-    xs = score[:, 0]  # type: ignore
-    ys = score[:, 1]  # type: ignore
+    score = x[:, 0:2]
+    xs = score[:, 0]
+    ys = score[:, 1]
     scalex = 1.0 / (xs.max() - xs.min())
     scaley = 1.0 / (ys.max() - ys.min())
 
@@ -158,11 +158,9 @@ def biplot(
                     marker=cast("MarkerStyle", "."),
                     s=100,
                 )
-                ax.annotate(f"{int_cols[i]}",
-                            (ptx, pty),
-                            fontsize=12,
-                            ha="center",
-                            va="center")
+                ax.annotate(
+                    f"{int_cols[i]}", (ptx, pty), fontsize=12, ha="center", va="center"
+                )
         else:
             for i in inds:
                 ptx, pty = xs[i] * scalex, ys[i] * scaley

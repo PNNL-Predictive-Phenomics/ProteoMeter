@@ -89,9 +89,7 @@ def lip_analysis(
         global_pept = stats.log2_transformation(global_pept, int_cols)
         global_prot = stats.log2_transformation(global_prot, int_cols)
 
-    lip_pept = filter_missingness(
-        lip_pept, groups, group_cols, par.min_replicates_qc
-    )
+    lip_pept = filter_missingness(lip_pept, groups, group_cols, par.min_replicates_qc)
     global_pept = filter_missingness(
         global_pept, groups, group_cols, par.min_replicates_qc
     )
@@ -179,7 +177,14 @@ def lip_analysis(
     lip_site = _lip_site(lip_site, par)
 
     if par.ibaq:
-        global_prot = abundance.calculate_ibaq_from_fasta(global_prot, par.fasta_file, int_cols, par.uniprot_col, id_matching=par.fasta_id_matching, log2scale_input=True)
+        global_prot = abundance.calculate_ibaq_from_fasta(
+            global_prot,
+            par.fasta_file,
+            int_cols,
+            par.uniprot_col,
+            id_matching=par.fasta_id_matching,
+            log2scale_input=True,
+        )
 
     return lip_pept, lip_site, global_prot
 
@@ -302,12 +307,12 @@ def _annotate_global_prot(global_prot: pd.DataFrame, par: Params) -> pd.DataFram
     global_prot[par.experiment_col] = "LiP"
     global_prot[par.residue_col] = "GLB"
     global_prot[par.site_col] = (
-        global_prot[par.uniprot_col]
+        global_prot[par.uniprot_col]  # type: ignore
         + par.id_separator
         + global_prot[par.residue_col].astype(str)
     )
     global_prot[par.protein_col] = global_prot[par.protein_col].map(
-        lambda x: x.split("|")[-1]  # type: ignore
+        lambda x: x.split("|")[-1]
     )
 
     return global_prot
@@ -326,9 +331,9 @@ def _lip_site(lip_site: pd.DataFrame, par: Params) -> pd.DataFrame:
     lip_site[par.experiment_col] = "LiP"
     lip_site[par.residue_col] = lip_site[par.site_col]
     lip_site[par.site_col] = (
-        lip_site[par.uniprot_col] + par.id_separator + lip_site[par.site_col]
+        lip_site[par.uniprot_col] + par.id_separator + lip_site[par.site_col]  # type: ignore
     )
     lip_site[par.protein_col] = lip_site[par.protein_col].map(
-        lambda x: x.split("|")[-1]  # type: ignore
+        lambda x: x.split("|")[-1]
     )
     return lip_site

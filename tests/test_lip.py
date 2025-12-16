@@ -82,14 +82,14 @@ def test_get_clean_peptides_basic():
     df = pd.DataFrame({"Sequence": ["MAAK", "AAK", "AAKT"]})
     result = get_clean_peptides(df, "Sequence")
     assert "clean_pept" in result.columns
-    assert list(result["clean_pept"]) == ["MAAK", "AAK", "AAKT"]  # type: ignore
+    assert list(result["clean_pept"]) == ["MAAK", "AAK", "AAKT"]
 
 
 def test_get_clean_peptides_custom_col():
     df = pd.DataFrame({"Seq": ["PEPTIDEA", "PEPTIDEB"]})
     result = get_clean_peptides(df, "Seq", clean_pept_col="stripped")
     assert "stripped" in result.columns
-    assert list(result["stripped"]) == ["PEPTIDEA", "PEPTIDEB"]  # type: ignore
+    assert list(result["stripped"]) == ["PEPTIDEA", "PEPTIDEB"]
 
 
 def test_get_clean_peptides_empty_df():
@@ -103,7 +103,7 @@ def test_get_clean_peptides_with_modifications():
     # Simulate strip_peptide removing modifications
     df = pd.DataFrame({"Sequence": ["M@AAK", "A#AK"]})
     result = get_clean_peptides(df, "Sequence")
-    assert list(result["clean_pept"]) == ["MAAK", "AAK"]  # type: ignore
+    assert list(result["clean_pept"]) == ["MAAK", "AAK"]
 
 
 def test_rollup_single_protein_to_lytic_site_basic():
@@ -122,10 +122,10 @@ def test_rollup_single_protein_to_lytic_site_basic():
     )
     # Should have two lytic sites for one peptide: start and end
     assert result.shape[0] == 2
-    assert set(result["Site"]) == {"K0", "K4"}  # type: ignore
+    assert set(result["Site"]) == {"K0", "K4"}
     assert all(result["UniProt"] == "P12345")
     assert "Intensity" in result.columns
-    assert np.isfinite(result["Intensity"]).all()  # type: ignore
+    assert np.isfinite(result["Intensity"]).all()
     assert "All pept num" in result.columns
     assert result["All pept num"].iloc[0] == 1
 
@@ -150,10 +150,10 @@ def test_rollup_single_protein_to_lytic_site_multiple_peptides():
     )
     # Should have 4 lytic sites (2 per peptide, possibly overlapping)
     assert result.shape[0] == 4
-    assert set(result["UniProt"]) == {"P12345"}  # type: ignore
-    assert set(result["Site"]).issuperset({"K0", "K4", "M1", "T5"})  # type: ignore
+    assert set(result["UniProt"]) == {"P12345"}
+    assert set(result["Site"]).issuperset({"K0", "K4", "M1", "T5"})
     assert "Intensity" in result.columns
-    assert np.isfinite(result["Intensity"]).all()  # type: ignore
+    assert np.isfinite(result["Intensity"]).all()
     assert "All pept num" in result.columns
     assert result["All pept num"].iloc[0] == 2
 
@@ -192,8 +192,8 @@ def test_rollup_single_protein_to_lytic_site_rollup_func_mean():
         rollup_func="mean",
     )
     assert "Intensity" in result.columns
-    assert np.isfinite(result["Intensity"]).all()  # type: ignore
-    assert np.isclose(result[result["Site"] == "K4"]["Intensity"], 21.0)  # type: ignore
+    assert np.isfinite(result["Intensity"]).all()
+    assert np.isclose(result[result["Site"] == "K4"]["Intensity"], 21.0)
 
 
 def test_rollup_single_protein_to_lytic_site_rollup_func_median():
@@ -216,8 +216,8 @@ def test_rollup_single_protein_to_lytic_site_rollup_func_median():
         rollup_func="median",
     )
     assert "Intensity" in result.columns
-    assert np.isfinite(result["Intensity"]).all()  # type: ignore
-    assert np.isclose(result[result["Site"] == "K4"]["Intensity"], 21.0)  # type: ignore
+    assert np.isfinite(result["Intensity"]).all()
+    assert np.isclose(result[result["Site"] == "K4"]["Intensity"], 21.0)
 
 
 def test_rollup_single_protein_to_lytic_site_rollup_func_sum():
@@ -240,8 +240,8 @@ def test_rollup_single_protein_to_lytic_site_rollup_func_sum():
     )
     expected = np.log2(2**10 + 2**30)
     assert "Intensity" in result.columns
-    assert np.isfinite(result["Intensity"]).all()  # type: ignore
-    assert np.isclose(result[result["Site"] == "K4"]["Intensity"], expected)  # type: ignore
+    assert np.isfinite(result["Intensity"]).all()
+    assert np.isclose(result[result["Site"] == "K4"]["Intensity"], expected)
 
 
 def test_rollup_single_protein_to_lytic_site_rollup_func_ignore_na():
@@ -268,7 +268,7 @@ def test_rollup_single_protein_to_lytic_site_rollup_func_ignore_na():
     )
 
     expected = np.log2(2**30)
-    assert np.isclose(result[result["Site"] == "K4"]["Intensity"], expected)  # type: ignore
+    assert np.isclose(result[result["Site"] == "K4"]["Intensity"], expected)
 
     result = rollup_single_protein_to_lytic_site(
         df,
@@ -281,7 +281,7 @@ def test_rollup_single_protein_to_lytic_site_rollup_func_ignore_na():
         rollup_func="median",
     )
     expected = 31.0
-    assert np.isclose(result[result["Site"] == "K4"]["Intensity"], expected)  # type: ignore
+    assert np.isclose(result[result["Site"] == "K4"]["Intensity"], expected)
 
     result = rollup_single_protein_to_lytic_site(
         df,
@@ -294,7 +294,7 @@ def test_rollup_single_protein_to_lytic_site_rollup_func_ignore_na():
         rollup_func="mean",
     )
     expected = 31.0
-    assert np.isclose(result[result["Site"] == "K4"]["Intensity"], expected)  # type: ignore
+    assert np.isclose(result[result["Site"] == "K4"]["Intensity"], expected)
 
 
 def test_rollup_single_protein_to_lytic_site_rollup_func_remove_na():
@@ -321,7 +321,7 @@ def test_rollup_single_protein_to_lytic_site_rollup_func_remove_na():
         ignore_NA=False,
     )
     expected = 30.0
-    assert np.isclose(result[result["Site"] == "K4"]["Intensity"], expected)  # type: ignore
+    assert np.isclose(result[result["Site"] == "K4"]["Intensity"], expected)
 
     result = rollup_single_protein_to_lytic_site(
         df,
@@ -335,7 +335,7 @@ def test_rollup_single_protein_to_lytic_site_rollup_func_remove_na():
         ignore_NA=False,
     )
     expected = 30.0
-    assert np.isclose(result[result["Site"] == "K4"]["Intensity"], expected)  # type: ignore
+    assert np.isclose(result[result["Site"] == "K4"]["Intensity"], expected)
 
     result = rollup_single_protein_to_lytic_site(
         df,
@@ -349,7 +349,7 @@ def test_rollup_single_protein_to_lytic_site_rollup_func_remove_na():
         ignore_NA=False,
     )
     expected = 30.0
-    assert np.isclose(result[result["Site"] == "K4"]["Intensity"], expected)  # type: ignore
+    assert np.isclose(result[result["Site"] == "K4"]["Intensity"], expected)
 
 
 def test_rollup_single_protein_to_lytic_site_alternative_protease():
