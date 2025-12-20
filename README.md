@@ -79,4 +79,4 @@ The files above correspond to a specific ptm type (e.g., LYS acetylation). Multi
 * lip_processed_prot.csv: Global abundance information used for abundance correction of peptide changes. This includes abundance quantification, fold-changes and statistical signficance.
 * lip_processed_site.csv: Digestion cut site quantification, fold-changes and statistical signficance. 
 * ptm_processed_site.csv: PTM site quantification, fold-changes and statistical signficance.
-* ptm_processed_prot.csv: Global abundance information used for abundance correction of PTM changes. This includes abundance quantification, fold-changes and statistical signficance.
+* ptm_processed_prot.csv: Global abundance information used for abundance correction of PTM changes. This includes abundance quantification, fold-changes and statistical significance.
