@@ -62,8 +62,8 @@ Example data and configuration files are in [demo_data](https://github.com/PNNL-
 
 #### LiP Data
 * lip_pept.tsv: quantification of peptides after limited proteolysis followed by trypsin digestion (ProK + Trypsin)
-* trypsin_pept.tsv: quantificaiton of peptides after trypsin digestion without limited proteolysis (Trypsin only)
-* trypsin_prot.tsv: quantificaiton of peptides after trypsin digestion without limited proteolysis (Trypsin only)
+* trypsin_pept.tsv: quantification of peptides after trypsin digestion without limited proteolysis (Trypsin only)
+* trypsin_prot.tsv: quantification of peptides after trypsin digestion without limited proteolysis (Trypsin only)
 
 In the demo_data/LiP directory, we have also included lip_prot.tsv, which contains quantification of proteins after limited proteolysis followed by trypsin digestion. This file is not required, but may be used in place of trypsin_prot.tsv (generally this is not recommended as the abundance quantification will likely be more robust for trypsin-digestion than for limited proteolysis followed by trypsin digestion).
 
