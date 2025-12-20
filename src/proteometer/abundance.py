@@ -1,10 +1,13 @@
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from typing import cast
 
 import numpy as np
 import pandas as pd
+from Bio import SeqIO
+from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
 
 import proteometer.normalization as normalization
 import proteometer.stats as stats
@@ -157,7 +160,7 @@ def prot_abund_correction_sig_only(
             scalar_dict.get(uniprot_id, 0)
             for uniprot_id in cast("pd.Series[str]", pept[uniprot_col])
         ]
-        pept[pairwise_ttest_group.treat_samples] = pept[
+        pept[pairwise_ttest_group.treat_samples] = pept[  # type: ignore
             pairwise_ttest_group.treat_samples
         ].subtract(
             cast("pd.Series[float]", pept[f"{pairwise_ttest_group.label()}_scalar"]),
@@ -207,11 +210,10 @@ def prot_abund_correction_matched(
             prot_abund = prot_abund_row.astype(float).fillna(0)
             prot_abund_median = cast(float, prot_abund_row[non_tt_cols].median())  # type: ignore
             if not np.isnan(prot_abund_median):
-                prot_abund_scale = cast(
-                    "pd.Series[float]",
-                    (~prot_abund_row.isna()).astype(float) * prot_abund_median,
-                )
-                pept_sub[columns_to_correct] = (
+                prot_abund_scale = (~prot_abund_row.isna()).astype(
+                    float
+                ) * prot_abund_median
+                pept_sub[columns_to_correct] = (  # type: ignore
                     pept_sub[columns_to_correct]
                     .sub(prot_abund, axis=1)
                     .add(prot_abund_scale, axis=1)
@@ -282,3 +284,220 @@ def global_prot_normalization_and_stats(
     global_prot = stats.pairwise_ttest(global_prot, pairwise_ttest_groups)
 
     return global_prot
+
+
+def fasta_to_sequence_map(fasta_path: str) -> dict[str, str]:
+    """
+    Reads a FASTA file and creates a mapping of protein IDs to sequences.
+
+    This function uses Biopython to parse a FASTA file. The identifier for each
+    sequence is taken from the header line (the part before the first whitespace).
+
+    Example FASTA entry:
+    >sp|P12345|GENE_NAME Protein description...
+    MKL...
+
+    The resulting key-value pair would be:
+    'sp|P12345|GENE_NAME': 'MKL...'
+
+    Args:
+        fasta_path (str): The path to the input FASTA file.
+
+    Returns:
+        dict[str, str]: A dictionary where keys are protein identifiers
+                        and values are the corresponding amino acid sequences.
+    """
+    sequences: dict[str, str] = {}
+    with open(fasta_path, "r") as fasta_data:
+        for record in cast(Iterable[SeqRecord], SeqIO.parse(fasta_data, "fasta")):
+            seq_id = cast(str, record.id)
+            seq_str = str(cast(Seq, record.seq))
+            sequences[seq_id] = seq_str
+    return sequences
+
+
+# Implementation of iBAQ calculation
+def count_theoretical_peptides(
+    sequence: str,
+    min_len: int = 6,
+    max_len: int = 30,
+    missed_cleavages: int = 2,
+    protease: str = "trypsin",
+) -> int:
+    """
+    Count the number of theoretically observable tryptic peptides for a protein sequence.
+
+    Args:
+        sequence (str): The amino acid sequence of the protein.
+        min_len (int, optional): Minimum length of peptides to count. Defaults to 6.
+        max_len (int, optional): Maximum length of peptides to count. Defaults to 30.
+        missed_cleavages (int, optional): The number of missed cleavages to allow. Defaults to 2.
+        protease (str, optional): The protease used for digestion. Defaults to "trypsin".
+
+    Returns:
+        int: The number of theoretically observable peptides.
+    """
+    if not sequence:
+        return 0
+
+    # Standard tryptic cleavage rule: after K or R, but not if followed by P
+    if protease.lower() == "trypsin":
+        cleavage_sites = {
+            i + 1
+            for i, aa in enumerate(sequence[:-1])
+            if aa in "KR" and sequence[i + 1] != "P"
+        }
+    else:
+        raise ValueError("Unsupported protease: {}".format(protease))
+    cleavage_sites.add(0)
+    cleavage_sites.add(len(sequence))
+
+    sites = sorted(list(cleavage_sites))
+    count = 0
+
+    for i in range(len(sites) - 1):
+        for j in range(i + 1, min(i + 2 + missed_cleavages, len(sites))):
+            start = sites[i]
+            end = sites[j]
+            pep_len = end - start
+            if min_len <= pep_len <= max_len:
+                count += 1
+    return count
+
+
+def calculate_ibaq(
+    prot_df: pd.DataFrame,
+    intensity_cols: list[str],
+    sequences: Mapping[str, str],
+    prot_id_col: str = "UniProt",
+    min_pep_len: int = 6,
+    max_pep_len: int = 30,
+    missed_cleavages: int = 2,
+    id_matching: str = "exact",
+    log2scale_input: bool = False,
+) -> pd.DataFrame:
+    """
+    Calculate iBAQ (intensity-based absolute quantification) values.
+
+    iBAQ is calculated by dividing the protein intensities by the number of
+    theoretically observable peptides.
+
+    Args:
+        prot_df (pd.DataFrame): DataFrame with protein data, including intensity
+            columns. The DataFrame index must contain protein identifiers that
+            correspond to the keys in the `sequences` mapping.
+        intensity_cols (list[str]): List of column names with protein intensities.
+        sequences (Mapping[str, str]): A mapping (e.g., a dictionary) from protein
+            identifiers to their amino acid sequences. This can be generated from a
+            FASTA file using libraries like Biopython.
+        prot_id_col (str, optional): The name of the column containing protein IDs.
+            Defaults to "UniProt".
+        min_pep_len (int, optional): Minimum length of peptides to consider. Defaults to 6.
+        max_pep_len (int, optional): Maximum length of peptides to consider. Defaults to 30.
+        missed_cleavages (int, optional): The number of missed cleavages to allow. Defaults to 2.
+        id_matching (str, optional): The method for matching protein IDs. Defaults to "exact".
+            Other option would be "contain(s)" or "startswith".
+        log2scale_input (bool, optional): Whether the input intensity values are already log2-transformed. Defaults to False.
+
+    Returns:
+        pd.DataFrame: A new DataFrame with iBAQ values for each sample. The original
+            intensity columns are replaced by iBAQ columns with an "_iBAQ" suffix.
+    """
+    ibaq_df = prot_df.copy()
+
+    # Map protein IDs from the index to their sequences
+    # Create a mapping from protein IDs in the dataframe to sequences
+    # by checking if the protein ID is a substring of any key in the sequences dictionary.
+    # This handles cases where FASTA headers are more complex than just the UniProt ID.
+    if id_matching.lower() == "exact":
+        protein_sequences: pd.Series[str | None] = ibaq_df[prot_id_col].apply(  # type: ignore
+            lambda prot_id: sequences.get(prot_id)  # type: ignore
+        )
+    elif id_matching.lower() == "contain" or id_matching.lower() == "contains":
+        protein_sequences: pd.Series[str | None] = ibaq_df[prot_id_col].apply(  # type: ignore
+            lambda prot_id: next(  # pyright: ignore[reportUnknownLambdaType]
+                (seq for header, seq in sequences.items() if prot_id in header), None
+            )
+        )
+    elif id_matching.lower() == "startswith":
+        protein_sequences: pd.Series[str | None] = ibaq_df[prot_id_col].apply(  # type: ignore
+            lambda prot_id: next(  # pyright: ignore[reportUnknownLambdaType]
+                (
+                    seq
+                    for header, seq in sequences.items()
+                    if header.startswith(prot_id)  # type: ignore
+                ),
+                None,
+            )
+        )
+    else:
+        raise ValueError(f"Unsupported id_matching value: {id_matching}")
+
+    # Calculate the number of theoretical peptides for each protein
+    theoretical_peptides: pd.Series[float] = protein_sequences.apply(
+        lambda seq: count_theoretical_peptides(  # pyright: ignore[reportUnknownLambdaType]
+            str(seq),  # type: ignore
+            min_pep_len,
+            max_pep_len,
+            missed_cleavages,
+        )
+        if pd.notna(seq)  # pyright: ignore[reportUnknownArgumentType]
+        else 0
+    )
+
+    # Avoid division by zero for proteins with no theoretical peptides
+    theoretical_peptides = theoretical_peptides.replace(0, np.nan)
+
+    # Calculate iBAQ for each intensity column
+    for col in intensity_cols:
+        if log2scale_input:
+            ibaq_df[col] = ibaq_df[col].apply(lambda x: 2**x if pd.notna(x) else x)  # type: ignore
+        ibaq_df[col] = ibaq_df[col] / theoretical_peptides
+        if log2scale_input:
+            ibaq_df[col] = ibaq_df[col].apply(
+                lambda x: np.log2(x) if pd.notna(x) else x  # type: ignore
+            )
+
+    return ibaq_df
+
+
+def calculate_ibaq_from_fasta(
+    prot_df: pd.DataFrame,
+    fasta_file: str,
+    intensity_cols: list[str],
+    prot_id_col: str = "UniProt",
+    min_pep_len: int = 6,
+    max_pep_len: int = 30,
+    missed_cleavages: int = 2,
+    id_matching: str = "exact",
+    log2scale_input: bool = False,
+) -> pd.DataFrame:
+    """
+    Calculate iBAQ (intensity-based absolute quantification) values from a FASTA file.
+
+    Args:
+        prot_df (pd.DataFrame): DataFrame containing protein information.
+        fasta_file (str): Path to the FASTA file containing protein sequences.
+        intensity_cols (list[str]): List of column names with protein intensities.
+        prot_id_col (str, optional): The name of the column containing protein IDs. Defaults to "UniProt".
+        min_pep_len (int, optional): Minimum length of peptides to consider. Defaults to 6.
+        max_pep_len (int, optional): Maximum length of peptides to consider. Defaults to 30.
+        missed_cleavages (int, optional): The number of missed cleavages to allow. Defaults to 2.
+        id_matching (str, optional): The method for matching protein IDs. Defaults to "exact". Other options include "contains" and "startswith".
+        log2scale_input (bool, optional): Whether the input intensity values are already log2-transformed. Defaults to False.
+
+    Returns:
+        pd.DataFrame: A DataFrame with iBAQ values for each sample.
+    """
+    sequences = fasta_to_sequence_map(fasta_file)
+    return calculate_ibaq(
+        prot_df,
+        intensity_cols,
+        sequences,
+        prot_id_col=prot_id_col,
+        min_pep_len=min_pep_len,
+        max_pep_len=max_pep_len,
+        missed_cleavages=missed_cleavages,
+        id_matching=id_matching,
+        log2scale_input=log2scale_input,
+    )

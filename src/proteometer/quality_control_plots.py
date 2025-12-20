@@ -71,14 +71,14 @@ def volcano_plot(
         _, ax = plt.subplots()
     log2fc = cast("pd.Series[float]", df[f"{comparison}"])
     significance = cast("pd.Series[float]", df[f"{comparison}_{sig_type}"])
-    sig_mult = log2fc * (significance < sig_thresh)  # type: ignore
+    sig_mult = log2fc * (significance < sig_thresh)
 
     cscale = log2fc.abs().max() if max_color_value is None else max_color_value
 
     ax.scatter(
         log2fc,
         -np.log10(significance),
-        c=sig_mult,  # type: ignore
+        c=sig_mult,
         cmap="coolwarm",
         vmax=cscale,
         vmin=-cscale,
@@ -103,6 +103,7 @@ def biplot(
     int_cols: list[str],
     group_cols: list[list[str]],
     ax: Axes | None = None,
+    use_sample_names: bool = False,
 ) -> Axes:
     """Plots a biplot of the data.
 
@@ -112,6 +113,8 @@ def biplot(
         group_cols (list[list[str]]): List of lists of columns to group by.
         ax (Axes | None, optional): Matplotlib Axes object to draw the biplot on.
             If `None`, a new Axes object is created. Defaults to `None`.
+        use_sample_names (bool, optional): If True, uses sample names for annotations.
+            Defaults to `False` with index numbers and legend to label points.
 
     Returns:
         Axes: The matplotlib Axes object with the plotted biplot.
@@ -123,11 +126,11 @@ def biplot(
     scaler.fit(mat)
     mat_scaled = cast("npt.NDArray[float64]", scaler.transform(mat))
     pca = PCA()
-    x = pca.fit_transform(mat_scaled)  # type: ignore
+    x = pca.fit_transform(mat_scaled)
     v1, v2, *_ = pca.explained_variance_ratio_
-    score = x[:, 0:2]  # type: ignore
-    xs = score[:, 0]  # type: ignore
-    ys = score[:, 1]  # type: ignore
+    score = x[:, 0:2]
+    xs = score[:, 0]
+    ys = score[:, 1]
     scalex = 1.0 / (xs.max() - xs.min())
     scaley = 1.0 / (ys.max() - ys.min())
 
@@ -145,20 +148,33 @@ def biplot(
             alpha=0.2,
             levels=[0.1, 0.2, 0.5, 1],
         )
-        for i in inds:
-            ptx, pty = xs[i] * scalex, ys[i] * scaley
-            ax.scatter(
-                [ptx],
-                [pty],
-                c=color,
-                marker=cast("MarkerStyle", "."),
-                s=100,
-            )
-            ax.annotate(f"{int_cols[i]}",
-                        (ptx, pty),
-                        fontsize=12,
-                        ha="center",
-                        va="center")
+        if use_sample_names:
+            for i in inds:
+                ptx, pty = xs[i] * scalex, ys[i] * scaley
+                ax.scatter(
+                    [ptx],
+                    [pty],
+                    c=color,
+                    marker=cast("MarkerStyle", "."),
+                    s=100,
+                )
+                ax.annotate(
+                    f"{int_cols[i]}", (ptx, pty), fontsize=12, ha="center", va="center"
+                )
+        else:
+            for i in inds:
+                ptx, pty = xs[i] * scalex, ys[i] * scaley
+                ax.scatter(
+                    [ptx],
+                    [pty],
+                    c=color,
+                    marker=cast("MarkerStyle", rf"${i}$"),
+                    s=100,
+                    label=f"{df[int_cols].columns[i]}",
+                )
+                ax.scatter([ptx], [pty], c="k", marker=cast("MarkerStyle", "."), s=10)
+    if not use_sample_names:
+        ax.legend(ncols=2, bbox_to_anchor=(1.4, 0.5), loc="center right")
     ax.set_xlim(-1, 1)
     ax.set_ylim(-1, 1)
     ax.set_xlabel(f"PC1 ({v1:.2%})")

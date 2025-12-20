@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import numpy as np
+
 from proteometer.utils import expsum
 
 if TYPE_CHECKING:
@@ -54,7 +55,9 @@ def rollup_to_site(
 
     df[residue_col] = df[residue_col].str.split(residue_sep)
     df = df.explode(residue_col)
-    df[id_col] = df[uniprot_col] + id_separator + df[residue_col]
+    df[id_col] = (
+        df[uniprot_col].astype(str) + id_separator + df[residue_col].astype(str)
+    )
 
     info_cols_wo_peptide_col = [col for col in info_cols if col != peptide_col]
     agg_methods_0: AggDictStr = {peptide_col: lambda x: "; ".join(x)}
@@ -65,11 +68,21 @@ def rollup_to_site(
         if ignore_NA:
             if rollup_func.lower() == "median":
                 agg_methods_2: AggDictFloat = {
-                    i: lambda x: (np.log2(len(x)) + x.median() if (not x[x.notna()].empty) else np.nan) for i in int_cols
+                    i: lambda x: (
+                        np.log2(len(x)) + x.median()
+                        if (not x[x.notna()].empty)
+                        else np.nan
+                    )
+                    for i in int_cols
                 }
             elif rollup_func.lower() == "mean":
                 agg_methods_2: AggDictFloat = {
-                    i: lambda x: (np.log2(len(x)) + x.mean() if (not x[x.notna()].empty) else np.nan) for i in int_cols
+                    i: lambda x: (
+                        np.log2(len(x)) + x.mean()
+                        if (not x[x.notna()].empty)
+                        else np.nan
+                    )
+                    for i in int_cols
                 }
             elif rollup_func.lower() == "sum":
                 agg_methods_2: AggDictFloat = {i: expsum for i in int_cols}
@@ -80,11 +93,21 @@ def rollup_to_site(
         else:
             if rollup_func.lower() == "median":
                 agg_methods_2: AggDictFloat = {
-                    i: lambda x: (np.log2(x.notna().sum()) + x.median() if (not x[x.notna()].empty) else np.nan) for i in int_cols
+                    i: lambda x: (
+                        np.log2(x.notna().sum()) + x.median()
+                        if (not x[x.notna()].empty)
+                        else np.nan
+                    )
+                    for i in int_cols
                 }
             elif rollup_func.lower() == "mean":
                 agg_methods_2: AggDictFloat = {
-                    i: lambda x: (np.log2(x.notna().sum()) + x.mean() if (not x[x.notna()].empty) else np.nan) for i in int_cols
+                    i: lambda x: (
+                        np.log2(x.notna().sum()) + x.mean()
+                        if (not x[x.notna()].empty)
+                        else np.nan
+                    )
+                    for i in int_cols
                 }
             elif rollup_func.lower() == "sum":
                 agg_methods_2: AggDictFloat = {i: expsum for i in int_cols}
@@ -94,9 +117,15 @@ def rollup_to_site(
                 )
     else:
         if rollup_func.lower() == "median":
-            agg_methods_2: AggDictFloat = {i: lambda x: (x.median() if (not x[x.notna()].empty) else np.nan) for i in int_cols}
+            agg_methods_2: AggDictFloat = {
+                i: lambda x: (x.median() if (not x[x.notna()].empty) else np.nan)
+                for i in int_cols
+            }
         elif rollup_func.lower() == "mean":
-            agg_methods_2: AggDictFloat = {i: lambda x: (x.mean() if (not x[x.notna()].empty) else np.nan) for i in int_cols}
+            agg_methods_2: AggDictFloat = {
+                i: lambda x: (x.mean() if (not x[x.notna()].empty) else np.nan)
+                for i in int_cols
+            }
         elif rollup_func.lower() == "sum":
             agg_methods_2: AggDictFloat = {i: expsum for i in int_cols}
         else:
@@ -108,7 +137,5 @@ def rollup_to_site(
     )
     df[site_col] = df[id_col].to_list()
     df[int_cols] = df[int_cols].replace([np.inf, -np.inf], np.nan)
-    df.index = df[id_col].to_list()  # type: ignore
+    df.index = df[id_col].to_list()
     return df
-
-

@@ -142,7 +142,7 @@ def plot_pept_barcode(
     seq_len = len(sequence)
     tryptic = pept_df[pept_df["pept_type"] == "Tryptic"].copy()
     semi = pept_df[pept_df["pept_type"] == "Semi-tryptic"].copy()
-    protein_id = str(pept_df["Protein"].iloc[0])  # type: ignore
+    protein_id = str(pept_df["Protein"].iloc[0])
     if not (semi.shape[0] > 0 or tryptic.shape[0] > 0):
         raise ValueError(
             "The peptide dataframe is empty with either tryptic or semi-tryptic peptides. Please check the input dataframe."
@@ -161,7 +161,7 @@ def plot_pept_barcode(
         / tryptic[f"{pairwise_ttest_name}_{sig_type}"]
     )
 
-    for _, row in tryptic.sort_values("effect", ascending=True).iterrows():  # type: ignore
+    for _, row in tryptic.sort_values("effect", ascending=True).iterrows():
         fc = cast("float", row[pairwise_ttest_name])
         if np.isnan(fc):
             continue
@@ -266,7 +266,7 @@ def plot_site_barcode(
                 f"{pairwise_ttest_name}_{sig_type}",
             ]
         ].copy()
-        trypsin_fc_diff.index = trypsin_fc_diff["Site"].to_list()  # type: ignore
+        trypsin_fc_diff.index = trypsin_fc_diff["Site"].to_list()
         for i in range(trypsin_fc_diff.shape[0]):
             tfd1 = int(cast("int", trypsin_fc_diff.iloc[i, 1]))  # pos
             tfd2 = cast("float", trypsin_fc_diff.iloc[i, 2])  # fc
@@ -329,7 +329,7 @@ def plot_site_barcode(
                 f"{pairwise_ttest_name}_{sig_type}",
             ]
         ].copy()
-        prok_fc_diff.index = prok_fc_diff["Site"].to_list()  # type: ignore
+        prok_fc_diff.index = prok_fc_diff["Site"].to_list()
         for i in range(prok_fc_diff.shape[0]):
             pfd1 = int(cast("int", prok_fc_diff.iloc[i, 1]))
             pfd2 = cast("float", prok_fc_diff.iloc[i, 2])

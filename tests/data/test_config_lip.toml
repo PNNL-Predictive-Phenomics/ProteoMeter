@@ -3,12 +3,12 @@ data_dir = "./tests/data/LiP"
 results_dir = "./tests/data/LiP"
 fasta_file = "reference_proteome.fasta"
 metadata_file = "metadata.tsv"
-global_prot_file = "trypsin_prot.tsv"
-global_pept_file = "trypsin_pept.tsv"
+global_prot_file = "global_prot.tsv"
+global_pept_file = "global_pept.tsv"
 
 
 [paths.lip]
-double_pept_file = "double_pept.tsv"
+lip_pept_file = "lip_pept.tsv"
 
 [paths.ptm]
 ptm_pept_files = []
@@ -27,7 +27,7 @@ anova_factors = ["Treatment", "Time"]
 [corrections]
 abundance_correction = true
 abundance_correction_paired_samples = true
-abundance_unpaired_sig_thr = 0.0
+abundance_correction_unpaired_sig_thr = 0.0
 batch_correction = false
 batch_correct_samples = []
 pooled_chanel_condition = "Total"
@@ -36,6 +36,8 @@ sig_type = "pval"                          # pval or adj-p
 min_replicates_qc = 2
 min_pept_count = 2
 log2_scale = false
+ibaq = true
+fasta_id_matching = "contains"
 
 [metadata]
 metadata_batch_col = "Batch"
