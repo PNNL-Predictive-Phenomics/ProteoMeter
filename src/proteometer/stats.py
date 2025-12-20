@@ -99,7 +99,7 @@ def log2_transformation(
         pd.DataFrame: DataFrame with log2-transformed intensity columns.
     """
     ret = df2transform.copy()
-    ret[int_cols] = np.log2(ret[int_cols].replace(0, np.nan))
+    ret[int_cols] = np.log2(ret[int_cols].replace(0, np.nan))  # type: ignore
     return ret
 
 
@@ -134,7 +134,7 @@ def anova(
 
     df_w = df[anova_cols].copy()
     f_stats_factors: Sequence[pd.DataFrame] = []
-    for df_id, row in df_w.iterrows():  # type: ignore
+    for df_id, row in df_w.iterrows():
         df_f = pd.merge(
             row,
             metadata[metadata[sample_col].isin(anova_cols)],
@@ -260,7 +260,7 @@ def calculate_pairwise_scalars(
         raise TypeError(f"{pairwise_ttest_name}_{sig_type} must be float")
     prot[f"{pairwise_ttest_name}_scalar"] = [
         prot[pairwise_ttest_name][i] if p < sig_thr else 0
-        for i, p in enumerate(prot[f"{pairwise_ttest_name}_{sig_type}"])  # type: ignore
+        for i, p in enumerate(prot[f"{pairwise_ttest_name}_{sig_type}"])
     ]
     return prot
 

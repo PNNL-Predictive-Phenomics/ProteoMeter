@@ -1,13 +1,12 @@
 from __future__ import annotations
 
+import warnings
 from typing import TypeAlias, Union, cast
 
 import numpy as np
 import pandas as pd
 import pytest
 import scipy as sp
-
-import warnings
 
 from proteometer.stats import TTestGroup, anova, pairwise_ttest
 
@@ -50,7 +49,7 @@ def test_anova_values(simple_anova_data: TestDataFixture):
         print(result)
 
     pvals: list[float] = []
-    for _, row in df.iterrows():  # type: ignore
+    for _, row in df.iterrows():
         g1 = np.array([row["sample1"], row["sample2"]], dtype="float64")
         g2 = np.array([row["sample3"], row["sample4"]], dtype="float64")
         fval, pval = sp.stats.f_oneway(g1, g2)
@@ -175,11 +174,15 @@ def test_pairwise_ttest_basic():
     result = pairwise_ttest(df.copy(), [ttest_group])
     label = ttest_group.label()
     # Check mean difference
-    expected_diff = cast("pd.Series[float]", df[ttest_group.treat_samples].mean(axis=1) - df[ttest_group.control_samples].mean(axis=1))
-    
+    expected_diff = cast(
+        "pd.Series[float]",
+        df[ttest_group.treat_samples].mean(axis=1)
+        - df[ttest_group.control_samples].mean(axis=1),
+    )
+
     pd.testing.assert_series_equal(result[label], expected_diff, check_names=False)
     # Check p-values match scipy
-    for i, row in df.iterrows(): # type: ignore
+    for i, row in df.iterrows():
         row = cast("pd.Series[float]", row)
         _, p = sp.stats.ttest_ind(
             [row["T1"], row["T2"]],
@@ -187,7 +190,7 @@ def test_pairwise_ttest_basic():
             nan_policy="omit",
         )
         p = cast("float", p)
-        assert np.isclose(float(result.at[i, f"{label}_pval"]), float(p)) # type: ignore
+        assert np.isclose(float(result.at[i, f"{label}_pval"]), float(p))  # type: ignore
 
 
 def test_pairwise_ttest_with_nan():
@@ -283,4 +286,3 @@ def test_pairwise_ttest_returns_input_shape():
     )
     result = pairwise_ttest(df.copy(), [ttest_group])
     assert all(result.index == df.index)
-

@@ -160,7 +160,7 @@ def prot_abund_correction_sig_only(
             scalar_dict.get(uniprot_id, 0)
             for uniprot_id in cast("pd.Series[str]", pept[uniprot_col])
         ]
-        pept[pairwise_ttest_group.treat_samples] = pept[
+        pept[pairwise_ttest_group.treat_samples] = pept[  # type: ignore
             pairwise_ttest_group.treat_samples
         ].subtract(
             cast("pd.Series[float]", pept[f"{pairwise_ttest_group.label()}_scalar"]),
@@ -202,21 +202,18 @@ def prot_abund_correction_matched(
     if non_tt_cols is None:
         non_tt_cols = columns_to_correct
     for uniprot_id in pept[uniprot_col].unique():
-        pept_sub = cast(
-            pd.DataFrame, pept[pept[uniprot_col] == uniprot_id].copy())
+        pept_sub = cast(pd.DataFrame, pept[pept[uniprot_col] == uniprot_id].copy())
         if uniprot_id in prot[uniprot_col].unique():
             prot_abund_row = cast(
                 "pd.Series[float]", prot.loc[uniprot_id, columns_to_correct]
             )
             prot_abund = prot_abund_row.astype(float).fillna(0)
-            prot_abund_median = cast(
-                float, prot_abund_row[non_tt_cols].median())  # type: ignore
+            prot_abund_median = cast(float, prot_abund_row[non_tt_cols].median())  # type: ignore
             if not np.isnan(prot_abund_median):
-                prot_abund_scale = cast(
-                    "pd.Series[float]",
-                    (~prot_abund_row.isna()).astype(float) * prot_abund_median,
-                )
-                pept_sub[columns_to_correct] = (
+                prot_abund_scale = (~prot_abund_row.isna()).astype(
+                    float
+                ) * prot_abund_median
+                pept_sub[columns_to_correct] = (  # type: ignore
                     pept_sub[columns_to_correct]
                     .sub(prot_abund, axis=1)
                     .add(prot_abund_scale, axis=1)
@@ -311,7 +308,7 @@ def fasta_to_sequence_map(fasta_path: str) -> dict[str, str]:
                         and values are the corresponding amino acid sequences.
     """
     sequences: dict[str, str] = {}
-    with open(fasta_path, 'r') as fasta_data:
+    with open(fasta_path, "r") as fasta_data:
         for record in cast(Iterable[SeqRecord], SeqIO.parse(fasta_data, "fasta")):
             seq_id = cast(str, record.id)
             seq_str = str(cast(Seq, record.seq))
@@ -346,7 +343,10 @@ def count_theoretical_peptides(
     # Standard tryptic cleavage rule: after K or R, but not if followed by P
     if protease.lower() == "trypsin":
         cleavage_sites = {
-            i + 1 for i, aa in enumerate(sequence[:-1]) if aa in "KR" and sequence[i + 1] != "P"}
+            i + 1
+            for i, aa in enumerate(sequence[:-1])
+            if aa in "KR" and sequence[i + 1] != "P"
+        }
     else:
         raise ValueError("Unsupported protease: {}".format(protease))
     cleavage_sites.add(0)
@@ -422,20 +422,28 @@ def calculate_ibaq(
     elif id_matching.lower() == "startswith":
         protein_sequences: pd.Series[str | None] = ibaq_df[prot_id_col].apply(  # type: ignore
             lambda prot_id: next(  # pyright: ignore[reportUnknownLambdaType]
-                (seq for header, seq in sequences.items() if header.startswith(prot_id)), None # type: ignore
+                (
+                    seq
+                    for header, seq in sequences.items()
+                    if header.startswith(prot_id)  # type: ignore
+                ),
+                None,
             )
         )
     else:
         raise ValueError(f"Unsupported id_matching value: {id_matching}")
 
     # Calculate the number of theoretical peptides for each protein
-    theoretical_peptides: pd.Series[float] = protein_sequences.apply( # type: ignore
-            lambda seq: count_theoretical_peptides(  # pyright: ignore[reportUnknownLambdaType]
-                str(seq), min_pep_len, max_pep_len, missed_cleavages  # pyright: ignore[reportUnknownArgumentType]
-            )
-            if pd.notna(seq)  # pyright: ignore[reportUnknownArgumentType]
-            else 0
+    theoretical_peptides: pd.Series[float] = protein_sequences.apply(
+        lambda seq: count_theoretical_peptides(  # pyright: ignore[reportUnknownLambdaType]
+            str(seq),  # type: ignore
+            min_pep_len,
+            max_pep_len,
+            missed_cleavages,
         )
+        if pd.notna(seq)  # pyright: ignore[reportUnknownArgumentType]
+        else 0
+    )
 
     # Avoid division by zero for proteins with no theoretical peptides
     theoretical_peptides = theoretical_peptides.replace(0, np.nan)
@@ -443,10 +451,12 @@ def calculate_ibaq(
     # Calculate iBAQ for each intensity column
     for col in intensity_cols:
         if log2scale_input:
-            ibaq_df[col] = ibaq_df[col].apply(lambda x: 2 ** x if pd.notna(x) else x)  # type: ignore
+            ibaq_df[col] = ibaq_df[col].apply(lambda x: 2**x if pd.notna(x) else x)  # type: ignore
         ibaq_df[col] = ibaq_df[col] / theoretical_peptides
         if log2scale_input:
-            ibaq_df[col] = ibaq_df[col].apply(lambda x: np.log2(x) if pd.notna(x) else x)  # type: ignore
+            ibaq_df[col] = ibaq_df[col].apply(
+                lambda x: np.log2(x) if pd.notna(x) else x  # type: ignore
+            )
 
     return ibaq_df
 
@@ -480,4 +490,14 @@ def calculate_ibaq_from_fasta(
         pd.DataFrame: A DataFrame with iBAQ values for each sample.
     """
     sequences = fasta_to_sequence_map(fasta_file)
-    return calculate_ibaq(prot_df, intensity_cols, sequences, prot_id_col=prot_id_col, min_pep_len=min_pep_len, max_pep_len=max_pep_len, missed_cleavages=missed_cleavages, id_matching=id_matching, log2scale_input=log2scale_input)
+    return calculate_ibaq(
+        prot_df,
+        intensity_cols,
+        sequences,
+        prot_id_col=prot_id_col,
+        min_pep_len=min_pep_len,
+        max_pep_len=max_pep_len,
+        missed_cleavages=missed_cleavages,
+        id_matching=id_matching,
+        log2scale_input=log2scale_input,
+    )
