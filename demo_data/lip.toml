@@ -69,7 +69,7 @@ abundance_correction = true # Adjust quantification of peptides by protein abund
 # changes. Otherwise, we must rely on a statistical test of the population
 # averages (with threshhold given by `abudnance_unpaired_sig_thr`)
 abundance_correction_paired_samples = true 
-abundance_unpaired_sig_thr = 0.05 
+abundance_correction_unpaired_sig_thr = 0.05 
 
 # Normaly the batch correction is only for TMT data. If this is a TMT
 # experiment, then batch correction is likely needed. User must provide a list
