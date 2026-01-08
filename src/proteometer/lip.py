@@ -685,7 +685,7 @@ def rollup_single_protein_to_lytic_site(
     )
 
     protein_lys_grouped.sort_values(by=[pos_col], inplace=True)
-    protein_lys_grouped.index = protein_lys_grouped[id_col].to_list()  # type: ignore
+    protein_lys_grouped.index = protein_lys_grouped[id_col].to_list()
     return protein_lys_grouped
 
 
@@ -752,7 +752,7 @@ def delta_prok_site(
     prok = site_df[site_df[site_type_col] == "ProK"]
     pept_dfs = dict(list(peptide_df.groupby(pept_protein_col)))
     df_rows = []
-    for _, row in prok.iterrows():  # type: ignore
+    for _, row in prok.iterrows():
         pept_df = pept_dfs[
             row[site_protein_col]
         ]  # peptides for protein this site (row) is in

@@ -104,7 +104,7 @@ def combine_multi_ptms(
             prot[par.experiment_col] = "PTM"
             prot[par.residue_col] = "GLB"
             prot[par.site_col] = (
-                prot[par.uniprot_col] + par.id_separator + prot[par.residue_col]
+                prot[par.uniprot_col] + par.id_separator + prot[par.residue_col]  # type: ignore
             )
             proteomics_list.append(prot)
         elif key in par.ptm_names:

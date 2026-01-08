@@ -63,7 +63,7 @@ def generate_index(
     # so this would require fixing this elsewhere too.
     # In the short term, it is easiest to just ignore
     # this since it works.
-    df.index = df[id_col].to_list()  # type: ignore
+    df.index = df[id_col].to_list()
     return df
 
 

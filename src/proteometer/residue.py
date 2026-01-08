@@ -15,7 +15,7 @@ def get_res_names(residues: Iterable[str]) -> list[list[str]]:
 
     Returns:
         list[list[str]]: A list of lists, where each inner list contains the extracted
-            residue names from the corresponding input string. 
+            residue names from the corresponding input string.
     """
     res_names = [
         [res for res in re.findall(r"[A-Z]\d+[a-z\-]*", residue)]
@@ -36,8 +36,7 @@ def get_res_pos(residues: Iterable[str]) -> list[list[int]]:
             residue positions from the corresponding input string.
     """
     res_pos = [
-        [int(res) for res in re.findall(r"\d+", residue)]
-        for residue in residues
+        [int(res) for res in re.findall(r"\d+", residue)] for residue in residues
     ]
     return res_pos
 
@@ -82,8 +81,8 @@ def count_site_number_with_global_proteomics(
     Returns:
         pd.DataFrame: DataFrame with the site number added.
     """
-    site_number = df.groupby(uniprot_col).size() - 1  # type: ignore
+    site_number = df.groupby(uniprot_col).size() - 1
     site_number.name = site_number_col
-    for uniprot in site_number.index:  # type: ignore
+    for uniprot in site_number.index:
         df.loc[df[id_col] == uniprot, site_number_col] = site_number[uniprot]
     return df

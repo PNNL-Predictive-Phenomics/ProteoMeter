@@ -7,8 +7,8 @@ import pandas as pd
 
 from proteometer.params import Params
 from proteometer.stats import TTestGroup
-
 from proteometer.utils import flatten
+
 
 def group_columns(
     metadata: pd.DataFrame, par: Params
@@ -33,7 +33,7 @@ def group_columns(
     control_ind: pd.Series[bool] = cond_column == par.metadata_control_condition
     treat_ind = cond_column == par.metadata_treatment_condition
     control_groups: list[str] = list(
-        metadata[control_ind][par.metadata_group_col].unique()  # type: ignore
+        metadata[control_ind][par.metadata_group_col].unique()
     )
 
     control_group_cols: list[list[str]] = [
@@ -42,9 +42,7 @@ def group_columns(
         ].to_list()
         for group in control_groups
     ]
-    treat_groups: list[str] = list(
-        metadata[treat_ind][par.metadata_group_col].unique()  # type: ignore
-    )
+    treat_groups: list[str] = list(metadata[treat_ind][par.metadata_group_col].unique())
     treat_group_cols: list[list[str]] = [
         metadata[metadata[par.metadata_group_col] == group][
             par.metadata_sample_col
@@ -87,7 +85,7 @@ def anova_columns(metadata: pd.DataFrame, par: Params) -> list[str]:
 
     condition_column: pd.Series[str] = metadata[par.metadata_condition_col].astype(str)
     control_ind: pd.Series[bool] = condition_column == par.pooled_chanel_condition
-    tt_groups = list(metadata[control_ind][par.metadata_group_col].unique())  # type: ignore
+    tt_groups = list(metadata[control_ind][par.metadata_group_col].unique())
 
     tt_group_cols: list[list[str]] = [
         metadata[metadata[par.metadata_group_col] == group][
@@ -119,10 +117,10 @@ def t_test_groups(metadata: pd.DataFrame, par: Params) -> list[TTestGroup]:
     """
     pairwise_ttest_groups: list[TTestGroup] = []
     for ctrl_group, treat_group in par.ttest_pairs:
-        control_samples = metadata[metadata[par.metadata_group_col] == ctrl_group][  # type: ignore
+        control_samples = metadata[metadata[par.metadata_group_col] == ctrl_group][
             par.metadata_sample_col
         ].to_list()
-        treat_samples = metadata[metadata[par.metadata_group_col] == treat_group][  # type: ignore
+        treat_samples = metadata[metadata[par.metadata_group_col] == treat_group][
             par.metadata_sample_col
         ].to_list()
         t_test_group = TTestGroup(
