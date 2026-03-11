@@ -7,41 +7,17 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 import seaborn as sns
+from matplotlib.cm import ScalarMappable
+from matplotlib.colors import Normalize
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from matplotlib.axes import Axes
     from matplotlib.markers import MarkerStyle
     from numpy import float64
-
-
-# fig, axs = plt.subplots(1, 3, figsize=(12, 4))
-# xscale = lip_prok[comparisons].abs().max(axis=None) * 1.1
-# yscale = -np.log10(lip_prok[[c + sig_type for c in comparisons]].min().min()) * 1.1
-
-# for ax, comparison in zip(axs, comparisons):
-#     sig_mult = lip_prok[f"{comparison}"] * (
-#         lip_prok[f"{comparison}{sig_type}"] < sig_thresh
-#     )
-
-#     p = ax.scatter(
-#         lip_prok[f"{comparison}"],
-#         -np.log10(lip_prok[f"{comparison}{sig_type}"]),
-#         c=sig_mult,
-#         cmap="coolwarm",
-#         vmax=xscale / 2,
-#         vmin=-xscale / 2,
-#         s=10,
-#     )
-#     ax.axhline(-np.log10(sig_thresh), color="black", linestyle="--", alpha=0.5)
-#     ax.set_xlim(-xscale, xscale)
-#     ax.set_ylim(0, yscale)
-#     ax.grid()
-#     ax.set_xlabel(f"Log2FC {comparison}")
-#     ax.set_ylabel("-Log10 adj-p-Value")
-# fig.suptitle("ProK Sites", fontsize=16, y=1.01)
-# plt.show()
 
 
 def volcano_plot(
@@ -207,3 +183,81 @@ def correlation_plot(
     ax.set_xticklabels(int_cols, rotation=90)
     ax.set_yticklabels(int_cols, rotation=0)
     return ax
+
+
+def plot_peptide_coverage(
+    intensities: Iterable[float],
+    pept_start_positions: Iterable[int],
+    pept_end_positions: Iterable[int],
+    sequence: str,
+    linewidth: float = 5,
+    n_ticklabels: int | None = 10,
+    set_xlim_to_sequence: bool = True,
+    ax: Axes | None = None,
+) -> tuple[Axes, ScalarMappable]:
+    """Plots the coverage of peptides over a protein sequence.
+
+    Args:
+        intensities (Iterable[float]): An iterable of intensity values corresponding to each peptide. (Determines peptide color)
+        pept_start_positions (Iterable[int]): An iterable of start positions of peptides (1-indexed).
+        pept_end_positions (Iterable[int]): An iterable of end positions of peptides (1-indexed).
+        sequence (str): The full protein sequence.
+        linewidth (float, optional): The width of the lines representing peptides. Defaults to 5.
+        n_ticklabels (int | None, optional): Number of tick labels to display on the x-axis. If `None`, tick labels are not altered. Defaults to 10.
+        set_xlim_to_sequence (bool, optional): Whether to set the x-axis limits to the sequence length. Defaults to True.
+            If False, x-axis limits are not altered (useful if you want to overlay this plot on another plot with shared x-axis).
+        ax (Axes | None, optional): Matplotlib Axes object to draw the peptide coverage plot on.
+            If `None`, a new Axes object is created. Defaults to `None`.
+
+    Returns:
+        tuple[Axes, ScalarMappable]: A tuple containing the matplotlib Axes object with the plotted peptide coverage
+            and a ScalarMappable for the color mapping (e.g., you can create a colorbar via `fig.colorbar(scalar_mappable, ax=ax)`).
+
+    """
+    if ax is None:
+        _, ax = plt.subplots()
+
+    cmap = plt.get_cmap("viridis")
+    intensity_array = np.array(intensities)
+
+    depths = np.zeros(len(sequence))
+    pnorm = Normalize(vmin=np.nanmin(intensity_array), vmax=np.nanmax(intensity_array))
+    for start, end, intensity in zip(
+        pept_start_positions, pept_end_positions, intensities, strict=True
+    ):
+        if start < 0 or end > len(sequence):
+            raise ValueError(
+                f"Peptide positions out of bounds: start={start}, end={end}, sequence length={len(sequence)}"
+            )
+        if start >= end:
+            raise ValueError(
+                f"Peptide start position must be less than end position: start={start}, end={end}"
+            )
+        if np.isnan(intensity):
+            continue
+
+        cur_depth = depths[start:end].max()
+        depths[start:end] += 1
+        ax.hlines(
+            cur_depth + 1,
+            start - 0.5,
+            end + 0.5,
+            color=cmap(pnorm(intensity)),
+            linewidth=linewidth,
+        )
+
+    if n_ticklabels == 0:
+        ax.set_xticks([])
+    elif n_ticklabels:
+        tick_interval = np.ceil(len(sequence) / n_ticklabels).astype("int")
+        xtick_positions = list(range(1, len(sequence) + 1, tick_interval))
+        xtick_labels = [
+            f"{s}{i}" for s, i in zip(sequence[::tick_interval], xtick_positions)
+        ]
+        ax.set_xticks(xtick_positions)
+        ax.set_xticklabels(xtick_labels, rotation=90)
+
+    if set_xlim_to_sequence:
+        ax.set_xlim(1, len(sequence))
+
+    return ax, ScalarMappable(cmap=cmap, norm=pnorm)
