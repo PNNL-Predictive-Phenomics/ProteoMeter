@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 def plot_barcode(
     pal: Collection[ColorType],
-    ticklabel: list[str] | None = None,
+    ticklabels: list[str] | None = None,
     barcode_name: str | None = None,
     ax: Axes | None = None,
     size: tuple[int, int] = (10, 2),
@@ -30,7 +30,7 @@ def plot_barcode(
 
     Args:
         pal (Collection[ColorType]): A collection of colors for the barcode.
-        ticklabel (list[str] | None, optional): Labels for the ticks on the x-axis. Defaults to None.
+        ticklabels (list[str] | None, optional): Labels for the ticks on the x-axis. Defaults to None.
         barcode_name (str | None, optional): Name label for the barcode on the y-axis. Defaults to None.
         ax (Axes | None, optional): Matplotlib Axes object to draw the barcode on. If None, a new Axes is created. Defaults to None.
         size (tuple[int, int], optional): Size of the figure (width, height). Defaults to (10, 2).
@@ -50,10 +50,10 @@ def plot_barcode(
     ax.set_yticks([0])
     if barcode_name:
         ax.set_yticklabels([barcode_name])
-    if ticklabel:
-        tick_interval = np.ceil(n / len(ticklabel)).astype("int")
+    if ticklabels:
+        tick_interval = np.ceil(n / len(ticklabels)).astype("int")
         ax.set_xticks(np.arange(0, n, tick_interval))  # type: ignore
-        ax.set_xticklabels(ticklabel)
+        ax.set_xticklabels(ticklabels)
     return ax
 
 
@@ -194,7 +194,7 @@ def plot_pept_barcode(
     plot_barcode(
         tryptic_bar_code,
         barcode_name=protein_id,
-        ticklabel=[
+        ticklabels=[
             fc_diff_names[j]
             for j in cast(
                 "Iterable[int]",
@@ -380,7 +380,7 @@ def plot_site_barcode(
     plot_barcode(
         trypsin_bar_code,
         barcode_name=uniprot_id + "_trypsin_site",
-        ticklabel=[
+        ticklabels=[
             fc_diff_names[j]
             for j in cast(
                 "Iterable[int]",
@@ -393,7 +393,7 @@ def plot_site_barcode(
     plot_barcode(
         prok_bar_code,
         barcode_name=uniprot_id + "_prok_site",
-        ticklabel=[
+        ticklabels=[
             fc_diff_names[j]
             for j in cast(
                 "Iterable[int]",
