@@ -104,6 +104,7 @@ def biplot(
     group_cols: list[list[str]],
     ax: Axes | None = None,
     use_sample_names: bool = False,
+    title: str = "PCA Biplot",
 ) -> Axes:
     """Plots a biplot of the data.
 
@@ -115,7 +116,8 @@ def biplot(
             If `None`, a new Axes object is created. Defaults to `None`.
         use_sample_names (bool, optional): If True, uses sample names for annotations.
             Defaults to `False` with index numbers and legend to label points.
-
+        title (str, optional): Title of the biplot. Defaults to "PCA Biplot".
+        
     Returns:
         Axes: The matplotlib Axes object with the plotted biplot.
     """
@@ -179,6 +181,7 @@ def biplot(
     ax.set_ylim(-1, 1)
     ax.set_xlabel(f"PC1 ({v1:.2%})")
     ax.set_ylabel(f"PC2 ({v2:.2%})")
+    ax.set_title(title)
     ax.grid()
     return ax
 
