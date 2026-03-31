@@ -193,6 +193,7 @@ def plot_peptide_coverage(
     linewidth: float = 5,
     n_ticklabels: int | None = 10,
     set_xlim_to_sequence: bool = True,
+    zero_center_color: bool = False,
     ax: Axes | None = None,
 ) -> tuple[Axes, ScalarMappable]:
     """Plots the coverage of peptides over a protein sequence.
@@ -206,6 +207,7 @@ def plot_peptide_coverage(
         n_ticklabels (int | None, optional): Number of tick labels to display on the x-axis. If `None`, tick labels are not altered. Defaults to 10.
         set_xlim_to_sequence (bool, optional): Whether to set the x-axis limits to the sequence length. Defaults to True.
             If False, x-axis limits are not altered (useful if you want to overlay this plot on another plot with shared x-axis).
+        zero_center_color (bool, optional): Whether to center the color scale at zero and use a diverging colormap. Defaults to False.
         ax (Axes | None, optional): Matplotlib Axes object to draw the peptide coverage plot on.
             If `None`, a new Axes object is created. Defaults to `None`.
 
@@ -217,11 +219,18 @@ def plot_peptide_coverage(
     if ax is None:
         _, ax = plt.subplots()
 
-    cmap = plt.get_cmap("viridis")
     intensity_array = np.array(intensities)
 
     depths = np.zeros(len(sequence))
-    pnorm = Normalize(vmin=np.nanmin(intensity_array), vmax=np.nanmax(intensity_array))
+    if zero_center_color:
+        cmap = plt.get_cmap("berlin")
+        max_abs_intensity = np.nanmax(np.abs(intensity_array))
+        pnorm = Normalize(vmin=-max_abs_intensity, vmax=max_abs_intensity)
+    else:
+        cmap = plt.get_cmap("viridis")
+        pnorm = Normalize(
+            vmin=np.nanmin(intensity_array), vmax=np.nanmax(intensity_array)
+        )
     for start, end, intensity in zip(
         pept_start_positions, pept_end_positions, intensities, strict=True
     ):
