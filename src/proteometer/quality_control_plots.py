@@ -194,6 +194,7 @@ def plot_peptide_coverage(
     n_ticklabels: int | None = 10,
     set_xlim_to_sequence: bool = True,
     zero_center_color: bool = False,
+    color_scale_range: tuple[float, float] | None = None,
     ax: Axes | None = None,
 ) -> tuple[Axes, ScalarMappable]:
     """Plots the coverage of peptides over a protein sequence.
@@ -208,6 +209,9 @@ def plot_peptide_coverage(
         set_xlim_to_sequence (bool, optional): Whether to set the x-axis limits to the sequence length. Defaults to True.
             If False, x-axis limits are not altered (useful if you want to overlay this plot on another plot with shared x-axis).
         zero_center_color (bool, optional): Whether to center the color scale at zero and use a diverging colormap. Defaults to False.
+        color_scale_range (tuple[float, float] | None, optional): Tuple specifying the (min, max) range for the color scale.
+            If `None`, the range is determined from the data. If `zero_center_color` is True, the range must include both positive and negative values,
+            and the value with larger magnitude is used to set the color scale limits. Defaults to `None`.
         ax (Axes | None, optional): Matplotlib Axes object to draw the peptide coverage plot on.
             If `None`, a new Axes object is created. Defaults to `None`.
 
@@ -225,12 +229,23 @@ def plot_peptide_coverage(
     if zero_center_color:
         cmap = plt.get_cmap("berlin")
         max_abs_intensity = np.nanmax(np.abs(intensity_array))
+        if color_scale_range is not None:
+            if color_scale_range[0] >= 0 or color_scale_range[1] <= 0:
+                raise ValueError(
+                    "color_scale_range must include both positive and negative values when zero_center_color is True."
+                )
+            max_abs_intensity = max(
+                abs(color_scale_range[0]), abs(color_scale_range[1])
+            )
         pnorm = Normalize(vmin=-max_abs_intensity, vmax=max_abs_intensity)
     else:
         cmap = plt.get_cmap("viridis")
-        pnorm = Normalize(
-            vmin=np.nanmin(intensity_array), vmax=np.nanmax(intensity_array)
-        )
+        if color_scale_range is not None:
+            pnorm = Normalize(vmin=color_scale_range[0], vmax=color_scale_range[1])
+        else:
+            pnorm = Normalize(
+                vmin=np.nanmin(intensity_array), vmax=np.nanmax(intensity_array)
+            )
     for start, end, intensity in zip(
         pept_start_positions, pept_end_positions, intensities, strict=True
     ):
