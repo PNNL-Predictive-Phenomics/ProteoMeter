@@ -45,7 +45,7 @@ def get_peptide_start_end_positions_from_sequence(
     start_pos = protein_sequence.find(peptide_stripped)
     if start_pos == -1:
         return None
-    end_pos = start_pos + len(peptide_stripped)
+    end_pos = start_pos + len(peptide_stripped) - 1
     return start_pos + 1, end_pos + 1
 
 
