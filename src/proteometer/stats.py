@@ -286,3 +286,58 @@ def calculate_all_pairwise_scalars(
             prot, pairwise_ttest_group.label(), sig_type, sig_thr
         )
     return prot
+
+
+def aggregate_pept_fdr_to_protein(
+    pept_df: pd.DataFrame,
+    comparisons: list[str],
+    protein_col: str = "Protein",
+    method: str = "fisher",
+):
+    """
+    Aggregates peptide-level FDR to protein-level FDR by taking the minimum adjusted p-value
+    for each protein across all peptides.
+
+    Args:
+        pept_df (pd.DataFrame): DataFrame containing peptide-level data with 'Protein' and
+            adjusted p-value columns for each comparison.
+        comparisons (list[str]): List of comparison names. Each comparison should have an
+            adjusted p-value indicated by a "_adj-p" suffix.
+    Returns:
+        pd.DataFrame: DataFrame with protein-level data, including the minimum adjusted
+            p-values for each comparison.
+    """
+    pept_df_copy = pept_df.copy()
+
+    def combine_pvalues(pvals: pd.Series) -> float:
+        return sp.stats.combine_pvalues(  # type: ignore
+            pvals,  # type: ignore
+            method="fisher",
+            nan_policy="omit",
+        ).pvalue
+
+    if method == "min":
+        protein_df = (
+            pept_df_copy.groupby(protein_col)
+            .agg({f"{comparison}_adj-p": "min" for comparison in comparisons})
+            .reset_index()
+        )
+    elif method == "fisher":
+        protein_df = (
+            pept_df_copy.groupby(protein_col)
+            .agg({f"{comparison}_pval": combine_pvalues for comparison in comparisons})
+            .reset_index()
+        )
+        protein_df = recalculate_adj_pval(protein_df, comparisons)
+    else:
+        raise ValueError(f"Unknown method: {method}")
+
+    protein_df.set_index(protein_col, inplace=True, drop=False)
+
+    # now, assign a log2fc column for each comparison, taking the log2fc from the most significant peptide for each protein
+    for comparison in comparisons:
+        representative = pept_df_copy.groupby(protein_col)[f"{comparison}"].apply(
+            lambda x: x.abs().max()
+        )
+        protein_df[f"{comparison}_log2fc_representative"] = representative
+    return protein_df
