@@ -195,6 +195,8 @@ def plot_peptide_coverage(
     set_xlim_to_sequence: bool = True,
     zero_center_color: bool = False,
     color_scale_range: tuple[float, float] | None = None,
+    color_scale_cmap: str | None = None,
+    bar_padding: float = 0.25,
     ax: Axes | None = None,
 ) -> tuple[Axes, ScalarMappable]:
     """Plots the coverage of peptides over a protein sequence.
@@ -212,6 +214,8 @@ def plot_peptide_coverage(
         color_scale_range (tuple[float, float] | None, optional): Tuple specifying the (min, max) range for the color scale.
             If `None`, the range is determined from the data. If `zero_center_color` is True, the range must include both positive and negative values,
             and the value with larger magnitude is used to set the color scale limits. Defaults to `None`.
+        color_scale_cmap (str | None, optional): Colormap to use for the color scale. If `None`, "berlin" is used for zero-centered and "viridis" for non-zero-centered. Defaults to `None`.
+        bar_padding (float, optional): Padding between bars, must be between 0 and 0.5. Defaults to 0.25. Use 0.5 to have adjacent peptides touch each other, <0.5 for gaps, and >0.5 for overlaps.
         ax (Axes | None, optional): Matplotlib Axes object to draw the peptide coverage plot on.
             If `None`, a new Axes object is created. Defaults to `None`.
 
@@ -220,6 +224,9 @@ def plot_peptide_coverage(
             and a ScalarMappable for the color mapping (e.g., you can create a colorbar via `fig.colorbar(scalar_mappable, ax=ax)`).
 
     """
+    if bar_padding < 0 or bar_padding > 0.5:
+        raise ValueError("bar_padding must be between 0 and 0.5.")
+
     if ax is None:
         _, ax = plt.subplots()
 
@@ -227,7 +234,10 @@ def plot_peptide_coverage(
 
     depths = np.zeros(len(sequence))
     if zero_center_color:
-        cmap = plt.get_cmap("berlin")
+        if color_scale_cmap is not None:
+            cmap = plt.get_cmap(color_scale_cmap)
+        else:
+            cmap = plt.get_cmap("berlin")
         max_abs_intensity = np.nanmax(np.abs(intensity_array))
         if color_scale_range is not None:
             if color_scale_range[0] >= 0 or color_scale_range[1] <= 0:
@@ -239,7 +249,10 @@ def plot_peptide_coverage(
             )
         pnorm = Normalize(vmin=-max_abs_intensity, vmax=max_abs_intensity)
     else:
-        cmap = plt.get_cmap("viridis")
+        if color_scale_cmap is not None:
+            cmap = plt.get_cmap(color_scale_cmap)
+        else:
+            cmap = plt.get_cmap("viridis")
         if color_scale_range is not None:
             pnorm = Normalize(vmin=color_scale_range[0], vmax=color_scale_range[1])
         else:
@@ -253,19 +266,19 @@ def plot_peptide_coverage(
             raise ValueError(
                 f"Peptide positions out of bounds: start={start}, end={end}, sequence length={len(sequence)}"
             )
-        if start >= end:
+        if start > end:
             raise ValueError(
                 f"Peptide start position must be less than end position: start={start}, end={end}"
             )
         if np.isnan(intensity):
             continue
 
-        cur_depth = depths[start:end].max()
-        depths[start:end] += 1
+        cur_depth = depths[start : (end + 1)].max()
+        depths[start : (end + 1)] += 1
         ax.hlines(
             cur_depth + 1,
-            start - 0.5,
-            end + 0.5,
+            start - bar_padding,
+            end + bar_padding,
             color=cmap(pnorm(intensity)),
             linewidth=linewidth,
         )
