@@ -160,7 +160,7 @@ def prot_abund_correction_sig_only(
             scalar_dict.get(uniprot_id, 0)
             for uniprot_id in cast("pd.Series[str]", pept[uniprot_col])
         ]
-        pept[pairwise_ttest_group.treat_samples] = pept[  # type: ignore
+        pept[pairwise_ttest_group.treat_samples] = pept[
             pairwise_ttest_group.treat_samples
         ].subtract(
             cast("pd.Series[float]", pept[f"{pairwise_ttest_group.label()}_scalar"]),
@@ -213,7 +213,7 @@ def prot_abund_correction_matched(
                 prot_abund_scale = (~prot_abund_row.isna()).astype(
                     float
                 ) * prot_abund_median
-                pept_sub[columns_to_correct] = (  # type: ignore
+                pept_sub[columns_to_correct] = (
                     pept_sub[columns_to_correct]
                     .sub(prot_abund, axis=1)
                     .add(prot_abund_scale, axis=1)
@@ -415,13 +415,13 @@ def calculate_ibaq(
         )
     elif id_matching.lower() == "contain" or id_matching.lower() == "contains":
         protein_sequences: pd.Series[str | None] = ibaq_df[prot_id_col].apply(  # type: ignore
-            lambda prot_id: next(  # pyright: ignore[reportUnknownLambdaType]
+            lambda prot_id: next(  # type: ignore
                 (seq for header, seq in sequences.items() if prot_id in header), None
             )
         )
     elif id_matching.lower() == "startswith":
         protein_sequences: pd.Series[str | None] = ibaq_df[prot_id_col].apply(  # type: ignore
-            lambda prot_id: next(  # pyright: ignore[reportUnknownLambdaType]
+            lambda prot_id: next(  # type: ignore
                 (
                     seq
                     for header, seq in sequences.items()
@@ -435,14 +435,16 @@ def calculate_ibaq(
 
     # Calculate the number of theoretical peptides for each protein
     theoretical_peptides: pd.Series[float] = protein_sequences.apply(
-        lambda seq: count_theoretical_peptides(  # pyright: ignore[reportUnknownLambdaType]
-            str(seq),  # type: ignore
-            min_pep_len,
-            max_pep_len,
-            missed_cleavages,
+        lambda seq: (  # type: ignore
+            count_theoretical_peptides(
+                str(seq),  # type: ignore
+                min_pep_len,
+                max_pep_len,
+                missed_cleavages,
+            )
+            if pd.notna(seq)  # pyright: ignore[reportUnknownArgumentType]
+            else 0
         )
-        if pd.notna(seq)  # pyright: ignore[reportUnknownArgumentType]
-        else 0
     )
 
     # Avoid division by zero for proteins with no theoretical peptides
