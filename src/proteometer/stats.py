@@ -71,11 +71,9 @@ def recalculate_adj_pval_proteinwise(
     for comparison in comparisons:
         pcol = f"{comparison}_pval"
         apcol = f"{comparison}_adj-p"
-        ind = ~df[pcol].isna()
-        for protein in df[protein_col].unique():
-            ind_prot = ind & (df[protein_col] == protein)
-            df.loc[ind_prot, apcol] = sp.stats.false_discovery_control(
-                df[ind_prot][pcol].astype(float)  # type: ignore
+        for _protein, prot_df in df.dropna(subset=[pcol]).groupby(protein_col):
+            df.loc[prot_df.index, apcol] = sp.stats.false_discovery_control(
+                prot_df[pcol].astype(float)
             )
         df.loc[
             df[pcol].isna(),
