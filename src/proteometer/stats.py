@@ -97,7 +97,7 @@ def log2_transformation(
         pd.DataFrame: DataFrame with log2-transformed intensity columns.
     """
     ret = df2transform.copy()
-    ret[int_cols] = np.log2(ret[int_cols].replace(0, np.nan))  # type: ignore
+    ret[int_cols] = np.log2(ret[int_cols].replace(0, np.nan))
     return ret
 
 

@@ -379,12 +379,12 @@ def _annotate_global_prot(global_prot: pd.DataFrame, par: Params) -> pd.DataFram
     global_prot[par.experiment_col] = "LiP"
     global_prot[par.residue_col] = "GLB"
     global_prot[par.site_col] = (
-        global_prot[par.uniprot_col]  # type: ignore
+        global_prot[par.uniprot_col]
         + par.id_separator
         + global_prot[par.residue_col].astype(str)
     )
     global_prot[par.protein_col] = global_prot[par.protein_col].map(
-        lambda x: x.split("|")[-1]
+        lambda x: x.split("|")[-1]  # type: ignore
     )
 
     return global_prot
@@ -403,9 +403,9 @@ def _lip_site(lip_site: pd.DataFrame, par: Params) -> pd.DataFrame:
     lip_site[par.experiment_col] = "LiP"
     lip_site[par.residue_col] = lip_site[par.site_col]
     lip_site[par.site_col] = (
-        lip_site[par.uniprot_col] + par.id_separator + lip_site[par.site_col]  # type: ignore
+        lip_site[par.uniprot_col] + par.id_separator + lip_site[par.site_col]
     )
     lip_site[par.protein_col] = lip_site[par.protein_col].map(
-        lambda x: x.split("|")[-1]
+        lambda x: x.split("|")[-1]  # type: ignore
     )
     return lip_site
