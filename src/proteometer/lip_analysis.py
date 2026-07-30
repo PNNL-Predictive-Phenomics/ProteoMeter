@@ -291,6 +291,78 @@ def lip_site_statistics(
     return lip_site
 
 
+def lip_solvent_accessibility_scores(
+    lip_pept: pd.DataFrame,
+    global_pept: pd.DataFrame,
+    protein_column_name: str = "Protein",
+    peptide_column_name: str = "Peptide",
+    trypticity_column_name: str = "pept_type",
+) -> pd.Series:
+    """
+    Calculates the solvent accessibility score for each protein based on the
+    number of semi- or non-tryptic peptides in the double-digested samples and the
+    number of fully tryptic peptides in the trypsin-only samples.
+
+    Args:
+        lip_pept (pd.DataFrame): The double-digested peptide data frame.
+        global_pept (pd.DataFrame): The trypsin-only peptide data frame.
+        protein_column_name (str): The name of the column containing the protein IDs. Must be the same in both data frames.
+        peptide_column_name (str): The name of the column containing the peptide sequences. Must be the same in both data frames.
+        trypticity_column_name (str): The name of the column containing the trypticity information for the peptides. Only required in the `global_pept` data frame.
+
+    Returns:
+        pd.Series: A series containing the solvent accessibility score for each protein, indexed by protein ID.
+    """
+    semi_tryptic_counts = (
+        lip_pept[lip_pept[trypticity_column_name] != "Tryptic"]
+        .groupby(protein_column_name)[peptide_column_name]
+        .nunique()
+    )
+    fully_tryptic_counts = (
+        global_pept[global_pept[trypticity_column_name] == "Tryptic"]
+        .groupby(protein_column_name)[peptide_column_name]
+        .nunique()
+    )
+    solvent_accessibility_score = semi_tryptic_counts / fully_tryptic_counts
+    return solvent_accessibility_score
+
+
+def lip_peptide_perturbation_scores(
+    lip_pept: pd.DataFrame,
+    protein_solvent_accessibility_scores: pd.Series,
+    fold_change_column_name: str,
+    protein_column_name: str = "Protein",
+) -> pd.Series:
+    """
+    Calculates the LiP perturbation score from Sarkar et al. 2025
+    (https://doi.org/10.1021/acs.jproteome.5c00400) for each peptide. This is
+    calculated as the log2 fold change in peptide intensity multiplied by the
+    solvent accessibility score for the protein. The solvent accessibility score
+    is the ratio of the number of semi- or non-tryptic peptides in the double-digested
+    samples to the number of fully tryptic peptides in the trypsin-only samples. In
+    Sarkar et al. 2025, a protein perturbation score is calculated as the sum of
+    the perturbation scores of all tryptic peptides mapping to a protein. Here, we
+    calculate it at the per-peptide level. The resulting scores can be aggregated
+    as needed.
+
+    Args:
+        lip_pept (pd.DataFrame): The double-digested peptide data frame with
+            log2 fold changes calculated.
+        protein_solvent_accessibility_scores (pd.Series): The solvent accessibility scores for each protein.
+        protein_column_name (str): The name of the column containing the protein IDs. Must be the same in both data frames.
+        fold_change_column_name (str): The name of the column containing the log2 fold change values for the peptides. Only required in the `lip_pept` data frame.
+
+    Returns:
+        pd.Series: A series containing the LiP perturbation score for each peptide, indexed by the same index as `lip_pept`.
+    """
+    lip_pept = lip_pept.copy()
+    solvent_scores = lip_pept[protein_column_name].map(
+        protein_solvent_accessibility_scores
+    )
+
+    return lip_pept[fold_change_column_name] * solvent_scores
+
+
 def _annotate_global_prot(global_prot: pd.DataFrame, par: Params) -> pd.DataFrame:
     """
     Annotates the global protein data frame with additional columns for analysis.
