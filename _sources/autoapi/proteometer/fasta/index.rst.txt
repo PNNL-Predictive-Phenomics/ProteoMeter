@@ -1,0 +1,62 @@
+proteometer.fasta
+=================
+
+.. py:module:: proteometer.fasta
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   proteometer.fasta.get_sequences_from_fasta
+   proteometer.fasta.get_peptide_start_end_positions_from_sequence
+   proteometer.fasta.get_peptide_start_end_positions_from_fasta
+
+
+Module Contents
+---------------
+
+.. py:function:: get_sequences_from_fasta(fasta_file: str) -> list[Bio.SeqRecord.SeqRecord]
+
+   Parses a FASTA file and returns a list of sequence records.
+
+   :param fasta_file: Path to the FASTA file containing the sequences.
+   :type fasta_file: str
+
+   :returns: A list of SeqRecord objects representing the parsed sequences.
+   :rtype: list[SeqRecord]
+
+
+.. py:function:: get_peptide_start_end_positions_from_sequence(peptide: str, protein_sequence: str) -> tuple[int, int] | None
+
+   Finds the first start and end positions of a peptide within a protein sequence (1-indexed).
+
+   For example, BCD in ABCDEFG returns (2, 4).
+
+   :param peptide: The peptide sequence to search for. Can contain non-alphabetic characters which will be stripped.
+   :type peptide: str
+   :param protein_sequence: The full protein sequence in which to search for the peptide.
+   :type protein_sequence: str
+
+   :returns: A tuple of peptide start and end positions, or None if the peptide is not in the sequence.
+   :rtype: tuple[int, int] | None
+
+
+.. py:function:: get_peptide_start_end_positions_from_fasta(peptides: collections.abc.Iterable[str], protein_names: collections.abc.Iterable[str], fasta_file: str) -> tuple[list[int | None], list[int | None]]
+
+   Extracts the start and end positions of peptides from a FASTA file (1-indexed).
+
+   :param peptides: An iterable of peptide sequences to search for.
+                    Can contain non-alphabetic characters which will be stripped.
+   :type peptides: Iterable[str]
+   :param protein_names: An iterable of protein names corresponding to each peptide.
+                         The protein name should match the identifier in the FASTA file (up to the first `|` character).
+   :type protein_names: Iterable[str]
+   :param fasta_file: Path to the FASTA file containing the protein sequences.
+   :type fasta_file: str
+
+   :returns: Two lists containing the start and end positions of peptides, or None if not found.
+   :rtype: tuple[list[int | None], list[int | None]]
+
+

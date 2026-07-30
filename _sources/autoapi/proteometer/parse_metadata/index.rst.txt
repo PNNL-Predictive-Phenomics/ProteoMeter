@@ -1,0 +1,89 @@
+proteometer.parse_metadata
+==========================
+
+.. py:module:: proteometer.parse_metadata
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   proteometer.parse_metadata.group_columns
+   proteometer.parse_metadata.int_columns
+   proteometer.parse_metadata.anova_columns
+   proteometer.parse_metadata.t_test_groups
+
+
+Module Contents
+---------------
+
+.. py:function:: group_columns(metadata: pandas.DataFrame, par: proteometer.params.Params) -> tuple[list[list[str]], list[str]]
+
+   Generate the control and treatment group columns from the metadata.
+
+   :param metadata: The metadata DataFrame with column names specified in `par`.
+   :type metadata: pd.DataFrame
+   :param par: The parameters object with the following attributes:
+               - metadata_group_col: Column name for group.
+               - metadata_sample_col: Column name for sample.
+               - metadata_condition_col: Column name for condition.
+               - metadata_control_condition: Control condition name.
+   :type par: Params
+
+   :returns:
+
+             A tuple with the control and treatment
+                 group information. The first element is a list of lists, where each
+                 inner list contains the sample columns for each group. The second element
+                 is a list of group names. Control groups are first, followed by treatment groups.
+   :rtype: tuple[list[list[str]], list[str]]
+
+
+.. py:function:: int_columns(metadata: pandas.DataFrame, par: proteometer.params.Params) -> list[str]
+
+   Return a list of all the intensity columns in the metadata.
+
+   :param metadata: The metadata DataFrame with column names specified in `par`.
+   :type metadata: pd.DataFrame
+   :param par: The parameters object with the following attributes:
+               - metadata_sample_col: Column name for sample.
+   :type par: Params
+
+   :returns: A list of all the intensity columns in the metadata.
+   :rtype: list[str]
+
+
+.. py:function:: anova_columns(metadata: pandas.DataFrame, par: proteometer.params.Params) -> list[str]
+
+   Return a list of columns for ANOVA analysis excluding pooled channel samples.
+
+   :param metadata: The metadata DataFrame with column names specified in `par`.
+   :type metadata: pd.DataFrame
+   :param par: The parameters object with attributes:
+               - metadata_condition_col: Column name for condition.
+               - pooled_chanel_condition: Condition name for pooled channel.
+               - metadata_group_col: Column name for group.
+               - metadata_sample_col: Column name for sample.
+   :type par: Params
+
+   :returns: A list of sample columns excluding those in pooled channel groups.
+   :rtype: list[str]
+
+
+.. py:function:: t_test_groups(metadata: pandas.DataFrame, par: proteometer.params.Params) -> list[proteometer.stats.TTestGroup]
+
+   Generate the user-defined pairwise t-test groups from the metadata.
+
+   :param metadata: The metadata DataFrame with column names specified in `par`.
+   :type metadata: pd.DataFrame
+   :param par: The parameters object with the following attributes:
+               - metadata_group_col: Column name for group.
+               - metadata_sample_col: Column name for sample.
+               - ttest_pairs: List of tuples containing the user-defined control and treatment group pairs.
+   :type par: Params
+
+   :returns: A list of TTestGroup objects with the user-defined pairwise t-test groups.
+   :rtype: list[TTestGroup]
+
+

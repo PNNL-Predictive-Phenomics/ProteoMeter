@@ -1,0 +1,122 @@
+proteometer.quality_control_plots
+=================================
+
+.. py:module:: proteometer.quality_control_plots
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   proteometer.quality_control_plots.volcano_plot
+   proteometer.quality_control_plots.biplot
+   proteometer.quality_control_plots.correlation_plot
+   proteometer.quality_control_plots.plot_peptide_coverage
+
+
+Module Contents
+---------------
+
+.. py:function:: volcano_plot(df: pandas.DataFrame, comparison: str, ax: matplotlib.axes.Axes | None = None, sig_type: str = 'adj-p', sig_thresh: float = 0.1, max_color_value: float | None = None) -> matplotlib.axes.Axes
+
+   Plots a volcano plot of the data.
+
+   :param df: DataFrame containing the data.
+   :type df: pd.DataFrame
+   :param comparison: The comparison to plot.
+   :type comparison: str
+   :param ax: Matplotlib Axes object to draw the volcano plot on.
+              If `None`, a new Axes object is created. Defaults to `None`.
+   :type ax: Axes | None, optional
+   :param sig_type: The type of significance to use. Defaults to "adj-p".
+   :type sig_type: str, optional
+   :param sig_thresh: The significance threshold to use. Defaults to 0.1.
+   :type sig_thresh: float, optional
+   :param max_color_value: Value at which the color scale should stop (symmetrical about zero).
+                           If None, the maximum absolute value in the data is used.
+   :type max_color_value: float | None, optional
+
+   :returns: The matplotlib Axes object with the plotted volcano plot.
+   :rtype: Axes
+
+
+.. py:function:: biplot(df: pandas.DataFrame, int_cols: list[str], group_cols: list[list[str]], ax: matplotlib.axes.Axes | None = None, use_sample_names: bool = False, title: str = 'PCA Biplot') -> matplotlib.axes.Axes
+
+   Plots a biplot of the data.
+
+   :param df: DataFrame containing the data.
+   :type df: pd.DataFrame
+   :param int_cols: List of columns to plot.
+   :type int_cols: list[str]
+   :param group_cols: List of lists of columns to group by.
+   :type group_cols: list[list[str]]
+   :param ax: Matplotlib Axes object to draw the biplot on.
+              If `None`, a new Axes object is created. Defaults to `None`.
+   :type ax: Axes | None, optional
+   :param use_sample_names: If True, uses sample names for annotations.
+                            Defaults to `False` with index numbers and legend to label points.
+   :type use_sample_names: bool, optional
+   :param title: Title of the biplot. Defaults to "PCA Biplot".
+   :type title: str, optional
+
+   :returns: The matplotlib Axes object with the plotted biplot.
+   :rtype: Axes
+
+
+.. py:function:: correlation_plot(df: pandas.DataFrame, int_cols: list[str], ax: matplotlib.axes.Axes | None = None) -> matplotlib.axes.Axes
+
+   Plots a correlation heatmap of the data.
+
+   :param df: DataFrame containing the data.
+   :type df: pd.DataFrame
+   :param int_cols: List of columns to plot.
+   :type int_cols: list[str]
+   :param ax: Matplotlib Axes object to draw the correlation heatmap on.
+              If `None`, a new Axes object is created. Defaults to `None`.
+   :type ax: Axes | None, optional
+
+   :returns: The matplotlib Axes object with the plotted correlation heatmap.
+   :rtype: Axes
+
+
+.. py:function:: plot_peptide_coverage(intensities: collections.abc.Iterable[float], pept_start_positions: collections.abc.Iterable[int], pept_end_positions: collections.abc.Iterable[int], sequence: str, linewidth: float = 5, n_ticklabels: int | None = 10, set_xlim_to_sequence: bool = True, zero_center_color: bool = False, color_scale_range: tuple[float, float] | None = None, color_scale_cmap: str | None = None, bar_padding: float = 0.25, ax: matplotlib.axes.Axes | None = None) -> tuple[matplotlib.axes.Axes, matplotlib.cm.ScalarMappable]
+
+   Plots the coverage of peptides over a protein sequence.
+
+   :param intensities: An iterable of intensity values corresponding to each peptide. (Determines peptide color)
+   :type intensities: Iterable[float]
+   :param pept_start_positions: An iterable of start positions of peptides (1-indexed).
+   :type pept_start_positions: Iterable[int]
+   :param pept_end_positions: An iterable of end positions of peptides (1-indexed).
+   :type pept_end_positions: Iterable[int]
+   :param sequence: The full protein sequence.
+   :type sequence: str
+   :param linewidth: The width of the lines representing peptides. Defaults to 5.
+   :type linewidth: float, optional
+   :param n_ticklabels: Number of tick labels to display on the x-axis. If `None`, tick labels are not altered. Defaults to 10.
+   :type n_ticklabels: int | None, optional
+   :param set_xlim_to_sequence: Whether to set the x-axis limits to the sequence length. Defaults to True.
+                                If False, x-axis limits are not altered (useful if you want to overlay this plot on another plot with shared x-axis).
+   :type set_xlim_to_sequence: bool, optional
+   :param zero_center_color: Whether to center the color scale at zero and use a diverging colormap. Defaults to False.
+   :type zero_center_color: bool, optional
+   :param color_scale_range: Tuple specifying the (min, max) range for the color scale.
+                             If `None`, the range is determined from the data. If `zero_center_color` is True, the range must include both positive and negative values,
+                             and the value with larger magnitude is used to set the color scale limits. Defaults to `None`.
+   :type color_scale_range: tuple[float, float] | None, optional
+   :param color_scale_cmap: Colormap to use for the color scale. If `None`, "berlin" is used for zero-centered and "viridis" for non-zero-centered. Defaults to `None`.
+   :type color_scale_cmap: str | None, optional
+   :param bar_padding: Padding between bars, must be between 0 and 0.5. Defaults to 0.25. Use 0.5 to have adjacent peptides touch each other, <0.5 for gaps, and >0.5 for overlaps.
+   :type bar_padding: float, optional
+   :param ax: Matplotlib Axes object to draw the peptide coverage plot on.
+              If `None`, a new Axes object is created. Defaults to `None`.
+   :type ax: Axes | None, optional
+
+   :returns:
+
+             A tuple containing the matplotlib Axes object with the plotted peptide coverage
+                 and a ScalarMappable for the color mapping (e.g., you can create a colorbar via `fig.colorbar(scalar_mappable, ax=ax)`).
+   :rtype: tuple[Axes, ScalarMappable]
+
+

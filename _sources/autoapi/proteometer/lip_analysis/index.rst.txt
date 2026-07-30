@@ -1,0 +1,115 @@
+proteometer.lip_analysis
+========================
+
+.. py:module:: proteometer.lip_analysis
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   proteometer.lip_analysis.lip_analysis
+   proteometer.lip_analysis.lip_pept_statistics
+   proteometer.lip_analysis.lip_site_statistics
+   proteometer.lip_analysis.lip_solvent_accessibility_scores
+   proteometer.lip_analysis.lip_peptide_perturbation_scores
+
+
+Module Contents
+---------------
+
+.. py:function:: lip_analysis(par: proteometer.params.Params, drop_samples: list[str] | None = None) -> tuple[pandas.DataFrame, pandas.DataFrame, pandas.DataFrame]
+
+   Performs statistical analysis on the provided limited proteolysis data.
+
+   :param par: Parameters for the limited proteolysis analysis, including
+               file paths and settings.
+   :type par: Params
+   :param drop_samples: List of samples to drop from the
+                        analysis. Defaults to None.
+   :type drop_samples: list[str], optional
+
+   :returns:
+
+             The resulting limited
+                 proteolysis data frames after analysis.
+                 These are the double-digested peptide data frame, the rollup of the
+                 peptide data to the single site, and the processed global protein
+                 data frame (in that order).
+   :rtype: tuple[pd.DataFrame,pd.DataFrame,pd.DataFrame]
+
+
+.. py:function:: lip_pept_statistics(lip_pept: pandas.DataFrame, prot_seqs: list[proteometer.fasta.SeqRecord], anova_cols: list[str], pairwise_ttest_groups: collections.abc.Iterable[proteometer.stats.TTestGroup], metadata: pandas.DataFrame, par: proteometer.params.Params) -> pandas.DataFrame
+
+.. py:function:: lip_site_statistics(lip_site: pandas.DataFrame, anova_cols: list[str], pairwise_ttest_groups: collections.abc.Iterable[proteometer.stats.TTestGroup], metadata: pandas.DataFrame, par: proteometer.params.Params) -> pandas.DataFrame
+
+   Converts the double-peptide data frame to a site-level data frame.
+
+   :param lip_pept: The double-peptide data frame.
+   :type lip_pept: pd.DataFrame
+   :param prot_seqs: The list of protein sequences.
+   :type prot_seqs: list[fasta.SeqRecord]
+   :param int_cols: The names of columns to with intensity values.
+   :type int_cols: Iterable[str]
+   :param anova_cols: The columns for ANOVA.
+   :type anova_cols: list[str]
+   :param pairwise_ttest_groups: The pairwise T-test groups.
+   :type pairwise_ttest_groups: Iterable[stats.TTestGroup]
+   :param metadata: The metadata data frame.
+   :type metadata: pd.DataFrame
+   :param par: The parameters for limitied proteolysis analysis.
+   :type par: Params
+
+   :returns: A data frame with the site-level data.
+   :rtype: pd.DataFrame
+
+
+.. py:function:: lip_solvent_accessibility_scores(lip_pept: pandas.DataFrame, global_pept: pandas.DataFrame, protein_column_name: str = 'Protein', peptide_column_name: str = 'Peptide', trypticity_column_name: str = 'pept_type') -> pandas.Series
+
+   Calculates the solvent accessibility score for each protein based on the
+   number of semi- or non-tryptic peptides in the double-digested samples and the
+   number of fully tryptic peptides in the trypsin-only samples.
+
+   :param lip_pept: The double-digested peptide data frame.
+   :type lip_pept: pd.DataFrame
+   :param global_pept: The trypsin-only peptide data frame.
+   :type global_pept: pd.DataFrame
+   :param protein_column_name: The name of the column containing the protein IDs. Must be the same in both data frames.
+   :type protein_column_name: str
+   :param peptide_column_name: The name of the column containing the peptide sequences. Must be the same in both data frames.
+   :type peptide_column_name: str
+   :param trypticity_column_name: The name of the column containing the trypticity information for the peptides. Only required in the `global_pept` data frame.
+   :type trypticity_column_name: str
+
+   :returns: A series containing the solvent accessibility score for each protein, indexed by protein ID.
+   :rtype: pd.Series
+
+
+.. py:function:: lip_peptide_perturbation_scores(lip_pept: pandas.DataFrame, protein_solvent_accessibility_scores: pandas.Series, fold_change_column_name: str, protein_column_name: str = 'Protein') -> pandas.Series
+
+   Calculates the LiP perturbation score from Sarkar et al. 2025
+   (https://doi.org/10.1021/acs.jproteome.5c00400) for each peptide. This is
+   calculated as the log2 fold change in peptide intensity multiplied by the
+   solvent accessibility score for the protein. The solvent accessibility score
+   is the ratio of the number of semi- or non-tryptic peptides in the double-digested
+   samples to the number of fully tryptic peptides in the trypsin-only samples. In
+   Sarkar et al. 2025, a protein perturbation score is calculated as the sum of
+   the perturbation scores of all tryptic peptides mapping to a protein. Here, we
+   calculate it at the per-peptide level. The resulting scores can be aggregated
+   as needed.
+
+   :param lip_pept: The double-digested peptide data frame with
+                    log2 fold changes calculated.
+   :type lip_pept: pd.DataFrame
+   :param protein_solvent_accessibility_scores: The solvent accessibility scores for each protein.
+   :type protein_solvent_accessibility_scores: pd.Series
+   :param protein_column_name: The name of the column containing the protein IDs. Must be the same in both data frames.
+   :type protein_column_name: str
+   :param fold_change_column_name: The name of the column containing the log2 fold change values for the peptides. Only required in the `lip_pept` data frame.
+   :type fold_change_column_name: str
+
+   :returns: A series containing the LiP perturbation score for each peptide, indexed by the same index as `lip_pept`.
+   :rtype: pd.Series
+
+

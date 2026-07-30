@@ -1,0 +1,99 @@
+proteometer.ptm
+===============
+
+.. py:module:: proteometer.ptm
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   proteometer.ptm.get_ptm_pos_in_pept
+   proteometer.ptm.get_yst
+   proteometer.ptm.get_phosphositeplus_pos
+   proteometer.ptm.combine_multi_ptms
+
+
+Module Contents
+---------------
+
+.. py:function:: get_ptm_pos_in_pept(peptide: str, ptm_label: str = '*', special_chars: str = '.]+-=@_!#$%^&*()<>?/\\|}{~:[') -> list[int]
+
+   Get the positions of PTM labels in a peptide.
+
+   This function processes a peptide string to find the positions of
+   post-translational modification (PTM) labels. It accounts for special
+   characters and returns a list of positions adjusted to the stripped
+   peptide sequence. Positions are 0-indexed from the start of the peptide.
+
+   :param peptide: The peptide string potentially containing PTM labels.
+   :type peptide: str
+   :param ptm_label: The label representing PTM. Defaults to '*'.
+   :type ptm_label: str, optional
+   :param special_chars: A string of special characters that
+                         might need escaping in regex operations. Defaults to common
+                         special characters.
+   :type special_chars: str, optional
+
+   :returns:
+
+             A sorted list of integer positions where the PTM labels
+                 occur in the peptide, adjusted for any modifications made during
+                 processing.
+   :rtype: list[int]
+
+
+.. py:function:: get_yst(strip_pept: str, ptm_aa: str = 'YSTyst') -> list[tuple[int, str]]
+
+   Get YST positions in a peptide.
+
+   This function takes a stripped peptide sequence and finds the positions of
+   Y, S, and T residues.
+
+   :param strip_pept: The stripped peptide sequence.
+   :type strip_pept: str
+   :param ptm_aa: The residues letters for Y, S, and T residues. Defaults to 'YSTyst'.
+   :type ptm_aa: str, optional
+
+   :returns:
+
+             A list of tuples where the first element is the
+                 position of the label in the stripped peptide and the second
+                 element is the YST residue letter.
+   :rtype: list[tuple[int, str]]
+
+
+.. py:function:: get_phosphositeplus_pos(mod_rsd: str) -> list[int]
+
+   Extracts numeric positions from a string of modified residues.
+
+   :param mod_rsd: A string of modified residues.
+   :type mod_rsd: str
+
+   :returns: A list of numeric positions extracted from the input string.
+   :rtype: list[int]
+
+
+.. py:function:: combine_multi_ptms(multi_proteomics: dict[str, pandas.DataFrame], par: proteometer.params.Params) -> pandas.DataFrame
+
+   Combines multiple proteomics dataframes into a single dataframe.
+
+   This function processes and combines different types of proteomics
+   data into a unified dataframe. It distinguishes between global
+   proteomics data and post-translational modifications (PTM) data,
+   assigning specific labels and counting site numbers accordingly.
+
+   :param multi_proteomics: Dictionary of proteomics dataframes
+                            with keys indicating the type of proteomics ('global' or PTM types).
+   :type multi_proteomics: dict[str, pd.DataFrame]
+   :param par: Configuration parameters containing column names and PTM details.
+   :type par: Params
+
+   :returns:
+
+             A combined dataframe containing all the input proteomics data,
+                 labeled and processed as per the specified parameters.
+   :rtype: pd.DataFrame
+
+
