@@ -10,10 +10,11 @@
 <a href="https://github.com/PhenoMeters/proteometer/actions">
     <img src="https://github.com/PhenoMeters/proteometer/actions/workflows/main.yml/badge.svg?branch=release" alt="CI Status">
 </a> -->
-<a href="https://PhenoMeters.github.io/proteometer/">
-    <img src="https://img.shields.io/website/https/PhenoMeters.github.io/proteometer/index.html.svg?label=docs&down_message=unavailable&up_message=available" alt="Documentation Status">
+    
+<!-- <a href="https://pnnl-predictive-phenomics.github.io/ProteoMeter/">
+    <img src="https://img.shields.io/badge/Documentation-8A2BE2" alt="Documentation">
 </a>
-
+ -->
 </p>
 
 
