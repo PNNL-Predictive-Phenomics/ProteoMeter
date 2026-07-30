@@ -193,7 +193,9 @@ def median_normalization(
 
     if batch_correct_samples is None or len(list(batch_correct_samples)) == 0:
         batch_correct_samples = cast("pd.Series[str]", metadata[sample_col])
-    if not set(batch_correct_samples).issubset(cast("pd.Series[str]", metadata[sample_col])):
+    if not set(batch_correct_samples).issubset(
+        cast("pd.Series[str]", metadata[sample_col])
+    ):
         batch_correct_samples = cast("pd.Series[str]", metadata[sample_col])
         Warning(
             f"Some samples provided for batch correction are not in metadata, using all samples in {sample_col} of metadata."
@@ -240,7 +242,9 @@ def batch_correction(
     df = df4batcor.copy()
     if batch_correct_samples is None or len(list(batch_correct_samples)) == 0:
         batch_correct_samples = cast("pd.Series[str]", metadata[sample_col])
-    if not set(batch_correct_samples).issubset(cast("pd.Series[str]", metadata[sample_col])):
+    if not set(batch_correct_samples).issubset(
+        cast("pd.Series[str]", metadata[sample_col])
+    ):
         batch_correct_samples = cast("pd.Series[str]", metadata[sample_col])
         Warning(
             f"Some samples provided for batch correction are not in metadata, using all samples in {sample_col} of metadata."
@@ -250,7 +254,7 @@ def batch_correction(
         Iterable[str],
         metadata[metadata[sample_col].isin(batch_correct_samples)][batch_col].unique(),
     )
-    batch_means_dict = {}
+    batch_means_dict: dict[str, pd.Series[float]] = {}
     for batch in batches:
         df_batch: pd.DataFrame = df[
             metadata[

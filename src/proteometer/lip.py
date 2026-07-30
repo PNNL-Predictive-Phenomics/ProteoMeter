@@ -641,12 +641,12 @@ def rollup_single_protein_to_lytic_site(
     else:
         if rollup_func.lower() == "median":
             agg_methods_2: AggDictFloat = {
-                i: lambda x: (x.median() if (not x[x.notna()].empty) else np.nan)
+                i: lambda x: x.median() if (not x[x.notna()].empty) else np.nan
                 for i in int_cols
             }
         elif rollup_func.lower() == "mean":
             agg_methods_2: AggDictFloat = {
-                i: lambda x: (x.mean() if (not x[x.notna()].empty) else np.nan)
+                i: lambda x: x.mean() if (not x[x.notna()].empty) else np.nan
                 for i in int_cols
             }
         elif rollup_func.lower() == "sum":
@@ -751,7 +751,7 @@ def delta_prok_site(
     """
     prok = site_df[site_df[site_type_col] == "ProK"]
     pept_dfs = dict(list(peptide_df.groupby(pept_protein_col)))
-    df_rows = []
+    df_rows: list[pd.Series] = []
     for _, row in prok.iterrows():
         pept_df = pept_dfs[
             row[site_protein_col]
