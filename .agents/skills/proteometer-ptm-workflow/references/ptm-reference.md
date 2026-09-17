@@ -6,6 +6,24 @@ This reference covers the typical ProteoMeter PTM workflow, not a general proteo
 
 For the full repository documentation entry point, see [docs/index.rst](../../../docs/index.rst). Use the source modules under `../../../src/proteometer/` when the focused PTM reference does not cover an API.
 
+## Environment
+
+ProteoMeter requires Python 3.12 or newer. Prefer an isolated `uv` environment from the repository root:
+
+```bash
+uv venv --python 3.12 .venv
+uv pip install --python .venv/bin/python -e .
+.venv/bin/python -c "import proteometer; print('ProteoMeter import: OK')"
+```
+
+Use `.venv\\Scripts\\python.exe` on Windows. If `uv` is unavailable, use Pixi as configured by `pyproject.toml`, or create a standard `venv` and install the editable package with its interpreter. All preflight and analysis commands must use the same approved interpreter. Optional enrichment dependencies should be installed only when that follow-up is approved.
+
+Before loading large tables, verify the environment with:
+
+```bash
+.venv/bin/python -c "import proteometer, pandas, scipy, pingouin; print('ProteoMeter dependencies: OK')"
+```
+
 ## Input tables
 
 The demo uses tab-separated files under `demo_data/PTM/`:
@@ -120,6 +138,8 @@ It returns `(all_ptms, global_prot)`. `all_ptms` contains combined site-level PT
 
 The output includes configured identifier columns and generated fields such as `type`, `experiment`, `site_number`, comparison effect columns, and p-value/adjusted-p-value columns. Exact comparison prefixes come from `TTestGroup.label()`, so inspect `params.ttest_pairs` and `df.columns` rather than hard-coding names.
 
+When `ibaq = true`, the current implementation replaces the original intensity columns with iBAQ-adjusted values instead of adding clearly named iBAQ columns. Preserve a pre-iBAQ copy if both representations are needed. For FASTA headers such as `sp|A0A...|NAME_HUMAN`, use `fasta_id_matching = "contains"` when the table stores the bare UniProt identifier.
+
 ## Post-analysis recipes
 
 Use the patterns in `demonstration.ipynb` as the working example:
@@ -153,17 +173,10 @@ Use the package's FASTA and barcode/alignment utilities when the question concer
 
 ## Diagnostics checklist
 
-- `FileNotFoundError`: print the absolute paths held by `Params`; check `data_dir` and the current working directory.
-- PTM list `ValueError`: compare all four PTM lists element by element.
-- `KeyError` for a sample: compare metadata sample values with every table's intensity headers.
-- Empty or heavily filtered output: inspect missingness and whether `min_replicates_qc` is too strict for the design.
-- Missing statistics: verify `ttest_pairs`, exact group names, and replicate counts after exclusions.
-- Batch correction failure: verify every configured `batch_correct_samples` value exists in metadata and that the batch column is populated.
-- Abundance correction failure or implausible values: confirm global tables are from paired samples when configured, and inspect global protein statistics before interpreting PTM changes.
-- iBAQ/FASTA mismatch: inspect FASTA headers and choose the appropriate matching mode; report unmatched identifiers.
-- Residue parsing failure: compare residue strings and modified peptide notation against the demo input files and `src/proteometer/residue.py`.
 
 After every run, report row counts before/after filtering, analyzed samples, excluded samples, corrections enabled, significance settings, and the output files produced.
+
+For PTM inputs, prefer peptide coverage plots. The barcode helper in `barcode.py` expects LiP-specific columns such as `pept_type`, `pept_start`, and `pept_end` and should not be called directly on the PTM tables. Before enrichment, verify both `gseapy` and a versioned `.gmt` file; without the GMT file, record enrichment as blocked rather than reporting an empty result.
 
 ## Run summary artifact
 

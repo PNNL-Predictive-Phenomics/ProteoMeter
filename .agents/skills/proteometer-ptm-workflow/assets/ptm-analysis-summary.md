@@ -5,6 +5,9 @@
 - Status: Draft | Final
 - Date:
 - Analyst:
+- Python interpreter:
+- ProteoMeter installation/import check:
+- Environment setup command:
 - Summary path:
 - Configuration path:
 - Approval status: Pending | Approved

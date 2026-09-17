@@ -23,6 +23,8 @@ Treat every workflow stage below as a checkpoint. After completing a stage, stop
 
 Do not begin the next stage until the user explicitly approves it. A response such as "approved", "continue", or a clear answer to the stated decision is required. If the user requests changes, revise the current stage and present that stage's handoff again.
 
+These gates are the default interactive mode. If a user explicitly requests an unattended or batch run, collect the same decisions in one written plan, obtain approval once before execution, and still produce the durable summary and final QC handoff.
+
 ## Source of truth
 
 Before changing inputs or code, inspect these local examples and APIs:
@@ -43,6 +45,7 @@ Use `assets/ptm-analysis-summary.md` as the durable report template.
 
 Track these gates in order:
 
+- [ ] Create or select a Python 3.12+ environment and install ProteoMeter into it.
 - [ ] Inventory the quantification tables, sample columns, PTM labels, metadata, and FASTA.
 - [ ] Normalize the input layout and verify table schemas before writing configuration.
 - [ ] Create `metadata.tsv` with sample IDs that exactly match every quantitative table.
@@ -52,6 +55,28 @@ Track these gates in order:
 - [ ] Perform QC and statistical review before biological interpretation.
 - [ ] Apply optional downstream analyses such as protein-wise FDR, FASTA/iBAQ, sequence/barcode views, or enrichment.
 - [ ] Report assumptions, exclusions, thresholds, output paths, and unresolved data-quality issues.
+
+### 0. Create the analysis environment
+
+Use `uv` by default when it is available. From the repository root, create an isolated environment and install the local package in editable mode:
+
+```bash
+uv venv --python 3.12 .venv
+uv pip install --python .venv/bin/python -e .
+```
+
+Run every subsequent Python command with the environment's interpreter, for example:
+
+```bash
+.venv/bin/python -c "import proteometer; print('ProteoMeter import: OK')"
+.venv/bin/python your_analysis_script.py
+```
+
+On Windows, use `.venv\\Scripts\\python.exe` instead of `.venv/bin/python`. Do not rely on the shell's default `python`, because it may be a different interpreter from the one where ProteoMeter was installed. Record the interpreter path and package installation result in the run summary.
+
+If `uv` is unavailable, use an existing project environment such as Pixi, or create a standard environment with `python -m venv .venv` and install with `.venv/bin/python -m pip install -e .`. Verify the import before continuing. Install optional demo dependencies only for the approved follow-up that needs them; the core PTM pipeline does not require enrichment packages.
+
+**Gate 0:** Report the interpreter path/version, installation command, ProteoMeter import result, and whether optional dependencies are installed. Ask the user to approve the environment before inventorying or modifying analysis inputs.
 
 ### 1. Inventory and map the data
 
@@ -93,7 +118,7 @@ Keep these lists in the same order:
 
 Set `log2_scale` to reflect the actual input. Use abundance correction when the biological question calls for modified-state changes relative to protein abundance, and ensure global protein/peptide data are sample-paired when `abundance_correction_paired_samples = true`. Enable batch correction for an appropriate TMT design and provide the sample columns listed in `batch_correct_samples`.
 
-Set `ibaq = true` only when the FASTA identifiers can be matched using the configured `fasta_id_matching` mode. Confirm `sig_type`, thresholds, and `min_replicates_qc` match the intended analysis rather than accepting demo defaults blindly.
+Set `ibaq = true` only when the FASTA identifiers can be matched using the configured `fasta_id_matching` mode. The current implementation replaces the original intensity columns with iBAQ-adjusted values rather than adding clearly named iBAQ columns, so preserve a pre-iBAQ copy when raw processed intensities must remain available. Confirm `sig_type`, thresholds, and `min_replicates_qc` match the intended analysis rather than accepting demo defaults blindly.
 
 **Gate 3:** Summarize the proposed TOML paths, PTM list alignment, corrections, thresholds, and exclusions. Ask the user to approve the configuration before running preflight.
 
@@ -109,7 +134,15 @@ Run a small Python check that loads `Params`, reads all TSV files with `sep="\t"
 - Residue strings and PTM-marked peptide sequences are parseable according to the package conventions.
 - No group loses all or too many replicates after planned `drop_samples`.
 
-Then instantiate `Params("path/to/ptm.toml")`. This catches invalid experiment type, significance type, search tool, and PTM list lengths before the expensive pipeline starts.
+Then instantiate `Params("path/to/ptm.toml")` with the approved environment's interpreter. This catches invalid experiment type, significance type, search tool, and PTM list lengths before the expensive pipeline starts.
+
+Verify imports before reading large tables:
+
+```bash
+.venv/bin/python -c "import proteometer, pandas, scipy, pingouin; print('ProteoMeter dependencies: OK')"
+```
+
+If this check fails, fix the environment before diagnosing the data. A typical full run can take minutes on demo-sized tables; report that execution has started and wait for completion rather than launching duplicate runs.
 
 If `skills-ref` is installed, validate the skill itself from the repository root:
 
@@ -142,6 +175,8 @@ ptm_site.to_csv("path/to/results/ptm_processed_site.csv")
 global_prot.to_csv("path/to/results/ptm_processed_prot.csv")
 ```
 
+Run that script with the approved interpreter, for example `.venv/bin/python run_ptm.py`.
+
 Use `drop_samples=[...]` only when exclusions are documented and leave enough replicates per group. Use `ptm_analysis_return_all(params)` when the uncorrected site-level result is needed for comparison with abundance-corrected output.
 
 Remember the returned order: `ptm_analysis` returns combined PTM/global site-level output first and processed global protein output second. The `return_all` variant adds uncorrected PTM output as the third result.
@@ -159,8 +194,8 @@ Before interpreting biology, inspect row counts, PTM types, missingness, sample 
 - `quality_control_plots.volcano_plot` for comparison-level effect/significance review.
 - `stats.recalculate_adj_pval` for global FDR recalculation and `stats.recalculate_adj_pval_proteinwise` for protein-wise FDR when that analysis is appropriate.
 - FASTA helpers and `abundance.calculate_ibaq_from_fasta` for sequence matching or iBAQ checks.
-- Barcode/alignment and peptide-coverage plots for site or sequence context.
-- The notebook's `gseapy` example for enrichment only after selecting a defensible significant protein set and obtaining the required GMT file.
+- PTM peptide-coverage plots for sequence context. The barcode helper shown in the broader demo expects LiP-specific fields such as `pept_type`, `pept_start`, and `pept_end`; do not apply it directly to PTM tables.
+- The notebook's `gseapy` example for enrichment only after selecting a defensible significant protein set, installing `gseapy` in the approved environment, and obtaining a versioned GMT file. Check both prerequisites before attempting enrichment.
 
 Use `parse_metadata.int_columns` and `parse_metadata.group_columns` with the loaded `Params` when constructing QC plots or checking sample groups; this avoids manually guessing which columns are quantitative or pooled.
 
